@@ -51,7 +51,6 @@ services:
       - results:/${RESULTS_FOLDER}
     depends_on:
       - redis
-      - db
     networks:
       - anclora-network
 
@@ -91,7 +90,7 @@ services:
       - anclora-network
 
   db:
-    image: postgres:15-alpine
+    image: postgres:13
     environment:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
