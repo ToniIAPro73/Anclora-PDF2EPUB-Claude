@@ -121,6 +121,8 @@ Usa el token recibido en el encabezado `Authorization: Bearer <token>` para acce
 - `POST /api/login` – devuelve un token JWT.
 - `GET /api/protected` – ejemplo de ruta protegida.
 - `GET /metrics` – expone métricas en formato Prometheus.
+- `POST /api/analyze` – analiza un PDF y sugiere la mejor secuencia de conversión.
+- `POST /api/convert` – acepta el parámetro opcional `pipeline_id` para forzar `rapid`, `balanced` o `quality`.
 
 Estructura del Proyecto
 anclora-pdf2epub/

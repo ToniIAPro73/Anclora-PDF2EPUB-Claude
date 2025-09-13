@@ -48,13 +48,14 @@ def test_api_convert_returns_task_id(tmp_path, monkeypatch):
 
     pdf_path = _create_pdf()
     with open(pdf_path, 'rb') as f:
-        response = client.post('/api/convert', headers=headers, data={'file': (f, 'sample.pdf')})
+        response = client.post('/api/convert', headers=headers, data={'file': (f, 'sample.pdf'), 'pipeline_id': 'rapid'})
 
     assert response.status_code == 202
     task_id = response.get_json().get('task_id')
     assert task_id
     mock_apply.assert_called_once()
     assert mock_apply.call_args.kwargs.get('task_id') == task_id
+    assert mock_apply.call_args.kwargs['args'][3] == 'rapid'
     os.remove(pdf_path)
 
 
@@ -128,3 +129,32 @@ def test_metrics_endpoint(tmp_path):
     response = client.get('/metrics')
     assert response.status_code == 200
     assert b'http_requests_total' in response.data
+
+
+def test_analyze_returns_options(tmp_path):
+    app = _setup_app(tmp_path)
+    client = app.test_client()
+
+    pdf_path = _create_pdf()
+    with open(pdf_path, 'rb') as f:
+        response = client.post('/api/analyze', data={'file': (f, 'sample.pdf')})
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert 'recommended' in data
+    assert len(data['options']) == 3
+    os.remove(pdf_path)
+
+
+def test_invalid_pipeline_id(tmp_path, monkeypatch):
+    app = _setup_app(tmp_path)
+    client = app.test_client()
+    monkeypatch.setattr(routes.convert_pdf_to_epub, 'apply_async', lambda *a, **k: None)
+
+    pdf_path = _create_pdf()
+    with open(pdf_path, 'rb') as f:
+        res = client.post('/api/convert', data={'file': (f, 'sample.pdf'), 'pipeline_id': 'unknown'})
+
+    assert res.status_code == 400
+    assert res.get_json()['error'] == 'Invalid pipeline_id'
+    os.remove(pdf_path)

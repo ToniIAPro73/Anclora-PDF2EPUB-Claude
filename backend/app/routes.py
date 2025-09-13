@@ -14,10 +14,11 @@ try:
 except ImportError:  # pragma: no cover - optional dependency
     magic = None
 from functools import wraps
-from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST, REGISTRY
 
 from .tasks import convert_pdf_to_epub, celery_app
 from .models import Conversion, User
+from .converter import ConversionEngine, suggest_best_pipeline
 from . import db, limiter
 
 bp = Blueprint('routes', __name__)
@@ -26,10 +27,62 @@ ALLOWED_EXTENSIONS = {"pdf"}
 ALLOWED_MIME_TYPES = {"application/pdf"}
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 logger = logging.getLogger(__name__)
-conversion_counter = Counter('pdf_conversions_total', 'Total PDF conversion requests')
+if 'pdf_conversions_total' in REGISTRY._names_to_collectors:
+    conversion_counter = REGISTRY._names_to_collectors['pdf_conversions_total']
+else:
+    conversion_counter = Counter('pdf_conversions_total', 'Total PDF conversion requests')
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth_header = request.headers.get('Authorization', '')
+        if not auth_header.lower().startswith('bearer '):
+            return jsonify({'error': 'Missing token'}), 401
+        token = auth_header.split(' ', 1)[1]
+        try:
+            jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+        except Exception:
+            return jsonify({'error': 'Invalid token'}), 401
+        return f(*args, **kwargs)
+
+    return decorated
+
+
+@bp.route('/api/analyze', methods=['POST'])
+def analyze():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    if not allowed_file(file.filename):
+        return jsonify({'error': 'Invalid file type'}), 400
+    file.seek(0, os.SEEK_END)
+    if file.tell() > MAX_FILE_SIZE:
+        return jsonify({'error': 'File too large'}), 400
+    file.seek(0)
+    if magic is not None:
+        mime_type = magic.from_buffer(file.read(2048), mime=True)
+        file.seek(0)
+        if mime_type not in ALLOWED_MIME_TYPES:
+            return jsonify({'error': 'Invalid file content'}), 400
+    else:
+        header = file.read(4)
+        file.seek(0)
+        if not header.startswith(b"%PDF"):
+            return jsonify({'error': 'Invalid file content'}), 400
+    import tempfile
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
+        file.save(tmp.name)
+    try:
+        result = suggest_best_pipeline(tmp.name)
+    finally:
+        os.unlink(tmp.name)
+    return jsonify(result)
 
 
 @bp.route('/api/register', methods=['POST'])
@@ -118,10 +171,14 @@ def convert():
         current_app.logger.warning("Path traversal attempt for result: %s", epub_filename)
         return jsonify({'error': 'Invalid file name'}), 400
 
+    pipeline_id = request.form.get('pipeline_id')
+    if pipeline_id and pipeline_id not in [e.value for e in ConversionEngine]:
+        return jsonify({'error': 'Invalid pipeline_id'}), 400
+
     task_id = str(uuid.uuid4())
     db.session.add(Conversion(task_id=task_id, status='PENDING'))
     db.session.commit()
-    convert_pdf_to_epub.apply_async(args=[task_id, pdf_path, epub_path], task_id=task_id)
+    convert_pdf_to_epub.apply_async(args=[task_id, pdf_path, epub_path, pipeline_id], task_id=task_id)
     conversion_counter.inc()
     return jsonify({'task_id': task_id}), 202
 

@@ -11,8 +11,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 @pytest.fixture(scope="module")
 def task_env(tmp_path_factory):
     tmpdir = tmp_path_factory.mktemp("db")
-    os.environ["CONVERSION_DB"] = str(tmpdir / "conv.db")
+    db_path = str(tmpdir / "conv.db")
+    os.environ["CONVERSION_DB"] = db_path
+    os.environ["DATABASE_URL"] = "sqlite:///" + db_path
     models = importlib.import_module("app.models")
+    models.db.Model.metadata.clear()
     importlib.reload(models)
     models.init_db()
     tasks = importlib.import_module("app.tasks")
@@ -24,7 +27,7 @@ def test_convert_pdf_to_epub_success(task_env):
     models.create_conversion("t1")
 
     class DummyConverter:
-        def convert(self, input_path, output_path=None):
+        def convert(self, input_path, output_path=None, engine=None):
             return {
                 "success": True,
                 "output_path": "out.epub",
@@ -55,7 +58,7 @@ def test_convert_pdf_to_epub_failure(task_env):
     models.create_conversion("t2")
 
     class DummyConverter:
-        def convert(self, input_path, output_path=None):
+        def convert(self, input_path, output_path=None, engine=None):
             raise RuntimeError("boom")
 
     tasks.converter = DummyConverter()
