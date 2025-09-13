@@ -61,7 +61,7 @@ class ConversionCache:
     """
 
     def __init__(self, cache_dir: Optional[str] = None, expiry_seconds: int = 3600) -> None:
-        self.cache_dir = cache_dir or os.path.join(tempfile.gettempdir(), "conversion_cache")
+        self.cache_dir = cache_dir or tempfile.mkdtemp(prefix="conversion_cache_")
         self.expiry_seconds = expiry_seconds
         os.makedirs(self.cache_dir, exist_ok=True)
         self._last_cleanup = 0.0

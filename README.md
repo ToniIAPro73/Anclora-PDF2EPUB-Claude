@@ -72,6 +72,8 @@ flowchart TD
 - **Git** para clonar el repositorio
 - **Node.js 18+** (solo para desarrollo local)
 - **Python 3.11+** (solo para desarrollo local)
+- **Ghostscript** (requerido para extracción de tablas con `camelot-py`)
+- **Java** (opcional, necesario si se utiliza `tabula-py`)
 
 ### Instalación con Docker (Recomendado)
 
