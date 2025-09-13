@@ -1,74 +1,143 @@
+"""Adapters and pipeline for running external conversion tools.
+
+This module provides simple wrappers around external binaries such as
+``pandoc`` and ``pdf2htmlEX``.  Each adapter measures execution time and
+captures errors so the caller can evaluate cost and reliability.
+
+Example:
+
+    pipeline = ConversionPipeline(["pdf2htmlex", "pandoc"])
+    result = pipeline.run("input.pdf")
+
+"""
+
+from __future__ import annotations
+
+import logging
+import os
+import shutil
+import subprocess
+import tempfile
+import time
 from dataclasses import dataclass
-from typing import List, Dict, Any
+from typing import Dict, List, Optional
+
+import pypandoc
+
+
+logger = logging.getLogger(__name__)
+
+
+def _ensure_pandoc() -> None:
+    """Ensure the pandoc binary is available.
+
+    ``pypandoc`` requires the pandoc executable.  If it is not found, we try
+    to download a local copy via :func:`pypandoc.download_pandoc`.
+    """
+
+    try:
+        pypandoc.get_pandoc_version()
+    except OSError:
+        logger.info("Pandoc not found. Downloading a local copy...")
+        pypandoc.download_pandoc()
 
 
 @dataclass
-class ConversionSequence:
-    """Representa una secuencia de conversión concreta"""
-    name: str
-    steps: List[str]
-    base_quality: int
-    base_cost: int
+class StepResult:
+    success: bool
+    duration: float
+    output: Optional[str] = None
+    error: Optional[str] = None
 
 
-class SequenceEvaluator:
-    """Evalúa diferentes secuencias de conversión"""
+class PandocAdapter:
+    """Adapter that converts documents using pandoc."""
+
     def __init__(self) -> None:
-        # Definición de secuencias soportadas
-        self.sequences = [
-            ConversionSequence(
-                name="pdf_to_epub_direct",
-                steps=["pdf_to_epub"],
-                base_quality=60,
-                base_cost=1,
-            ),
-            ConversionSequence(
-                name="pdf_to_html_to_epub",
-                steps=["pdf_to_html", "pandoc_html_to_epub"],
-                base_quality=80,
-                base_cost=3,
-            ),
-            ConversionSequence(
-                name="pdf_to_images_ocr_to_epub",
-                steps=["pdf_to_images", "ocr", "pandoc_html_to_epub"],
-                base_quality=70,
-                base_cost=5,
-            ),
-        ]
+        _ensure_pandoc()
 
-    def evaluate(self, pdf_path: str, analysis: Any) -> List[Dict[str, Any]]:
-        """Devuelve estimaciones de calidad y coste para cada secuencia"""
-        results: List[Dict[str, Any]] = []
-
-        for seq in self.sequences:
-            quality = seq.base_quality
-            cost = seq.base_cost
-
-            # Ajustes heurísticos basados en el análisis del PDF
-            if not getattr(analysis, "text_extractable", True):
-                if "ocr" in seq.steps:
-                    quality += 15
-                else:
-                    quality -= 30
-            if getattr(analysis, "image_count", 0) > 0 and "pdf_to_epub" in seq.steps:
-                quality -= 10
-            if getattr(analysis, "complexity_score", 0) > 3:
-                cost += 1
-                quality += 5
-
-            quality = max(0, min(100, quality))
-
-            results.append({
-                "sequence": seq.name,
-                "steps": seq.steps,
-                "estimated_quality": quality,
-                "estimated_cost": cost,
-            })
-
-        return results
+    def run(self, input_path: str, output_path: str) -> StepResult:
+        start = time.perf_counter()
+        try:
+            pypandoc.convert_file(
+                input_path,
+                "epub3",
+                outputfile=output_path,
+            )
+            duration = time.perf_counter() - start
+            logger.info("pandoc completed in %.2fs", duration)
+            return StepResult(True, duration, output=output_path)
+        except Exception as exc:  # pragma: no cover - defensive
+            duration = time.perf_counter() - start
+            logger.error("pandoc failed: %s", exc)
+            return StepResult(False, duration, error=str(exc))
 
 
-def evaluate_sequences(pdf_path: str, analysis: Any) -> List[Dict[str, Any]]:
-    """Evaluación de todas las secuencias disponibles"""
-    evaluator = SequenceEvaluator()
-    return evaluator.evaluate(pdf_path, analysis)
+class Pdf2HtmlEXAdapter:
+    """Adapter that converts PDF to HTML using pdf2htmlEX."""
+
+    def __init__(self) -> None:
+        if shutil.which("pdf2htmlEX") is None:
+            raise RuntimeError("pdf2htmlEX executable not found in PATH")
+
+    def run(self, input_path: str) -> StepResult:
+        start = time.perf_counter()
+        output_fd, output_path = tempfile.mkstemp(suffix=".html")
+        os.close(output_fd)
+
+        cmd = ["pdf2htmlEX", input_path, output_path]
+        try:
+            subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            duration = time.perf_counter() - start
+            logger.info("pdf2htmlEX completed in %.2fs", duration)
+            return StepResult(True, duration, output=output_path)
+        except subprocess.CalledProcessError as exc:
+            duration = time.perf_counter() - start
+            err = exc.stderr.decode(errors="ignore") if exc.stderr else str(exc)
+            logger.error("pdf2htmlEX failed: %s", err)
+            return StepResult(False, duration, error=err)
+
+
+class ConversionPipeline:
+    """Run a sequence of conversion steps.
+
+    Steps are specified by name (``"pdf2htmlex"`` or ``"pandoc"``).  Each
+    step is executed in order and metrics are recorded.  If a step fails the
+    pipeline stops and returns the collected metrics along with the error.
+    """
+
+    def __init__(self, steps: List[str]):
+        self.steps = steps
+        self.adapters = {
+            "pdf2htmlex": Pdf2HtmlEXAdapter(),
+            "pandoc": PandocAdapter(),
+        }
+
+    def run(self, pdf_path: str) -> Dict[str, object]:
+        current = pdf_path
+        final_output: Optional[str] = None
+        metrics: List[Dict[str, object]] = []
+
+        for step in self.steps:
+            adapter = self.adapters[step]
+            if step == "pandoc":
+                output_fd, output_path = tempfile.mkstemp(suffix=".epub")
+                os.close(output_fd)
+                result = adapter.run(current, output_path)
+                final_output = output_path if result.success else None
+            else:  # pdf2htmlex
+                result = adapter.run(current)
+                current = result.output or current
+
+            metrics.append(
+                {
+                    "step": step,
+                    "success": result.success,
+                    "duration": result.duration,
+                }
+            )
+
+            if not result.success:
+                return {"success": False, "error": result.error, "metrics": metrics}
+
+        return {"success": True, "output": final_output or current, "metrics": metrics}
