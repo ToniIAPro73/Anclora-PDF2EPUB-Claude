@@ -1,0 +1,13 @@
+flowchart TD
+    U[Usuario]
+    FE[Frontend React]
+    API[API Flask\nJWT + Rate Limiting]
+    Q[Redis Queue]
+    W[Trabajador Celery]
+    C[Motor de Conversión]
+    S[(Almacenamiento)]
+    P[(Prometheus)]
+    U --> FE --> API
+    API --> Q --> W --> C --> S
+    C --> P
+    API --> P
