@@ -51,6 +51,8 @@ services:
       - results:/${RESULTS_FOLDER}
     depends_on:
       - redis
+      - db
+    command: ["./wait-for-db.sh", "python", "main.py"]
     networks:
       - anclora-network
 
