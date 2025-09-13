@@ -1,4 +1,4 @@
-from flask import Flask, Response, request, jsonify, current_app
+from flask import Flask, Response, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_limiter import Limiter
