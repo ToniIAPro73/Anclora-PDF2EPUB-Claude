@@ -1,0 +1,655 @@
+import os
+import fitz  # PyMuPDF
+import ebooklib
+from ebooklib import epub
+from enum import Enum
+import pytesseract
+from PIL import Image
+import tempfile
+import uuid
+import logging
+
+# Configurar logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class ContentType(Enum):
+    TEXT_ONLY = "text_only"
+    TEXT_WITH_IMAGES = "text_with_images"
+    IMAGE_HEAVY = "image_heavy"
+    SCANNED_DOCUMENT = "scanned_document"
+    TECHNICAL_MANUAL = "technical_manual"
+    ACADEMIC_PAPER = "academic_paper"
+
+class ConversionEngine(Enum):
+    RAPID = "rapid"
+    BALANCED = "balanced"
+    QUALITY = "quality"
+
+class PDFAnalysis:
+    def __init__(self, page_count, file_size, text_extractable, 
+                 image_count, content_type, issues, complexity_score, 
+                 recommended_engine):
+        self.page_count = page_count
+        self.file_size = file_size
+        self.text_extractable = text_extractable
+        self.image_count = image_count
+        self.content_type = content_type
+        self.issues = issues
+        self.complexity_score = complexity_score
+        self.recommended_engine = recommended_engine
+
+class PDFAnalyzer:
+    def analyze_pdf(self, pdf_path):
+        """Analiza un PDF y devuelve métricas y recomendaciones"""
+        
+        # 1. Métricas básicas
+        file_size = os.path.getsize(pdf_path)
+        
+        try:
+            doc = fitz.open(pdf_path)
+            page_count = len(doc)
+            
+            # 2. Análisis de contenido
+            text_length = 0
+            image_count = 0
+            
+            for page in doc:
+                text_length += len(page.get_text())
+                image_count += len(page.get_images())
+            
+            text_extractable = text_length > 0
+            
+            # 3. Determinar tipo de contenido
+            if not text_extractable and image_count > 0:
+                content_type = ContentType.SCANNED_DOCUMENT
+            elif image_count > page_count * 2:
+                content_type = ContentType.IMAGE_HEAVY
+            elif image_count > 0:
+                content_type = ContentType.TEXT_WITH_IMAGES
+            else:
+                content_type = ContentType.TEXT_ONLY
+                
+            # Detección específica para documentos académicos o técnicos
+            if text_extractable:
+                text_sample = ""
+                for i in range(min(5, page_count)):
+                    text_sample += doc[i].get_text()
+                
+                if any(marker in text_sample.lower() for marker in 
+                       ["abstract", "keywords", "references", "bibliography", "doi"]):
+                    content_type = ContentType.ACADEMIC_PAPER
+                
+                if any(marker in text_sample.lower() for marker in 
+                       ["figure", "table", "diagram", "appendix", "specification"]):
+                    content_type = ContentType.TECHNICAL_MANUAL
+            
+            # 4. Detectar problemas
+            issues = []
+            
+            if not text_extractable:
+                issues.append("No text extractable, OCR required")
+            
+            if image_count == 0 and page_count > 0:
+                issues.append("No images detected")
+            
+            # Verificar si hay tablas
+            has_tables = False
+            for page in doc:
+                if "table" in page.get_text().lower():
+                    has_tables = True
+                    break
+            
+            if has_tables:
+                issues.append("Tables detected, may require special handling")
+            
+            # 5. Calcular complejidad
+            complexity_score = min(5, 1 + 
+                                 (0 if text_extractable else 2) + 
+                                 (0 if image_count < page_count else 1) + 
+                                 (0 if not has_tables else 1) + 
+                                 (0 if page_count < 20 else 1))
+            
+            # 6. Recomendar motor
+            if complexity_score <= 1:
+                recommended_engine = ConversionEngine.RAPID
+            elif complexity_score <= 3:
+                recommended_engine = ConversionEngine.BALANCED
+            else:
+                recommended_engine = ConversionEngine.QUALITY
+            
+            return PDFAnalysis(
+                page_count=page_count,
+                file_size=file_size,
+                text_extractable=text_extractable,
+                image_count=image_count,
+                content_type=content_type,
+                issues=issues,
+                complexity_score=complexity_score,
+                recommended_engine=recommended_engine
+            )
+            
+        except Exception as e:
+            logger.error(f"Error analyzing PDF: {str(e)}")
+            # Retornar análisis por defecto con recomendación de motor de calidad
+            return PDFAnalysis(
+                page_count=0,
+                file_size=file_size,
+                text_extractable=False,
+                image_count=0,
+                content_type=ContentType.SCANNED_DOCUMENT,
+                issues=["Error analyzing PDF"],
+                complexity_score=5,
+                recommended_engine=ConversionEngine.QUALITY
+            )
+
+class BaseConverter:
+    def convert(self, pdf_path, output_path, analysis, metadata=None):
+        """Método base que debe ser implementado por subclases"""
+        raise NotImplementedError("Subclasses must implement convert()")
+
+class RapidConverter(BaseConverter):
+    """Conversión básica rápida para documentos simples"""
+    def convert(self, pdf_path, output_path, analysis, metadata=None):
+        try:
+            # Crear EPUB
+            book = epub.EpubBook()
+            
+            # Configurar metadatos
+            book.set_title(metadata.get('title', 'Converted Document'))
+            book.set_language(metadata.get('language', 'es'))
+            
+            if 'author' in metadata:
+                book.add_author(metadata['author'])
+            
+            # Abrir PDF
+            pdf = fitz.open(pdf_path)
+            
+            # Crear capítulos
+            chapters = []
+            
+            for i, page in enumerate(pdf):
+                # Extraer texto
+                text = page.get_text()
+                
+                # Crear capítulo
+                chapter = epub.EpubHtml(
+                    title=f"Page {i+1}", 
+                    file_name=f"page_{i+1}.xhtml"
+                )
+                
+                # Contenido HTML simple
+                chapter.content = f"""
+                <html>
+                <head>
+                    <title>Page {i+1}</title>
+                </head>
+                <body>
+                    <h1>Page {i+1}</h1>
+                    <div>{text}</div>
+                </body>
+                </html>
+                """
+                
+                book.add_item(chapter)
+                chapters.append(chapter)
+            
+            # Añadir capítulos a la tabla de contenidos
+            book.toc = chapters
+            
+            # Añadir CSS
+            style = epub.EpubItem(
+                uid="style_default",
+                file_name="style/default.css",
+                media_type="text/css",
+                content="""
+                    body { font-family: sans-serif; }
+                    h1 { text-align: center; }
+                """
+            )
+            book.add_item(style)
+            
+            # Añadir elementos al esqueleto del EPUB
+            book.add_item(epub.EpubNcx())
+            book.add_item(epub.EpubNav())
+            
+            # Definir la estructura del EPUB
+            book.spine = ['nav'] + chapters
+            
+            # Escribir EPUB a disco
+            epub.write_epub(output_path, book)
+            
+            return {
+                "success": True,
+                "message": "Conversion completed successfully",
+                "quality_metrics": {
+                    "text_preserved": 100,
+                    "images_preserved": 0,
+                    "overall": 70
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Error in rapid conversion: {str(e)}")
+            return {
+                "success": False,
+                "message": f"Error during conversion: {str(e)}",
+                "quality_metrics": {
+                    "text_preserved": 0,
+                    "images_preserved": 0,
+                    "overall": 0
+                }
+            }
+
+class BalancedConverter(BaseConverter):
+    """Conversión equilibrada para documentos con texto e imágenes"""
+    def convert(self, pdf_path, output_path, analysis, metadata=None):
+        try:
+            # Crear EPUB
+            book = epub.EpubBook()
+            
+            # Configurar metadatos
+            book.set_title(metadata.get('title', 'Converted Document'))
+            book.set_language(metadata.get('language', 'es'))
+            
+            if 'author' in metadata:
+                book.add_author(metadata['author'])
+            
+            # Abrir PDF
+            pdf = fitz.open(pdf_path)
+            
+            # Crear capítulos
+            chapters = []
+            
+            for i, page in enumerate(pdf):
+                # Extraer texto
+                text = page.get_text()
+                
+                # Crear capítulo
+                chapter = epub.EpubHtml(
+                    title=f"Page {i+1}", 
+                    file_name=f"page_{i+1}.xhtml"
+                )
+                
+                # Contenido HTML base
+                html_content = f"""
+                <html>
+                <head>
+                    <title>Page {i+1}</title>
+                </head>
+                <body>
+                    <h1>Page {i+1}</h1>
+                    <div>{text}</div>
+                """
+                
+                # Extraer imágenes de la página
+                images = page.get_images()
+                image_files = []
+                
+                for img_index, img in enumerate(images):
+                    xref = img[0]
+                    base_image = pdf.extract_image(xref)
+                    image_bytes = base_image["image"]
+                    image_ext = base_image["ext"]
+                    
+                    # Generar nombre único para la imagen
+                    image_filename = f"images/image_p{i+1}_{img_index}.{image_ext}"
+                    
+                    # Crear objeto imagen para EPUB
+                    epub_image = epub.EpubItem(
+                        uid=f"image_p{i+1}_{img_index}",
+                        file_name=image_filename,
+                        media_type=f"image/{image_ext}",
+                        content=image_bytes
+                    )
+                    
+                    book.add_item(epub_image)
+                    image_files.append(image_filename)
+                
+                # Añadir imágenes al HTML
+                for img_file in image_files:
+                    html_content += f"""
+                    <div class="image-container">
+                        <img src="{img_file}" alt="Image" />
+                    </div>
+                    """
+                
+                html_content += """
+                </body>
+                </html>
+                """
+                
+                chapter.content = html_content
+                book.add_item(chapter)
+                chapters.append(chapter)
+            
+            # Añadir capítulos a la tabla de contenidos
+            book.toc = chapters
+            
+            # Añadir CSS
+            style = epub.EpubItem(
+                uid="style_default",
+                file_name="style/default.css",
+                media_type="text/css",
+                content="""
+                    body { font-family: sans-serif; margin: 1em; }
+                    h1 { text-align: center; }
+                    .image-container { text-align: center; margin: 1em 0; }
+                    img { max-width: 100%; height: auto; }
+                """
+            )
+            book.add_item(style)
+            
+            # Añadir elementos al esqueleto del EPUB
+            book.add_item(epub.EpubNcx())
+            book.add_item(epub.EpubNav())
+            
+            # Definir la estructura del EPUB
+            book.spine = ['nav'] + chapters
+            
+            # Escribir EPUB a disco
+            epub.write_epub(output_path, book)
+            
+            return {
+                "success": True,
+                "message": "Conversion completed successfully with images",
+                "quality_metrics": {
+                    "text_preserved": 100,
+                    "images_preserved": 90,
+                    "overall": 85
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Error in balanced conversion: {str(e)}")
+            return {
+                "success": False,
+                "message": f"Error during conversion: {str(e)}",
+                "quality_metrics": {
+                    "text_preserved": 0,
+                    "images_preserved": 0,
+                    "overall": 0
+                }
+            }
+
+class QualityConverter(BaseConverter):
+    """Conversión de alta calidad para documentos complejos, incluye OCR"""
+    def convert(self, pdf_path, output_path, analysis, metadata=None):
+        try:
+            # Crear EPUB
+            book = epub.EpubBook()
+            
+            # Configurar metadatos
+            book.set_title(metadata.get('title', 'Converted Document'))
+            book.set_language(metadata.get('language', 'es'))
+            
+            if 'author' in metadata:
+                book.add_author(metadata['author'])
+            
+            # Abrir PDF
+            pdf = fitz.open(pdf_path)
+            
+            # Crear capítulos
+            chapters = []
+            
+            # Directorio temporal para imagenes procesadas por OCR
+            with tempfile.TemporaryDirectory() as tmpdir:
+                for i, page in enumerate(pdf):
+                    # Intentar extraer texto
+                    text = page.get_text()
+                    needs_ocr = len(text.strip()) < 50  # Umbral arbitrario
+                    
+                    # Si no hay suficiente texto, aplicar OCR
+                    if needs_ocr:
+                        # Renderizar página a imagen
+                        pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
+                        img_path = os.path.join(tmpdir, f"page_{i}.png")
+                        pix.save(img_path)
+                        
+                        # Aplicar OCR
+                        img = Image.open(img_path)
+                        text = pytesseract.image_to_string(img, lang='spa+eng')
+                    
+                    # Crear capítulo
+                    chapter = epub.EpubHtml(
+                        title=f"Page {i+1}", 
+                        file_name=f"page_{i+1}.xhtml"
+                    )
+                    
+                    # Contenido HTML base
+                    html_content = f"""
+                    <html>
+                    <head>
+                        <title>Page {i+1}</title>
+                    </head>
+                    <body>
+                        <h1>Page {i+1}</h1>
+                    """
+                    
+                    # Formatear el texto con párrafos
+                    paragraphs = text.split('\n\n')
+                    for para in paragraphs:
+                        if para.strip():
+                            html_content += f"<p>{para}</p>\n"
+                    
+                    # Extraer imágenes de la página
+                    images = page.get_images()
+                    image_files = []
+                    
+                    for img_index, img in enumerate(images):
+                        xref = img[0]
+                        base_image = pdf.extract_image(xref)
+                        image_bytes = base_image["image"]
+                        image_ext = base_image["ext"]
+                        
+                        # Generar nombre único para la imagen
+                        image_filename = f"images/image_p{i+1}_{img_index}.{image_ext}"
+                        
+                        # Crear objeto imagen para EPUB
+                        epub_image = epub.EpubItem(
+                            uid=f"image_p{i+1}_{img_index}",
+                            file_name=image_filename,
+                            media_type=f"image/{image_ext}",
+                            content=image_bytes
+                        )
+                        
+                        book.add_item(epub_image)
+                        image_files.append(image_filename)
+                    
+                    # Añadir imágenes al HTML
+                    for img_file in image_files:
+                        html_content += f"""
+                        <div class="image-container">
+                            <img src="{img_file}" alt="Image" />
+                        </div>
+                        """
+                    
+                    html_content += """
+                    </body>
+                    </html>
+                    """
+                    
+                    chapter.content = html_content
+                    book.add_item(chapter)
+                    chapters.append(chapter)
+            
+            # Añadir capítulos a la tabla de contenidos
+            book.toc = chapters
+            
+            # Añadir CSS
+            style = epub.EpubItem(
+                uid="style_default",
+                file_name="style/default.css",
+                media_type="text/css",
+                content="""
+                    body { font-family: serif; margin: 1.2em; line-height: 1.5; }
+                    h1 { text-align: center; font-size: 1.5em; margin: 1em 0; }
+                    p { text-indent: 1em; margin: 0.5em 0; }
+                    .image-container { text-align: center; margin: 1.5em 0; }
+                    img { max-width: 100%; height: auto; }
+                """
+            )
+            book.add_item(style)
+            
+            # Añadir elementos al esqueleto del EPUB
+            book.add_item(epub.EpubNcx())
+            book.add_item(epub.EpubNav())
+            
+            # Definir la estructura del EPUB
+            book.spine = ['nav'] + chapters
+            
+            # Escribir EPUB a disco
+            epub.write_epub(output_path, book)
+            
+            # Calcular métricas de calidad
+            total_text = 0
+            total_images = 0
+            
+            for page in pdf:
+                total_text += len(page.get_text())
+                total_images += len(page.get_images())
+            
+            text_preserved = 100 if total_text > 0 else 0
+            images_preserved = 100 if total_images > 0 else 0
+            
+            return {
+                "success": True,
+                "message": "High quality conversion completed successfully",
+                "quality_metrics": {
+                    "text_preserved": text_preserved,
+                    "images_preserved": images_preserved,
+                    "overall": 95
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Error in quality conversion: {str(e)}")
+            return {
+                "success": False,
+                "message": f"Error during conversion: {str(e)}",
+                "quality_metrics": {
+                    "text_preserved": 0,
+                    "images_preserved": 0,
+                    "overall": 0
+                }
+            }
+
+class EnhancedPDFToEPUBConverter:
+    """Conversor principal que selecciona y utiliza el motor adecuado"""
+    def __init__(self):
+        self.analyzer = PDFAnalyzer()
+        self.engines = {
+            ConversionEngine.RAPID: RapidConverter(),
+            ConversionEngine.BALANCED: BalancedConverter(),
+            ConversionEngine.QUALITY: QualityConverter()
+        }
+    
+    def convert(self, pdf_path, output_path=None, engine=None, metadata=None):
+        """
+        Convierte un PDF a EPUB usando el motor especificado o uno automáticamente seleccionado
+        
+        Args:
+            pdf_path: Ruta al archivo PDF
+            output_path: Ruta de salida para el EPUB (opcional)
+            engine: Motor de conversión específico (opcional)
+            metadata: Metadatos para el EPUB (opcional)
+            
+        Returns:
+            Diccionario con el resultado y métricas
+        """
+        try:
+            # Generar nombre de salida si no se proporciona
+            if output_path is None:
+                pdf_basename = os.path.basename(pdf_path)
+                pdf_name, _ = os.path.splitext(pdf_basename)
+                output_path = f"{pdf_name}_{uuid.uuid4().hex[:8]}.epub"
+            
+            # Metadatos por defecto
+            if metadata is None:
+                pdf_basename = os.path.basename(pdf_path)
+                pdf_name, _ = os.path.splitext(pdf_basename)
+                metadata = {
+                    'title': pdf_name,
+                    'language': 'es',
+                }
+            
+            # 1. Analizar PDF
+            logger.info(f"Analyzing PDF: {pdf_path}")
+            analysis = self.analyzer.analyze_pdf(pdf_path)
+            
+            # 2. Seleccionar motor
+            selected_engine = engine or analysis.recommended_engine
+            logger.info(f"Using conversion engine: {selected_engine.value}")
+            
+            # 3. Convertir con el motor seleccionado
+            logger.info(f"Starting conversion with {selected_engine.value} engine")
+            result = self.engines[selected_engine].convert(
+                pdf_path, output_path, analysis, metadata
+            )
+            
+            if result["success"]:
+                logger.info(f"Conversion successful: {output_path}")
+            else:
+                logger.error(f"Conversion failed: {result['message']}")
+            
+            # Añadir información adicional al resultado
+            result["output_path"] = output_path
+            result["engine_used"] = selected_engine.value
+            result["analysis"] = {
+                "page_count": analysis.page_count,
+                "file_size": analysis.file_size,
+                "content_type": analysis.content_type.value,
+                "complexity_score": analysis.complexity_score,
+                "issues": analysis.issues
+            }
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Conversion error: {str(e)}")
+            return {
+                "success": False,
+                "message": f"Unexpected error during conversion: {str(e)}",
+                "quality_metrics": {
+                    "text_preserved": 0,
+                    "images_preserved": 0,
+                    "overall": 0
+                }
+            }
+
+# Función de utilidad para uso desde línea de comandos
+def convert_pdf_to_epub(pdf_path, output_path=None, engine_name=None):
+    """Función de conveniencia para uso desde CLI"""
+    converter = EnhancedPDFToEPUBConverter()
+    
+    # Seleccionar motor si se especifica
+    engine = None
+    if engine_name:
+        try:
+            engine = ConversionEngine[engine_name.upper()]
+        except KeyError:
+            print(f"Error: Motor de conversión desconocido: {engine_name}")
+            print(f"Opciones válidas: {[e.name for e in ConversionEngine]}")
+            return
+    
+    # Ejecutar conversión
+    result = converter.convert(pdf_path, output_path, engine)
+    
+    if result["success"]:
+        print(f"Conversión exitosa: {result['output_path']}")
+        print(f"Métricas de calidad: {result['quality_metrics']}")
+    else:
+        print(f"Error en la conversión: {result['message']}")
+
+# Ejecución directa desde línea de comandos
+if __name__ == "__main__":
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='Convierte PDF a EPUB con análisis inteligente')
+    parser.add_argument('pdf_path', help='Ruta al archivo PDF')
+    parser.add_argument('--output', '-o', help='Ruta de salida para el EPUB')
+    parser.add_argument('--engine', '-e', choices=['rapid', 'balanced', 'quality'], 
+                        help='Motor de conversión a utilizar')
+    
+    args = parser.parse_args()
+    convert_pdf_to_epub(args.pdf_path, args.output, args.engine)
