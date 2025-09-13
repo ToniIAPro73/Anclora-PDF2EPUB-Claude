@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
+import PreviewModal from './PreviewModal';
 
 interface ConversionPanelProps {
   file: File | null;
@@ -14,6 +15,7 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [pipelines, setPipelines] = useState<Array<{ id: string; quality: string; estimated_time: number }>>([]);
   const [selectedPipeline, setSelectedPipeline] = useState<string>('');
+  const [showPreview, setShowPreview] = useState(false);
   const { token, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -163,6 +165,12 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
       </button>
       {taskId && <p>Task ID: {taskId}</p>}
       {status && <p>Estado: {status}</p>}
+      {status === 'SUCCESS' && taskId && (
+        <>
+          <button onClick={() => setShowPreview(true)}>Previsualizar</button>
+          {showPreview && <PreviewModal taskId={taskId} onClose={() => setShowPreview(false)} />}
+        </>
+      )}
       {error && <p className="error">{error}</p>}
     </div>
   );
