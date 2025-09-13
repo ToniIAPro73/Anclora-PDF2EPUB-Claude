@@ -13,6 +13,7 @@ Convertir documentos PDF a formato EPUB3 de manera inteligente, abordando los pr
 - **Procesamiento asíncrono escalable** con cola de tareas
 - **Transparencia total en el proceso** con métricas detalladas
 
+<<<<<<< HEAD
 ### Funcionalidades Implementadas
 - ✅ **Análisis Inteligente**: Sistema completo de detección automática de contenido
 - ✅ **Múltiples Motores**: Tres motores especializados completamente funcionales
@@ -21,6 +22,16 @@ Convertir documentos PDF a formato EPUB3 de manera inteligente, abordando los pr
 - ✅ **Interfaz Funcional**: React + TypeScript con componentes implementados
 - ✅ **Base de Datos**: Sistema de persistencia con SQLite
 - ✅ **Tests de Integración**: Suite de pruebas automatizadas
+=======
+### Funcionalidades Clave
+- **Análisis Inteligente**: Detección automática del tipo de contenido (texto, imágenes, documentos escaneados)
+- **Múltiples Motores**: Tres motores especializados (Rapid, Balanced, Quality)
+- **OCR Integrado**: Procesamiento de documentos escaneados con Tesseract
+- **Procesamiento Asíncrono**: Cola de tareas con Redis y Celery
+- **Interfaz Moderna**: React + TypeScript con soporte para temas claro/oscuro
+- **Autenticación y Seguridad**: JWT con rate limiting por usuario/IP
+- **Métricas en Tiempo Real**: Seguimiento detallado del proceso de conversión mediante Prometheus
+>>>>>>> c9637924410d83b0fe503e1d8a3e17669c3db95f
 
 ## 2. Arquitectura del Sistema
 
@@ -33,6 +44,7 @@ Convertir documentos PDF a formato EPUB3 de manera inteligente, abordando los pr
 - **React Dropzone 14.2.3** para carga de archivos drag & drop
 - Sistema completo de temas claro/oscuro con persistencia
 
+<<<<<<< HEAD
 #### Backend (Funcional y Robusto)
 - **Flask 3.0.0** con factory pattern y blueprints
 - **Celery 5.3.4** para procesamiento asíncrono distribuido
@@ -41,6 +53,18 @@ Convertir documentos PDF a formato EPUB3 de manera inteligente, abordando los pr
 - **PyMuPDF 1.24.0** para manipulación avanzada de PDFs
 - **EbookLib 0.18.0** para generación de EPUBs estándar
 - **Tesseract OCR** con soporte multi-idioma (español/inglés)
+=======
+#### Backend
+- **Flask 3.0.0** como framework web
+- **Celery 5.3.4** para procesamiento asíncrono
+- **Redis 5.0.1** como broker de mensajes y cache
+- **PyMuPDF 1.24.0** para manipulación de PDFs
+- **EbookLib 0.18.0** para generación de EPUBs
+- **Tesseract OCR** para reconocimiento de texto
+- **Flask-JWT-Extended** para autenticación JWT
+- **Flask-Limiter** para rate limiting
+- **Prometheus Client** para exposición de métricas
+>>>>>>> c9637924410d83b0fe503e1d8a3e17669c3db95f
 
 #### Infraestructura (Production-Ready)
 - **Docker** + **Docker Compose** con multi-stage builds
@@ -56,7 +80,9 @@ Convertir documentos PDF a formato EPUB3 de manera inteligente, abordando los pr
 ├─────────────────────────────────────────────────────────┤
 │ Frontend: React + TypeScript + Tailwind CSS             │
 ├─────────────────────────────────────────────────────────┤
-│ API Gateway: Flask + Authentication + Rate Limiting     │
+│ API Gateway: Flask + JWT + Rate Limiting                │
+├─────────────────────────────────────────────────────────┤
+│ Observabilidad: Prometheus + Logs Estructurados         │
 ├─────────────────────────────────────────────────────────┤
 │ Message Queue: Redis + Celery (Async Processing)        │
 ├─────────────────────────────────────────────────────────┤
@@ -72,7 +98,21 @@ Convertir documentos PDF a formato EPUB3 de manera inteligente, abordando los pr
 └─────────────────────────────────────────────────────────┘
 ```
 
+<<<<<<< HEAD
 ### Sistema de Análisis Inteligente
+=======
+#### Diagrama de Componentes y Flujo de Conversión
+
+```mermaid
+flowchart TD
+    U[Usuario] --> FE[Frontend React] --> API[API Flask\nJWT + Rate Limiting]
+    API --> Q[Redis Queue] --> W[Trabajador Celery] --> C[Motor de Conversión] --> S[(Almacenamiento)]
+    API --> P[(Prometheus)]
+    C --> P
+```
+
+### Motores de Conversión
+>>>>>>> c9637924410d83b0fe503e1d8a3e17669c3db95f
 
 La aplicación implementa un **PDFAnalyzer** sofisticado que:
 
@@ -82,7 +122,19 @@ La aplicación implementa un **PDFAnalyzer** sofisticado que:
 4. **Calcula Complejidad**: Score de 1-5 basado en múltiples factores
 5. **Recomienda Motor**: Selección automática del motor óptimo
 
+<<<<<<< HEAD
 ### Motores de Conversión Especializados
+=======
+### Técnicas
+- **Arquitectura Escalable**: Microservicios con Docker y procesamiento asíncrono
+- **Análisis Inteligente**: Selección automática del motor óptimo basado en el contenido
+- **Múltiples Motores**: Especialización según el tipo de documento
+- **OCR Integrado**: Capacidad de procesar documentos escaneados
+- **Logging Detallado**: Trazabilidad completa del proceso
+- **Seguridad Integrada**: Autenticación JWT y rate limiting por usuario/IP
+- **Observabilidad**: Métricas expuestas vía Prometheus
+- **Configuración Flexible**: Variables de entorno para todos los parámetros
+>>>>>>> c9637924410d83b0fe503e1d8a3e17669c3db95f
 
 #### 1. RapidConverter (Implementado)
 - **Propósito**: Documentos simples con solo texto
@@ -101,6 +153,7 @@ La aplicación implementa un **PDFAnalyzer** sofisticado que:
 
 ## 3. Fortalezas Clave de la Aplicación
 
+<<<<<<< HEAD
 ### Técnicas (Implementación Sólida)
 - ✅ **Arquitectura Escalable**: Microservicios con Docker y procesamiento asíncrono funcional
 - ✅ **Análisis Inteligente Real**: Sistema de IA que detecta 6 tipos de contenido diferentes
@@ -109,6 +162,12 @@ La aplicación implementa un **PDFAnalyzer** sofisticado que:
 - ✅ **API REST Completa**: Endpoints para conversión, estado y historial implementados
 - ✅ **Base de Datos**: Sistema de persistencia con modelos SQLite
 - ✅ **Logging Estructurado**: Trazabilidad completa con métricas detalladas
+=======
+### Limitaciones Técnicas
+- **Sin Persistencia de Datos**: No hay base de datos para historial
+- **Falta de Tests**: No hay tests unitarios o de integración
+- **Sin Monitoreo Avanzado**: Falta sistema de alertas y dashboards completos
+>>>>>>> c9637924410d83b0fe503e1d8a3e17669c3db95f
 
 ### Funcionales (UX Completa)
 - ✅ **Interfaz Moderna**: React + TypeScript con todos los componentes implementados
@@ -173,12 +232,26 @@ La aplicación implementa un **PDFAnalyzer** sofisticado que:
 - **Cloud-Ready**: Escalable horizontalmente vs aplicación local
 - **API REST**: Integrable vs funcionalidad standalone
 
+<<<<<<< HEAD
 **⚠️ Desventajas Funcionales:**
 - Especializado en PDF→EPUB vs 20+ formatos soportados
 - Sin biblioteca digital vs gestión completa de ebooks
 - Funcionalidades de edición limitadas vs editor WYSIWYG
 
 ### vs. Adobe InDesign/Acrobat Pro (Solución Empresarial)
+=======
+### Prioridad Media (Mejoras de Calidad)
+4. **Seguridad y Validación**
+   - Fortalecer políticas de autenticación y rotación de claves
+   - Validación de archivos maliciosos
+   - HTTPS y certificados SSL
+
+5. **Monitoreo y Observabilidad**
+   - Expansión de métricas en Prometheus
+   - Logs estructurados (ELK Stack)
+   - Health checks y alertas
+   - Dashboard de administración
+>>>>>>> c9637924410d83b0fe503e1d8a3e17669c3db95f
 
 **🏆 Ventajas Estratégicas de Anclora:**
 - **Código Abierto**: Sin licencias vs $20-50/mes por usuario
@@ -213,10 +286,34 @@ La aplicación implementa un **PDFAnalyzer** sofisticado que:
    - Unificar límite de archivos (50MB en ambos lados)
    - Mejorar mensajes de error y validación
 
+<<<<<<< HEAD
 2. **Mejoras de UX**
    - Implementar funcionalidad visual en MetricsDisplay
    - Mejorar diseño del Header con navegación
    - Añadir indicadores de progreso más detallados
+=======
+## 8. Ejecución de Tests y Entorno Docker Compose
+
+### Ejecutar Tests
+1. Instalar dependencias del backend:
+   ```bash
+   pip install -r backend/requirements.txt
+   ```
+2. Ejecutar la suite de pruebas:
+   ```bash
+   pytest
+   ```
+
+### Levantar el Entorno con Docker Compose
+1. Asegurar la configuración de variables de entorno en el archivo `.env`.
+2. Construir y levantar todos los servicios:
+   ```bash
+   docker-compose up --build
+   ```
+3. Acceder a la aplicación a través de `http://localhost:<NGINX_PORT>`.
+
+## Conclusión
+>>>>>>> c9637924410d83b0fe503e1d8a3e17669c3db95f
 
 3. **Optimización de Descarga**
    - Implementar streaming de archivos grandes

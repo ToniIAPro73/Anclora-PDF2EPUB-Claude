@@ -11,6 +11,7 @@ from app.converter import (
     EnhancedPDFToEPUBConverter,
     RapidConverter,
 )
+from langdetect import LangDetectException
 
 
 def _create_simple_pdf(text: str = "Hello world") -> str:
@@ -19,6 +20,16 @@ def _create_simple_pdf(text: str = "Hello world") -> str:
     doc = fitz.open()
     page = doc.new_page()
     page.insert_text((72, 72), text)
+    doc.save(path)
+    doc.close()
+    return path
+
+
+def _create_empty_pdf() -> str:
+    fd, path = tempfile.mkstemp(suffix=".pdf")
+    os.close(fd)
+    doc = fitz.open()
+    doc.new_page()
     doc.save(path)
     doc.close()
     return path
@@ -45,6 +56,53 @@ def test_pdf_analyzer_detects_basic_metrics():
     assert analysis.text_extractable is True
     assert analysis.image_count == 0
     assert analysis.content_type == ContentType.TEXT_ONLY
+    os.remove(pdf_path)
+
+
+def test_pdf_analyzer_handles_pdf_without_text():
+    pdf_path = _create_empty_pdf()
+    analyzer = PDFAnalyzer()
+    analysis = analyzer.analyze_pdf(pdf_path)
+    assert analysis.text_extractable is False
+    assert "No text extractable, OCR required" in analysis.issues
+    os.remove(pdf_path)
+
+
+def test_pdf_analyzer_handles_corrupt_images(monkeypatch):
+    pdf_path = _create_simple_pdf()
+    analyzer = PDFAnalyzer()
+
+    class DummyPage:
+        def get_text(self):
+            return ""
+
+        def get_images(self):
+            raise ValueError("corrupt image")
+
+    class DummyDoc:
+        def __len__(self):
+            return 1
+
+        def __iter__(self):
+            return iter([DummyPage()])
+
+    monkeypatch.setattr(fitz, "open", lambda _: DummyDoc())
+    analysis = analyzer.analyze_pdf(pdf_path)
+    assert analysis.issues == ["Error analyzing PDF"]
+    assert analysis.content_type == ContentType.SCANNED_DOCUMENT
+    os.remove(pdf_path)
+
+
+def test_pdf_analyzer_handles_language_detection_errors(monkeypatch):
+    pdf_path = _create_simple_pdf()
+    analyzer = PDFAnalyzer()
+
+    def fake_detect(_text):
+        raise LangDetectException("fail")
+
+    monkeypatch.setattr("app.converter.detect", fake_detect)
+    analysis = analyzer.analyze_pdf(pdf_path)
+    assert analysis.language is None
     os.remove(pdf_path)
 
 

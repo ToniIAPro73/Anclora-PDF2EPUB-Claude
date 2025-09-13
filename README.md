@@ -51,6 +51,7 @@ env# Configuración de puertos
 FRONTEND_PORT=3003
 BACKEND_PORT=5175
 NGINX_PORT=80
+WORKER_METRICS_PORT=8001
 
 # Configuración de Redis
 REDIS_PORT=6379
@@ -60,6 +61,9 @@ REDIS_PASSWORD=anclora_redis_password
 FLASK_ENV=development
 FLASK_APP=app
 SECRET_KEY=anclora_dev_secret_key
+# Configuración JWT
+JWT_SECRET=anclora_jwt_secret
+JWT_EXPIRATION=3600
 
 # Configuración de almacenamiento
 UPLOAD_FOLDER=uploads
@@ -93,6 +97,31 @@ flask run --port=5175
 La API estará disponible en http://localhost:5175
 Pruebas
 bashpytest
+
+### Despliegue Beta
+
+Para probar la versión Beta del sistema ejecuta:
+
+```bash
+docker-compose up -d
+```
+
+Luego registra un usuario y obtén un token JWT:
+
+```bash
+curl -X POST http://localhost:5175/api/register -H 'Content-Type: application/json' -d '{"username":"user","password":"pass"}'
+curl -X POST http://localhost:5175/api/login -H 'Content-Type: application/json' -d '{"username":"user","password":"pass"}'
+```
+
+Usa el token recibido en el encabezado `Authorization: Bearer <token>` para acceder a rutas protegidas como `/api/convert`. Las métricas del servicio están disponibles en `http://localhost:5175/metrics`.
+
+### Nuevas APIs
+
+- `POST /api/register` – registra un usuario.
+- `POST /api/login` – devuelve un token JWT.
+- `GET /api/protected` – ejemplo de ruta protegida.
+- `GET /metrics` – expone métricas en formato Prometheus.
+
 Estructura del Proyecto
 anclora-pdf2epub/
 ├── frontend/                 # Aplicación React + TypeScript
@@ -177,6 +206,7 @@ Modifica los valores en el archivo .env para cambiar los puertos:
 envFRONTEND_PORT=3003    # Puerto para el frontend React
 BACKEND_PORT=5175     # Puerto para la API Flask
 NGINX_PORT=80         # Puerto para Nginx
+WORKER_METRICS_PORT=8001 # Puerto métricas del worker
 Escalado de Workers
 Para ajustar el número de workers de Celery y mejorar el rendimiento en conversiones paralelas:
 yaml# En docker-compose.yml
