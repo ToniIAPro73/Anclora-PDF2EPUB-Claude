@@ -6,6 +6,7 @@ import uuid
 
 from .tasks import convert_pdf_to_epub, celery_app
 from .models import create_conversion, fetch_conversions
+from . import limiter
 
 bp = Blueprint('routes', __name__)
 
@@ -16,6 +17,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @bp.route('/api/convert', methods=['POST'])
+@limiter.limit("5 per minute")
 def convert():
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
@@ -62,3 +64,14 @@ def history():
     per_page = int(request.args.get('per_page', 10))
     conversions = fetch_conversions(page, per_page)
     return jsonify(conversions)
+
+
+@bp.route('/api/auth', methods=['POST'])
+@limiter.limit("3 per minute")
+def auth():
+    data = request.get_json() or {}
+    username = data.get('username')
+    password = data.get('password')
+    if username == 'admin' and password == 'secret':
+        return jsonify({'token': 'fake-token'}), 200
+    return jsonify({'error': 'Invalid credentials'}), 401
