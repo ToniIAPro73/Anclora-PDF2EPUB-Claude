@@ -10,6 +10,8 @@ interface ConversionPanelProps {
 const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
   const [taskId, setTaskId] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+  const [progress, setProgress] = useState<number>(0);
+  const [statusMessage, setStatusMessage] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [isConverting, setIsConverting] = useState<boolean>(false);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
@@ -65,6 +67,8 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
     setError(null);
     setTaskId(null);
     setStatus(null);
+    setProgress(0);
+    setStatusMessage('');
     setIsConverting(true);
     try {
       const formData = new FormData();
@@ -108,9 +112,18 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
         }
         const data = await res.json();
         setStatus(data.status);
-        if (data.status === 'SUCCESS') {
+        if (data.status === 'PROGRESS') {
+          if (typeof data.progress === 'number') {
+            setProgress(data.progress);
+          }
+          if (data.message) {
+            setStatusMessage(data.message);
+          }
+        } else if (data.status === 'SUCCESS') {
           clearInterval(interval);
           setIsConverting(false);
+          setProgress(100);
+          setStatusMessage('Conversión completada');
           if (data.result && data.result.output_path) {
             const downloadRes = await fetch(data.result.output_path);
             const blob = await downloadRes.blob();
@@ -127,6 +140,7 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
           clearInterval(interval);
           setIsConverting(false);
           setError(data.error || 'Error en la conversión');
+          setStatusMessage('');
         }
       } catch (err: any) {
         clearInterval(interval);
@@ -163,14 +177,19 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
       <button onClick={startConversion} disabled={!file || !selectedPipeline || isConverting}>
         {isConverting ? 'Convirtiendo...' : 'Enviar a convertir'}
       </button>
-      {taskId && <p>Task ID: {taskId}</p>}
-      {status && <p>Estado: {status}</p>}
-      {status === 'SUCCESS' && taskId && (
-        <>
-          <button onClick={() => setShowPreview(true)}>Previsualizar</button>
-          {showPreview && <PreviewModal taskId={taskId} onClose={() => setShowPreview(false)} />}
-        </>
+      {isConverting && (
+        <div className="w-full mt-4">
+          <div className="w-full bg-gray-200 rounded h-4">
+            <div
+              className="bg-blue-500 h-4 rounded"
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+          <p className="mt-2 text-sm">{statusMessage || `Progreso: ${progress}%`}</p>
+        </div>
       )}
+      {taskId && <p>Task ID: {taskId}</p>}
+      {status && !isConverting && <p>Estado: {status}</p>}
       {error && <p className="error">{error}</p>}
     </div>
   );
