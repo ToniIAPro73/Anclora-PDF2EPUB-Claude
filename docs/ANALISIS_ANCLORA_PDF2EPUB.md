@@ -286,34 +286,10 @@ La aplicación implementa un **PDFAnalyzer** sofisticado que:
    - Unificar límite de archivos (50MB en ambos lados)
    - Mejorar mensajes de error y validación
 
-<<<<<<< HEAD
 2. **Mejoras de UX**
    - Implementar funcionalidad visual en MetricsDisplay
    - Mejorar diseño del Header con navegación
    - Añadir indicadores de progreso más detallados
-=======
-## 8. Ejecución de Tests y Entorno Docker Compose
-
-### Ejecutar Tests
-1. Instalar dependencias del backend:
-   ```bash
-   pip install -r backend/requirements.txt
-   ```
-2. Ejecutar la suite de pruebas:
-   ```bash
-   pytest
-   ```
-
-### Levantar el Entorno con Docker Compose
-1. Asegurar la configuración de variables de entorno en el archivo `.env`.
-2. Construir y levantar todos los servicios:
-   ```bash
-   docker-compose up --build
-   ```
-3. Acceder a la aplicación a través de `http://localhost:<NGINX_PORT>`.
-
-## Conclusión
->>>>>>> c9637924410d83b0fe503e1d8a3e17669c3db95f
 
 3. **Optimización de Descarga**
    - Implementar streaming de archivos grandes
