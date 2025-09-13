@@ -86,6 +86,8 @@ def convert_pdf_to_epub(task_id, input_path, output_path=None):
             "quality_metrics": result.get("quality_metrics"),
             "engine_used": result.get("engine_used"),
             "analysis": result.get("analysis"),
+            "pipeline_used": result.get("pipeline_used"),
+            "pipeline_metrics": result.get("pipeline_metrics"),
         }
         from . import create_app
         app = create_app()
@@ -104,6 +106,8 @@ def convert_pdf_to_epub(task_id, input_path, output_path=None):
             "quality_metrics": result.get("quality_metrics"),
             "engine_used": result.get("engine_used"),
             "analysis": result.get("analysis"),
+            "pipeline_used": result.get("pipeline_used"),
+            "pipeline_metrics": result.get("pipeline_metrics"),
             "duration": duration,
         }
     except Exception as exc:
