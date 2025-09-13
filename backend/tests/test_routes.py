@@ -3,6 +3,7 @@ import sys
 import tempfile
 from unittest.mock import MagicMock
 import fitz
+import io
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -50,6 +51,51 @@ def test_api_convert_returns_task_id(tmp_path, monkeypatch):
     assert task_id
     mock_apply.assert_called_once()
     assert mock_apply.call_args.kwargs.get('task_id') == task_id
+    os.remove(pdf_path)
+
+
+def test_rejects_invalid_mime_and_logs(tmp_path, caplog):
+    app = _setup_app(tmp_path)
+    client = app.test_client()
+
+    fake_file = io.BytesIO(b"not a pdf")
+    with caplog.at_level('WARNING'):
+        response = client.post('/api/convert', data={'file': (fake_file, 'fake.pdf')})
+
+    assert response.status_code == 400
+    assert 'Invalid MIME type' in caplog.text
+
+
+def test_rejects_large_file(tmp_path, monkeypatch):
+    app = _setup_app(tmp_path)
+    client = app.test_client()
+
+    monkeypatch.setattr(routes, 'MAX_FILE_SIZE', 10)
+    pdf_path = _create_pdf()
+    with open(pdf_path, 'rb') as f:
+        response = client.post('/api/convert', data={'file': (f, 'big.pdf')})
+
+    assert response.status_code == 400
+    assert response.get_json()['error'] == 'File too large'
+    os.remove(pdf_path)
+
+
+def test_sanitizes_filename(tmp_path, monkeypatch):
+    app = _setup_app(tmp_path)
+    client = app.test_client()
+
+    monkeypatch.setattr(routes, 'create_conversion', lambda task_id: None)
+    monkeypatch.setattr(routes.convert_pdf_to_epub, 'apply_async', lambda *a, **k: None)
+
+    pdf_path = _create_pdf()
+    with open(pdf_path, 'rb') as f:
+        response = client.post('/api/convert', data={'file': (f, '../evil.pdf')})
+
+    assert response.status_code == 202
+    saved_files = list((tmp_path / 'uploads').iterdir())
+    assert len(saved_files) == 1
+    assert saved_files[0].name.endswith('evil.pdf')
+    assert '..' not in saved_files[0].name
     os.remove(pdf_path)
 
 
