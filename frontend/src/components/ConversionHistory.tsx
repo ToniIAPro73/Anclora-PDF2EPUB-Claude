@@ -1,36 +1,55 @@
 import React, { useEffect, useState } from 'react';
 
 interface HistoryItem {
-  id: number;
-  fileName: string;
-  date: string;
+  task_id: string;
+  filename?: string;
+  status?: string;
+  timestamp?: string;
 }
 
 const ConversionHistory: React.FC = () => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem('history');
-    if (stored) {
-      setHistory(JSON.parse(stored));
-    }
+    const fetchHistory = async () => {
+      try {
+        const res = await fetch('/api/history');
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Error al obtener historial');
+        }
+        setHistory(data);
+      } catch (err: any) {
+        setError(err.message);
+      }
+    };
+    fetchHistory();
   }, []);
 
-  if (history.length === 0) {
-    return <p className="text-center">No hay conversiones registradas.</p>;
-  }
-
   return (
-    <div className="max-w-2xl mx-auto">
-      <h2 className="text-xl font-semibold mb-4">Historial de Conversiones</h2>
-      <ul className="space-y-2">
-        {history.map((item) => (
-          <li key={item.id} className="bg-white dark:bg-gray-800 p-4 rounded shadow">
-            <p className="font-medium">{item.fileName}</p>
-            <p className="text-sm text-gray-500">{item.date}</p>
-          </li>
-        ))}
-      </ul>
+    <div className="conversion-history">
+      {error && <p className="error">{error}</p>}
+      <table>
+        <thead>
+          <tr>
+            <th>Task ID</th>
+            <th>Archivo</th>
+            <th>Estado</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody>
+          {history.map(item => (
+            <tr key={item.task_id}>
+              <td>{item.task_id}</td>
+              <td>{item.filename || '-'}</td>
+              <td>{item.status || '-'}</td>
+              <td>{item.timestamp || '-'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
