@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 # Configure in-memory databases before importing the app factory
 os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
 os.environ.setdefault("CONVERSION_DB", ":memory:")
+os.environ.setdefault("JWT_SECRET", "test-secret")
 
 from app import create_app, db
 

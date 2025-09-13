@@ -6,6 +6,7 @@ import uuid
 
 from .tasks import convert_pdf_to_epub, celery_app
 from .models import create_conversion, fetch_conversions
+from .auth import token_required
 
 bp = Blueprint('routes', __name__)
 
@@ -16,6 +17,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @bp.route('/api/convert', methods=['POST'])
+@token_required
 def convert():
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
@@ -43,6 +45,7 @@ def convert():
     return jsonify({'task_id': task_id}), 202
 
 @bp.route('/api/status/<task_id>', methods=['GET'])
+@token_required
 def task_status(task_id):
     result = AsyncResult(task_id, app=celery_app)
     response = {
@@ -57,6 +60,7 @@ def task_status(task_id):
 
 
 @bp.route('/api/history', methods=['GET'])
+@token_required
 def history():
     page = int(request.args.get('page', 1))
     per_page = int(request.args.get('per_page', 10))

@@ -60,6 +60,9 @@ REDIS_PASSWORD=anclora_redis_password
 FLASK_ENV=development
 FLASK_APP=app
 SECRET_KEY=anclora_dev_secret_key
+# Configuración JWT
+JWT_SECRET=anclora_jwt_secret
+JWT_EXPIRATION=3600
 
 # Configuración de almacenamiento
 UPLOAD_FOLDER=uploads
