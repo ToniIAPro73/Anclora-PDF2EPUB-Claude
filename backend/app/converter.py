@@ -10,6 +10,9 @@ from langdetect import detect, LangDetectException
 import tempfile
 import uuid
 import logging
+import zipfile
+
+from .table_extractor import extract_tables
 
 from .pipelines import evaluate_sequences as pipeline_evaluate_sequences
 
@@ -711,6 +714,14 @@ class EnhancedPDFToEPUBConverter:
             # 3. Ejecutar la secuencia definida en el pipeline
             selected_engine = engine
             result = None
+
+            table_map = {}
+            try:
+                for tbl in extract_tables(pdf_path):
+                    table_map.setdefault(tbl["page"], []).append(tbl["content"])
+            except Exception as e:
+                logger.warning(f"Table extraction failed: {e}")
+
             for step in pipeline:
                 if step == "analyze":
                     continue  # análisis ya realizado
@@ -730,6 +741,16 @@ class EnhancedPDFToEPUBConverter:
 
             if result["success"]:
                 logger.info(f"Conversion successful: {output_path}")
+
+                if table_map:
+                    with zipfile.ZipFile(output_path, "a") as zf:
+                        for page, tables in table_map.items():
+                            page_name = f"EPUB/page_{page}.xhtml"
+                            if page_name in zf.namelist():
+                                html = zf.read(page_name).decode("utf-8")
+                                for table_html in tables:
+                                    html = html.replace("</body>", f"{table_html}</body>")
+                                zf.writestr(page_name, html)
             else:
                 logger.error(f"Conversion failed: {result['message']}")
 
