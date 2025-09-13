@@ -91,6 +91,8 @@ source venv/bin/activate  # En Windows: venv\Scripts\activate
 pip install -r requirements.txt
 flask run --port=5175
 La API estará disponible en http://localhost:5175
+Pruebas
+bashpytest
 Estructura del Proyecto
 anclora-pdf2epub/
 ├── frontend/                 # Aplicación React + TypeScript
