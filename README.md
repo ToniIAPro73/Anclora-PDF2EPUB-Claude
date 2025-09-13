@@ -37,6 +37,7 @@ Requisitos Previos
 Docker y Docker Compose
 Node.js 16+ (solo para desarrollo local)
 Python 3.9+ (solo para desarrollo local)
+Pandoc y pdf2htmlEX (para conversiones avanzadas)
 
 Inicio Rápido
 
@@ -93,6 +94,8 @@ bashcd backend
 python -m venv venv
 source venv/bin/activate  # En Windows: venv\Scripts\activate
 pip install -r requirements.txt
+# pypandoc descargará Pandoc automáticamente si no está instalado
+# pdf2htmlEX debe estar disponible en el sistema (ej. `apt-get install pdf2htmlex`)
 flask run --port=5175
 La API estará disponible en http://localhost:5175
 Pruebas
@@ -121,6 +124,8 @@ Usa el token recibido en el encabezado `Authorization: Bearer <token>` para acce
 - `POST /api/login` – devuelve un token JWT.
 - `GET /api/protected` – ejemplo de ruta protegida.
 - `GET /metrics` – expone métricas en formato Prometheus.
+- `POST /api/analyze` – analiza un PDF y sugiere la mejor secuencia de conversión.
+- `POST /api/convert` – acepta el parámetro opcional `pipeline_id` para forzar `rapid`, `balanced` o `quality`.
 
 Estructura del Proyecto
 anclora-pdf2epub/

@@ -1,4 +1,6 @@
 from datetime import datetime
+import sqlite3
+import os
 from . import db
 
 
@@ -29,3 +31,25 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
+
+
+def init_db():
+    db_path = os.environ.get('CONVERSION_DB', 'app.db')
+    with sqlite3.connect(db_path) as conn:
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS conversions (id INTEGER PRIMARY KEY AUTOINCREMENT, task_id TEXT UNIQUE, status TEXT, output_path TEXT, metrics TEXT, created_at TEXT)"
+        )
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password_hash TEXT)"
+        )
+        conn.commit()
+
+
+def create_conversion(task_id):
+    db_path = os.environ.get('CONVERSION_DB', 'app.db')
+    with sqlite3.connect(db_path) as conn:
+        conn.execute(
+            "INSERT INTO conversions (task_id, status, created_at) VALUES (?, ?, ?)",
+            (task_id, 'PENDING', datetime.utcnow().isoformat()),
+        )
+        conn.commit()
