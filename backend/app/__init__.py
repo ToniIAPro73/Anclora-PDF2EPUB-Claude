@@ -10,15 +10,13 @@ import logging
 import json
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 from .models import init_db
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 
 db = SQLAlchemy()
-limit_value = lambda: os.environ.get('RATE_LIMIT', '5 per minute')
-limiter = Limiter(get_remote_address, default_limits=[limit_value])
 migrate = Migrate()
-limiter = Limiter(key_func=get_remote_address,
-                  default_limits=["200 per day", "50 per hour"])
+limit_value = lambda: current_app.config.get('RATE_LIMIT', '5 per minute')
+limiter = Limiter(key_func=get_remote_address, default_limits=[limit_value])
+
+from .auth import auth_bp
 
 
 class JsonFormatter(logging.Formatter):
@@ -61,6 +59,7 @@ def create_app():
         SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URL', 'sqlite:///app.db'),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         RATE_LIMIT=os.environ.get('RATE_LIMIT', '5 per minute'),
+        JWT_SECRET=os.environ.get('JWT_SECRET', 'dev'),
     )
 
     db.init_app(app)
@@ -103,6 +102,9 @@ def create_app():
 
     app.register_blueprint(routes.bp)
     app.register_blueprint(auth_bp)
+
+    with app.app_context():
+        db.create_all()
 
     @app.errorhandler(429)
     def ratelimit_handler(e):

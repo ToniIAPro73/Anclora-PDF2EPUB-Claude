@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../AuthContext';
 
 interface ConversionPanelProps {
   file: File | null;
@@ -9,6 +11,8 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isConverting, setIsConverting] = useState<boolean>(false);
+  const { token, logout } = useAuth();
+  const navigate = useNavigate();
 
   const startConversion = async () => {
     if (!file) return;
@@ -22,7 +26,14 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
       const res = await fetch('/api/convert', {
         method: 'POST',
         body: formData,
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
+      if (res.status === 401) {
+        logout();
+        navigate('/login');
+        setIsConverting(false);
+        return;
+      }
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || 'Error en la conversión');
@@ -38,7 +49,16 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
   const pollStatus = (id: string) => {
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/status/${id}`);
+        const res = await fetch(`/api/status/${id}` , {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        if (res.status === 401) {
+          clearInterval(interval);
+          logout();
+          navigate('/login');
+          setIsConverting(false);
+          return;
+        }
         const data = await res.json();
         setStatus(data.status);
         if (data.status === 'SUCCESS') {

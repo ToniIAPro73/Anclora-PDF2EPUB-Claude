@@ -7,6 +7,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from . import db
 
+__all__ = ["auth_bp", "token_required"]
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
