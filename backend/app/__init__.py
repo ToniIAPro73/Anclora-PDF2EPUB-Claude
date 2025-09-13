@@ -4,8 +4,12 @@ from flask_migrate import Migrate
 from datetime import datetime
 import os
 from .models import init_db
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 db = SQLAlchemy()
+limit_value = lambda: os.environ.get('RATE_LIMIT', '5 per minute')
+limiter = Limiter(get_remote_address, default_limits=[limit_value])
 migrate = Migrate()
 
 def create_app():
@@ -19,10 +23,12 @@ def create_app():
         CONVERSION_TIMEOUT=int(os.environ.get('CONVERSION_TIMEOUT', 300)),
         SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URL', 'sqlite:///app.db'),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        RATE_LIMIT=os.environ.get('RATE_LIMIT', '5 per minute'),
     )
 
     db.init_app(app)
     migrate.init_app(app, db)
+    limiter.init_app(app)
     
     # Asegurarse de que existan los directorios
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)

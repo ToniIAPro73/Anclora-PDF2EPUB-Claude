@@ -25,6 +25,15 @@ def init_db():
             )
             """
         )
+        c.execute(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE,
+                password_hash TEXT
+            )
+            """
+        )
         conn.commit()
 
 
@@ -71,4 +80,23 @@ def fetch_conversions(page=1, per_page=10):
             data["metrics"] = json.loads(data["metrics"])
         results.append(data)
     return results
+
+
+def create_user(username, password_hash):
+    with closing(get_connection()) as conn:
+        c = conn.cursor()
+        c.execute(
+            "INSERT INTO users (username, password_hash) VALUES (?, ?)",
+            (username, password_hash),
+        )
+        conn.commit()
+
+
+def find_user(username):
+    with closing(get_connection()) as conn:
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        c.execute("SELECT * FROM users WHERE username=?", (username,))
+        row = c.fetchone()
+    return dict(row) if row else None
 
