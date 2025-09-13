@@ -158,85 +158,160 @@ curl -X POST http://localhost/api/auth/login \
    - Navegar a http://localhost
    - Iniciar sesión con las credenciales creadas
    - Subir un archivo PDF y comenzar la conversión
-Desarrollo Local
-Frontend
-bashcd frontend
+## 🛠️ Desarrollo Local
+
+### Frontend (React + TypeScript)
+
+```bash
+cd frontend
 npm install
-npm start
+npm run dev
+```
 El servidor de desarrollo iniciará en http://localhost:3003
-Backend
-bashcd backend
+
+### Backend (Flask + Celery)
+
+```bash
+cd backend
 python -m venv venv
 source venv/bin/activate  # En Windows: venv\Scripts\activate
 pip install -r requirements.txt
-# pypandoc descargará Pandoc automáticamente si no está instalado
-# pdf2htmlEX debe estar disponible en el sistema (ej. `apt-get install pdf2htmlex`)
 flask run --port=5175
-La API estará disponible en http://localhost:5175
-Pruebas
-bashpytest
-
-### Despliegue Beta
-
-Para probar la versión Beta del sistema ejecuta:
-
-```bash
-docker-compose up -d
 ```
 
-Luego registra un usuario y obtén un token JWT:
+### Worker de Celery
 
 ```bash
-curl -X POST http://localhost:5175/api/register -H 'Content-Type: application/json' -d '{"username":"user","password":"pass"}'
-curl -X POST http://localhost:5175/api/login -H 'Content-Type: application/json' -d '{"username":"user","password":"pass"}'
+cd backend
+celery -A app.celery worker --loglevel=info
 ```
 
-Usa el token recibido en el encabezado `Authorization: Bearer <token>` para acceder a rutas protegidas como `/api/convert`. Las métricas del servicio están disponibles en `http://localhost:5175/metrics`.
+### Servicios Auxiliares
 
-### Nuevas APIs
+```bash
+# Redis (requerido para Celery)
+docker run -d -p 6379:6379 redis:7-alpine
 
-- `POST /api/register` – registra un usuario.
-- `POST /api/login` – devuelve un token JWT.
-- `GET /api/protected` – ejemplo de ruta protegida.
-- `GET /metrics` – expone métricas en formato Prometheus.
-- `POST /api/analyze` – analiza un PDF y sugiere la mejor secuencia de conversión.
-- `POST /api/convert` – acepta el parámetro opcional `pipeline_id` para forzar `rapid`, `balanced` o `quality`.
+# PostgreSQL (requerido para persistencia)
+docker run -d -p 5432:5432 -e POSTGRES_DB=anclora_pdf2epub -e POSTGRES_USER=anclora_user -e POSTGRES_PASSWORD=anclora_password postgres:15
+```
 
-Estructura del Proyecto
+## 🧪 Testing
+
+### Tests Backend
+```bash
+cd backend
+pytest tests/ -v
+```
+
+### Tests Frontend
+```bash
+cd frontend
+npm test
+```
+
+### Tests de Integración
+```bash
+# Con Docker Compose ejecutándose
+cd backend
+pytest tests/integration/ -v
+```
+
+## 📡 API Reference
+
+### Autenticación
+
+| Endpoint | Método | Descripción |
+|----------|--------|-------------|
+| `/api/auth/register` | POST | Registrar nuevo usuario |
+| `/api/auth/login` | POST | Iniciar sesión y obtener JWT |
+
+### Conversión
+
+| Endpoint | Método | Descripción | Auth |
+|----------|--------|-------------|------|
+| `/api/analyze` | POST | Analizar PDF y obtener recomendaciones | ✅ |
+| `/api/convert` | POST | Iniciar conversión PDF→EPUB | ✅ |
+| `/api/status/<task_id>` | GET | Obtener estado de conversión | ✅ |
+| `/api/history` | GET | Historial de conversiones | ✅ |
+
+### Monitoreo
+
+| Endpoint | Método | Descripción |
+|----------|--------|-------------|
+| `/metrics` | GET | Métricas Prometheus |
+| `/health` | GET | Health check |
+
+### Ejemplo de Uso de API
+
+```bash
+# 1. Registrar usuario
+curl -X POST http://localhost/api/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"testuser","password":"testpass123"}'
+
+# 2. Obtener token
+TOKEN=$(curl -X POST http://localhost/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"testuser","password":"testpass123"}' | jq -r '.token')
+
+# 3. Analizar PDF
+curl -X POST http://localhost/api/analyze \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "file=@document.pdf"
+
+# 4. Convertir PDF
+curl -X POST http://localhost/api/convert \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "file=@document.pdf" \
+  -F "pipeline_id=balanced"
+```
+
+## 📁 Estructura del Proyecto
+
+```
 anclora-pdf2epub/
-├── frontend/                 # Aplicación React + TypeScript
-│   ├── public/               # Archivos estáticos
-│   │   └── images/           # Imágenes y assets
-│   ├── src/                  # Código fuente
-│   │   ├── components/       # Componentes React
-│   │   ├── hooks/            # Custom React hooks
-│   │   ├── utils/            # Utilidades
-│   │   ├── styles/           # CSS/Tailwind
-│   │   ├── App.tsx           # Componente principal
-│   │   └── index.tsx         # Punto de entrada
-│   ├── package.json          # Dependencias npm
-│   ├── tsconfig.json         # Configuración TypeScript
-│   └── vite.config.js        # Configuración Vite
+├── 📁 frontend/                    # Aplicación React + TypeScript
+│   ├── 📁 public/                  # Archivos estáticos
+│   ├── 📁 src/
+│   │   ├── 📁 components/          # Componentes React
+│   │   │   ├── ConversionPanel.tsx # Panel de conversión
+│   │   │   ├── FileUploader.tsx    # Subida de archivos
+│   │   │   ├── ConversionHistory.tsx # Historial
+│   │   │   └── MetricsDisplay.tsx  # Métricas
+│   │   ├── App.tsx                 # Componente principal
+│   │   ├── AuthContext.tsx         # Context de autenticación
+│   │   └── index.tsx               # Punto de entrada
+│   ├── package.json                # Dependencias npm
+│   ├── tsconfig.json               # Configuración TypeScript
+│   └── vite.config.js              # Configuración Vite
 │
-├── backend/                  # API Flask + Celery
-│   ├── app/                  # Aplicación Flask
-│   │   ├── __init__.py       # Factory app
-│   │   ├── routes.py         # Endpoints API
-│   │   ├── tasks.py          # Tareas Celery
-│   │   ├── converter.py      # Motor conversión
-│   │   └── models/           # Modelos de datos
-│   ├── tests/                # Tests unitarios/integración
-│   └── requirements.txt      # Dependencias Python
+├── 📁 backend/                     # API Flask + Celery
+│   ├── 📁 app/
+│   │   ├── __init__.py             # Factory Flask
+│   │   ├── routes.py               # Endpoints API REST
+│   │   ├── tasks.py                # Tareas Celery asíncronas
+│   │   ├── converter.py            # Motores de conversión
+│   │   ├── pipeline.py             # Pipeline de procesamiento
+│   │   ├── auth.py                 # Autenticación JWT
+│   │   └── models.py               # Modelos SQLAlchemy
+│   ├── 📁 tests/                   # Tests unitarios/integración
+│   └── requirements.txt            # Dependencias Python
 │
-├── docker/                   # Configuración Docker
-│   ├── nginx/                # Configuración Nginx
-│   │   └── nginx.conf        # Proxy reverso
-│   ├── Dockerfile.frontend   # Imagen Docker frontend
-│   └── Dockerfile.backend    # Imagen Docker backend
+├── 📁 docker/                      # Configuración Docker
+│   ├── 📁 nginx/
+│   │   └── nginx.conf              # Proxy reverso
+│   ├── Dockerfile.frontend         # Imagen Docker frontend
+│   └── Dockerfile.backend          # Imagen Docker backend
 │
-├── .env                      # Variables de entorno
-├── docker-compose.yml        # Orquestación servicios
-└── README.md                 # Documentación
+├── 📁 docs/                        # Documentación
+│   └── ANALISIS_TECNICO_COMPLETO_ANCLORA.md
+│
+├── .env                            # Variables de entorno
+├── docker-compose.yml              # Orquestación 7 servicios
+├── README.md                       # Esta documentación
+└── .gitignore                      # Archivos ignorados por Git
+```
 Uso del Sistema
 1. Subir un PDF
 
