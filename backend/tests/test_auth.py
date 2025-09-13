@@ -3,27 +3,22 @@ import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from app import create_app
+from test_routes import _setup_app
 
 
-def _setup_app(tmpdir):
-    os.environ['UPLOAD_FOLDER'] = str(tmpdir / 'uploads')
-    os.environ['RESULTS_FOLDER'] = str(tmpdir / 'results')
-    os.environ['CONVERSION_DB'] = str(tmpdir / 'conv.db')
-    os.environ['DATABASE_URL'] = 'sqlite:///' + str(tmpdir / 'app.db')
-    os.environ['JWT_SECRET'] = 'test-secret'
-    return create_app()
-
-
-def test_register_and_login(tmp_path):
+def test_register_login_and_access(tmp_path):
     app = _setup_app(tmp_path)
     client = app.test_client()
 
-    resp = client.post('/api/auth/register', json={'email': 'a@a.com', 'password': 'pw'})
-    assert resp.status_code == 201
-    token = resp.get_json().get('token')
-    assert token
+    res = client.post('/api/register', json={'username': 'alice', 'password': 'secret'})
+    assert res.status_code == 201
 
-    resp = client.post('/api/auth/login', json={'email': 'a@a.com', 'password': 'pw'})
-    assert resp.status_code == 200
-    assert resp.get_json().get('token')
+    res = client.post('/api/login', json={'username': 'alice', 'password': 'secret'})
+    assert res.status_code == 200
+    token = res.get_json()['token']
+
+    res = client.get('/api/protected', headers={'Authorization': f'Bearer {token}'})
+    assert res.status_code == 200
+
+    res = client.get('/api/protected', headers={'Authorization': 'Bearer wrong'})
+    assert res.status_code == 401

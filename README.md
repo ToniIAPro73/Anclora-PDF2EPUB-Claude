@@ -97,21 +97,30 @@ flask run --port=5175
 La API estará disponible en http://localhost:5175
 Pruebas
 bashpytest
-Monitoreo y Logs
------------------
-Tras levantar la pila con `docker-compose up -d` se exponen métricas y dashboards básicos:
 
-- Backend: http://localhost:5175/metrics
-- Worker:  http://localhost:8001/metrics
-- Prometheus: http://localhost:9090
-- Grafana: http://localhost:3000 (usuario `admin`, contraseña `admin` por defecto)
+### Despliegue Beta
 
-Los contenedores generan logs estructurados en formato JSON. Puedes verlos con:
+Para probar la versión Beta del sistema ejecuta:
 
 ```bash
-docker-compose logs -f backend
-docker-compose logs -f worker
+docker-compose up -d
 ```
+
+Luego registra un usuario y obtén un token JWT:
+
+```bash
+curl -X POST http://localhost:5175/api/register -H 'Content-Type: application/json' -d '{"username":"user","password":"pass"}'
+curl -X POST http://localhost:5175/api/login -H 'Content-Type: application/json' -d '{"username":"user","password":"pass"}'
+```
+
+Usa el token recibido en el encabezado `Authorization: Bearer <token>` para acceder a rutas protegidas como `/api/convert`. Las métricas del servicio están disponibles en `http://localhost:5175/metrics`.
+
+### Nuevas APIs
+
+- `POST /api/register` – registra un usuario.
+- `POST /api/login` – devuelve un token JWT.
+- `GET /api/protected` – ejemplo de ruta protegida.
+- `GET /metrics` – expone métricas en formato Prometheus.
 
 Estructura del Proyecto
 anclora-pdf2epub/
