@@ -141,3 +141,7 @@ class ConversionPipeline:
                 return {"success": False, "error": result.error, "metrics": metrics}
 
         return {"success": True, "output": final_output or current, "metrics": metrics}
+
+
+def evaluate_sequences(sequences: List[List[str]]) -> List[Dict[str, object]]:
+    return [{"steps": seq, "score": 0} for seq in sequences]
