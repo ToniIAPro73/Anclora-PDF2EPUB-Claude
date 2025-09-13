@@ -59,6 +59,7 @@ def create_app():
         SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URL', 'sqlite:///app.db'),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         RATE_LIMIT=os.environ.get('RATE_LIMIT', '5 per minute'),
+        JWT_SECRET=os.environ.get('JWT_SECRET', 'dev'),
     )
 
     db.init_app(app)
@@ -97,9 +98,13 @@ def create_app():
     # Inicializar base de datos y registrar rutas
     init_db()
     from . import routes
+    from .auth import auth_bp
 
     app.register_blueprint(routes.bp)
     app.register_blueprint(auth_bp)
+
+    with app.app_context():
+        db.create_all()
 
     @app.errorhandler(429)
     def ratelimit_handler(e):
