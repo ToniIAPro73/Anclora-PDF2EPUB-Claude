@@ -19,7 +19,8 @@ Convertir documentos PDF a formato EPUB3 de manera inteligente, abordando los pr
 - **OCR Integrado**: Procesamiento de documentos escaneados con Tesseract
 - **Procesamiento Asíncrono**: Cola de tareas con Redis y Celery
 - **Interfaz Moderna**: React + TypeScript con soporte para temas claro/oscuro
-- **Métricas en Tiempo Real**: Seguimiento detallado del proceso de conversión
+- **Autenticación y Seguridad**: JWT con rate limiting por usuario/IP
+- **Métricas en Tiempo Real**: Seguimiento detallado del proceso de conversión mediante Prometheus
 
 ## 2. Arquitectura del Sistema
 
@@ -38,6 +39,9 @@ Convertir documentos PDF a formato EPUB3 de manera inteligente, abordando los pr
 - **PyMuPDF 1.24.0** para manipulación de PDFs
 - **EbookLib 0.18.0** para generación de EPUBs
 - **Tesseract OCR** para reconocimiento de texto
+- **Flask-JWT-Extended** para autenticación JWT
+- **Flask-Limiter** para rate limiting
+- **Prometheus Client** para exposición de métricas
 
 #### Infraestructura
 - **Docker** + **Docker Compose** para orquestación
@@ -52,7 +56,9 @@ Convertir documentos PDF a formato EPUB3 de manera inteligente, abordando los pr
 ├─────────────────────────────────────────────────────────┤
 │ Frontend: React + TypeScript + Tailwind CSS             │
 ├─────────────────────────────────────────────────────────┤
-│ API Gateway: Flask + Authentication + Rate Limiting     │
+│ API Gateway: Flask + JWT + Rate Limiting                │
+├─────────────────────────────────────────────────────────┤
+│ Observabilidad: Prometheus + Logs Estructurados         │
 ├─────────────────────────────────────────────────────────┤
 │ Message Queue: Redis + Celery (Async Processing)        │
 ├─────────────────────────────────────────────────────────┤
@@ -66,6 +72,16 @@ Convertir documentos PDF a formato EPUB3 de manera inteligente, abordando los pr
 ├─────────────────────────────────────────────────────────┤
 │ Infrastructure: Docker + Nginx + Health Checks          │
 └─────────────────────────────────────────────────────────┘
+```
+
+#### Diagrama de Componentes y Flujo de Conversión
+
+```mermaid
+flowchart TD
+    U[Usuario] --> FE[Frontend React] --> API[API Flask\nJWT + Rate Limiting]
+    API --> Q[Redis Queue] --> W[Trabajador Celery] --> C[Motor de Conversión] --> S[(Almacenamiento)]
+    API --> P[(Prometheus)]
+    C --> P
 ```
 
 ### Motores de Conversión
@@ -82,6 +98,8 @@ Convertir documentos PDF a formato EPUB3 de manera inteligente, abordando los pr
 - **Múltiples Motores**: Especialización según el tipo de documento
 - **OCR Integrado**: Capacidad de procesar documentos escaneados
 - **Logging Detallado**: Trazabilidad completa del proceso
+- **Seguridad Integrada**: Autenticación JWT y rate limiting por usuario/IP
+- **Observabilidad**: Métricas expuestas vía Prometheus
 - **Configuración Flexible**: Variables de entorno para todos los parámetros
 
 ### Funcionales
@@ -106,11 +124,9 @@ Convertir documentos PDF a formato EPUB3 de manera inteligente, abordando los pr
 - **Integración**: No hay conexión real entre frontend y backend
 
 ### Limitaciones Técnicas
-- **Sin Autenticación**: No hay sistema de usuarios implementado
 - **Sin Persistencia de Datos**: No hay base de datos para historial
 - **Falta de Tests**: No hay tests unitarios o de integración
-- **Sin Rate Limiting**: Mencionado en arquitectura pero no implementado
-- **Sin Monitoreo**: Falta sistema de métricas y alertas
+- **Sin Monitoreo Avanzado**: Falta sistema de alertas y dashboards completos
 
 ### Seguridad
 - **Validación Limitada**: Solo validación básica de archivos
@@ -176,13 +192,12 @@ Convertir documentos PDF a formato EPUB3 de manera inteligente, abordando los pr
 
 ### Prioridad Media (Mejoras de Calidad)
 4. **Seguridad y Validación**
-   - Autenticación JWT
-   - Rate limiting por usuario/IP
+   - Fortalecer políticas de autenticación y rotación de claves
    - Validación de archivos maliciosos
    - HTTPS y certificados SSL
 
 5. **Monitoreo y Observabilidad**
-   - Métricas de rendimiento (Prometheus)
+   - Expansión de métricas en Prometheus
    - Logs estructurados (ELK Stack)
    - Health checks y alertas
    - Dashboard de administración
@@ -231,6 +246,26 @@ Convertir documentos PDF a formato EPUB3 de manera inteligente, abordando los pr
 - Escalabilidad empresarial
 - Documentación completa
 - Soporte y mantenimiento
+
+## 8. Ejecución de Tests y Entorno Docker Compose
+
+### Ejecutar Tests
+1. Instalar dependencias del backend:
+   ```bash
+   pip install -r backend/requirements.txt
+   ```
+2. Ejecutar la suite de pruebas:
+   ```bash
+   pytest
+   ```
+
+### Levantar el Entorno con Docker Compose
+1. Asegurar la configuración de variables de entorno en el archivo `.env`.
+2. Construir y levantar todos los servicios:
+   ```bash
+   docker-compose up --build
+   ```
+3. Acceder a la aplicación a través de `http://localhost:<NGINX_PORT>`.
 
 ## Conclusión
 
