@@ -57,16 +57,18 @@ def api_url():
 
 def test_pdf_conversion(api_url):
     base_url = api_url
+    token = requests.post(base_url + "/api/auth/register", json={"email": "a@a.com", "password": "pw"}).json()["token"]
+    headers = {"Authorization": f"Bearer {token}"}
     pdf_path = Path(__file__).parent / "sample.pdf"
     with pdf_path.open("rb") as f:
         files = {"file": ("sample.pdf", f, "application/pdf")}
-        resp = requests.post(base_url + "/api/convert", files=files)
+        resp = requests.post(base_url + "/api/convert", files=files, headers=headers)
     assert resp.status_code == 202
     task_id = resp.json()["task_id"]
 
     # Poll for completion
     for _ in range(120):
-        status = requests.get(base_url + f"/api/status/{task_id}").json()
+        status = requests.get(base_url + f"/api/status/{task_id}", headers=headers).json()
         if status.get("status") == "SUCCESS":
             output_path = status["result"].get("output_path")
             break
@@ -83,5 +85,5 @@ def test_pdf_conversion(api_url):
         check=True,
     )
 
-    history = requests.get(base_url + "/api/history").json()
+    history = requests.get(base_url + "/api/history", headers=headers).json()
     assert any(entry.get("task_id") == task_id for entry in history)
