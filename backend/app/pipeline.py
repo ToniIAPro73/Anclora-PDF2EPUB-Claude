@@ -25,6 +25,8 @@ from typing import Dict, List, Optional
 
 import pypandoc
 
+from . import formula_detector
+
 
 logger = logging.getLogger(__name__)
 
@@ -125,14 +127,19 @@ class PandocAdapter:
     def __init__(self) -> None:
         _ensure_pandoc()
 
-    def run(self, input_path: str, output_path: str) -> StepResult:
+    def run(self, input_path: str, output_path: str, pdf_path: Optional[str] = None) -> StepResult:
         start = time.perf_counter()
         try:
             pypandoc.convert_file(
                 input_path,
                 "epub3",
                 outputfile=output_path,
+                extra_args=["--mathml"],
             )
+            if pdf_path:
+                formulas = formula_detector.detect_formulas(pdf_path)
+                if formulas:
+                    formula_detector.inject_formulas(output_path, formulas)
             duration = time.perf_counter() - start
             logger.info("pandoc completed in %.2fs", duration)
             return StepResult(True, duration, output=output_path)
@@ -198,7 +205,7 @@ class ConversionPipeline:
                 if step == "pandoc":
                     output_fd, output_path = tempfile.mkstemp(suffix=".epub")
                     os.close(output_fd)
-                    result = adapter.run(current, output_path)
+                    result = adapter.run(current, output_path, pdf_path)
                 else:  # pdf2htmlex
                     result = adapter.run(current)
 
