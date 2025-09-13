@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from datetime import datetime
 import os
+from .models import init_db
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -27,7 +28,8 @@ def create_app():
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     os.makedirs(app.config['RESULTS_FOLDER'], exist_ok=True)
     
-    # Registrar rutas
+    # Inicializar base de datos y registrar rutas
+    init_db()
     from . import routes
     app.register_blueprint(routes.bp)
 
