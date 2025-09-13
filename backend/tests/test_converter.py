@@ -152,6 +152,33 @@ def test_rapid_converter_generates_epub(tmp_path):
     os.remove(pdf_path)
 
 
+def test_rapid_converter_preserves_tables(tmp_path):
+    pdf_path = _create_simple_pdf("<table><tr><td>Cell</td></tr></table>")
+    output_path = tmp_path / "table.epub"
+    analysis = _analysis_for(pdf_path)
+    converter = RapidConverter()
+    converter.convert(pdf_path, str(output_path), analysis, metadata={"title": "Table"})
+    import zipfile
+    with zipfile.ZipFile(output_path, 'r') as zf:
+        content = zf.read('EPUB/page_1.xhtml').decode('utf-8')
+    assert '<table>' in content
+    os.remove(pdf_path)
+
+
+def test_rapid_converter_handles_math(tmp_path):
+    mathml = "<math><mi>x</mi><msup><mi>x</mi><mn>2</mn></msup></math>"
+    pdf_path = _create_simple_pdf(mathml)
+    output_path = tmp_path / "math.epub"
+    analysis = _analysis_for(pdf_path)
+    converter = RapidConverter()
+    converter.convert(pdf_path, str(output_path), analysis, metadata={"title": "Math"})
+    import zipfile
+    with zipfile.ZipFile(output_path, 'r') as zf:
+        content = zf.read('EPUB/page_1.xhtml').decode('utf-8')
+    assert ('<math' in content) or ('<img' in content and 'alt=' in content)
+    os.remove(pdf_path)
+
+
 def test_suggest_best_pipeline_returns_sequence_and_metrics():
     pdf_path = _create_simple_pdf()
     converter = EnhancedPDFToEPUBConverter()

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../AuthContext';
+import renderMathInElement from 'katex/contrib/auto-render';
 
 declare global {
   interface Window {
@@ -34,24 +35,14 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ taskId, onClose }) => {
   }, [taskId, token]);
 
   useEffect(() => {
-    const typeset = async () => {
-      if (import.meta.env.MODE === 'test') return;
-      if (!containerRef.current) return;
-      if (!window.MathJax) {
-        // @ts-ignore - MathJax no provee declaraciones de tipo para este import
-        await import('mathjax/es5/tex-mml-chtml.js');
-      }
-      containerRef.current
-        .querySelectorAll('span.math-inline')
-        .forEach((el) => {
-          const tex = el.textContent || '';
-          // @ts-ignore - MathJax proporciona esta utilidad en tiempo de ejecución
-          const node = window.MathJax.tex2chtml(tex, { display: false });
-          el.replaceWith(node);
-        });
-      window.MathJax?.typesetPromise?.([containerRef.current]);
-    };
-    typeset();
+    document.querySelectorAll('.preview-body').forEach((el) => {
+      renderMathInElement(el as HTMLElement, {
+        delimiters: [
+          { left: '$$', right: '$$', display: true },
+          { left: '\\(', right: '\\)', display: false },
+        ],
+      });
+    });
   }, [pages, index]);
 
   const next = () => setIndex((i) => Math.min(i + 1, pages.length - 1));
