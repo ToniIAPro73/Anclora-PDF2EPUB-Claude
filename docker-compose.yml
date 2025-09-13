@@ -52,7 +52,6 @@ services:
     depends_on:
       - redis
       - db
-    command: ["./wait-for-db.sh", "python", "main.py"]
     networks:
       - anclora-network
 
@@ -92,7 +91,7 @@ services:
       - anclora-network
 
   db:
-    image: postgres:13
+    image: postgres:15-alpine
     environment:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
