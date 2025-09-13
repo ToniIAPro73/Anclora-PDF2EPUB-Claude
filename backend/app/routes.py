@@ -7,12 +7,17 @@ import uuid
 import datetime
 import jwt
 import logging
+
+try:
+    import magic  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    magic = None
 from functools import wraps
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 
 from .tasks import convert_pdf_to_epub, celery_app
-from .models import create_conversion, fetch_conversions, create_user, find_user
-from . import limiter
+from .models import Conversion, User
+from . import db, limiter
 
 bp = Blueprint('routes', __name__)
 
@@ -48,9 +53,11 @@ def register():
     password = data.get('password')
     if not username or not password:
         return jsonify({'error': 'Username and password required'}), 400
-    if find_user(username):
+    if User.query.filter_by(username=username).first():
         return jsonify({'error': 'User exists'}), 400
-    create_user(username, generate_password_hash(password))
+    user = User(username=username, password_hash=generate_password_hash(password))
+    db.session.add(user)
+    db.session.commit()
     return jsonify({'message': 'User created'}), 201
 
 
@@ -59,8 +66,8 @@ def login():
     data = request.get_json() or {}
     username = data.get('username')
     password = data.get('password')
-    user = find_user(username)
-    if not user or not check_password_hash(user['password_hash'], password):
+    user = User.query.filter_by(username=username).first()
+    if not user or not check_password_hash(user.password_hash, password):
         return jsonify({'error': 'Invalid credentials'}), 401
     payload = {'sub': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)}
     token = jwt.encode(payload, current_app.config['SECRET_KEY'], algorithm='HS256')
@@ -93,11 +100,20 @@ def convert():
         return jsonify({'error': 'File too large'}), 400
     file.seek(0)
 
-    mime_type = magic.from_buffer(file.read(2048), mime=True)
-    file.seek(0)
-    if mime_type not in ALLOWED_MIME_TYPES:
-        current_app.logger.warning("Invalid MIME type %s for file %s", mime_type, file.filename)
-        return jsonify({'error': 'Invalid file content'}), 400
+    if magic is not None:
+        mime_type = magic.from_buffer(file.read(2048), mime=True)
+        file.seek(0)
+        if mime_type not in ALLOWED_MIME_TYPES:
+            current_app.logger.warning("Invalid MIME type %s for file %s", mime_type, file.filename)
+            logging.warning("Invalid MIME type %s for file %s", mime_type, file.filename)
+            return jsonify({'error': 'Invalid file content'}), 400
+    else:
+        header = file.read(4)
+        file.seek(0)
+        if not header.startswith(b"%PDF"):
+            current_app.logger.warning("Invalid MIME type for file %s", file.filename)
+            logging.warning("Invalid MIME type for file %s", file.filename)
+            return jsonify({'error': 'Invalid file content'}), 400
 
     upload_folder = current_app.config['UPLOAD_FOLDER']
     os.makedirs(upload_folder, exist_ok=True)
@@ -117,7 +133,8 @@ def convert():
         return jsonify({'error': 'Invalid file name'}), 400
 
     task_id = str(uuid.uuid4())
-    create_conversion(task_id)
+    db.session.add(Conversion(task_id=task_id, status='PENDING'))
+    db.session.commit()
     convert_pdf_to_epub.apply_async(args=[task_id, pdf_path, epub_path], task_id=task_id)
     conversion_counter.inc()
     return jsonify({'task_id': task_id}), 202
@@ -142,8 +159,8 @@ def task_status(task_id):
 def history():
     page = int(request.args.get('page', 1))
     per_page = int(request.args.get('per_page', 10))
-    conversions = fetch_conversions(page, per_page)
-    return jsonify(conversions)
+    pagination = Conversion.query.order_by(Conversion.id.desc()).paginate(page=page, per_page=per_page, error_out=False)
+    return jsonify([c.to_dict() for c in pagination.items])
 
 @bp.route('/metrics')
 def metrics():

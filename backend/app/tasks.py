@@ -7,7 +7,8 @@ from celery.signals import task_prerun, task_postrun
 from prometheus_client import Counter, Histogram, start_http_server
 
 from app.converter import EnhancedPDFToEPUBConverter
-from .models import init_db, update_conversion
+from .models import Conversion
+from . import db
 
 
 celery_app = Celery(
@@ -49,7 +50,6 @@ if os.environ.get("WORKER_METRICS_PORT"):
     start_http_server(int(os.environ["WORKER_METRICS_PORT"]))
 
 converter = EnhancedPDFToEPUBConverter()
-init_db()
 
 
 @task_prerun.connect
@@ -87,7 +87,15 @@ def convert_pdf_to_epub(task_id, input_path, output_path=None):
             "engine_used": result.get("engine_used"),
             "analysis": result.get("analysis"),
         }
-        update_conversion(task_id, "SUCCESS", result.get("output_path"), metrics)
+        from . import create_app
+        app = create_app()
+        with app.app_context():
+            conv = Conversion.query.filter_by(task_id=task_id).first()
+            if conv:
+                conv.status = "SUCCESS"
+                conv.output_path = result.get("output_path")
+                conv.metrics = metrics
+                db.session.commit()
         return {
             "task_id": task_id,
             "success": result.get("success", False),
@@ -105,7 +113,15 @@ def convert_pdf_to_epub(task_id, input_path, output_path=None):
             "duration": duration,
             "error": str(exc),
         }
-        update_conversion(task_id, "FAILURE", None, metrics)
+        from . import create_app
+        app = create_app()
+        with app.app_context():
+            conv = Conversion.query.filter_by(task_id=task_id).first()
+            if conv:
+                conv.status = "FAILURE"
+                conv.output_path = None
+                conv.metrics = metrics
+                db.session.commit()
         return {
             "task_id": task_id,
             "success": False,

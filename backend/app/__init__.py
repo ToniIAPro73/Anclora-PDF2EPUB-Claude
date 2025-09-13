@@ -1,4 +1,4 @@
-from flask import Flask, Response, request
+from flask import Flask, Response, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_limiter import Limiter
@@ -9,16 +9,11 @@ import time
 import logging
 import json
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
-from .models import init_db
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 
 db = SQLAlchemy()
 limit_value = lambda: os.environ.get('RATE_LIMIT', '5 per minute')
 limiter = Limiter(get_remote_address, default_limits=[limit_value])
 migrate = Migrate()
-limiter = Limiter(key_func=get_remote_address,
-                  default_limits=["200 per day", "50 per hour"])
 
 
 class JsonFormatter(logging.Formatter):
@@ -96,12 +91,10 @@ def create_app():
     def metrics():
         return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
 
-    # Inicializar base de datos y registrar rutas
-    init_db()
+    # Registrar rutas
     from . import routes
 
     app.register_blueprint(routes.bp)
-    app.register_blueprint(auth_bp)
 
     @app.errorhandler(429)
     def ratelimit_handler(e):
@@ -111,15 +104,6 @@ def create_app():
         }), 429
 
     return app
-
-
-class Conversion(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    filename = db.Column(db.String(255), nullable=False)
-    status = db.Column(db.String(50), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    metrics = db.Column(db.JSON)
-
 # Para ejecución directa
 if __name__ == '__main__':
     app = create_app()

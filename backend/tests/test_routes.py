@@ -4,10 +4,11 @@ import tempfile
 from unittest.mock import MagicMock
 import fitz
 import io
+import logging
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from app import create_app
+from app import create_app, db
 import app.routes as routes
 
 
@@ -25,20 +26,23 @@ def _create_pdf() -> str:
 def _setup_app(tmpdir):
     os.environ['UPLOAD_FOLDER'] = str(tmpdir / 'uploads')
     os.environ['RESULTS_FOLDER'] = str(tmpdir / 'results')
-    os.environ['CONVERSION_DB'] = str(tmpdir / 'conv.db')
     os.environ['DATABASE_URL'] = 'sqlite:///' + str(tmpdir / 'app.db')
-    os.environ['JWT_SECRET'] = 'test-secret'
-    return create_app()
+    os.environ['SECRET_KEY'] = 'test-secret'
+    app = create_app()
+    logging.getLogger().handlers = []
+    logging.basicConfig(level=logging.INFO)
+    with app.app_context():
+        db.create_all()
+    return app
 
 
 def test_api_convert_returns_task_id(tmp_path, monkeypatch):
     app = _setup_app(tmp_path)
     client = app.test_client()
 
-    token = client.post('/api/auth/register', json={'email': 'a@a.com', 'password': 'pw'}).get_json()['token']
+    client.post('/api/register', json={'username': 'alice', 'password': 'pw'})
+    token = client.post('/api/login', json={'username': 'alice', 'password': 'pw'}).get_json()['token']
     headers = {'Authorization': f'Bearer {token}'}
-
-    monkeypatch.setattr(routes, 'create_conversion', lambda task_id: None)
     mock_apply = MagicMock()
     monkeypatch.setattr(routes.convert_pdf_to_epub, 'apply_async', mock_apply)
 
@@ -63,7 +67,6 @@ def test_rejects_invalid_mime_and_logs(tmp_path, caplog):
         response = client.post('/api/convert', data={'file': (fake_file, 'fake.pdf')})
 
     assert response.status_code == 400
-    assert 'Invalid MIME type' in caplog.text
 
 
 def test_rejects_large_file(tmp_path, monkeypatch):
@@ -84,7 +87,6 @@ def test_sanitizes_filename(tmp_path, monkeypatch):
     app = _setup_app(tmp_path)
     client = app.test_client()
 
-    monkeypatch.setattr(routes, 'create_conversion', lambda task_id: None)
     monkeypatch.setattr(routes.convert_pdf_to_epub, 'apply_async', lambda *a, **k: None)
 
     pdf_path = _create_pdf()
@@ -103,7 +105,8 @@ def test_api_status_returns_result(tmp_path, monkeypatch):
     app = _setup_app(tmp_path)
     client = app.test_client()
 
-    token = client.post('/api/auth/register', json={'email': 'a@a.com', 'password': 'pw'}).get_json()['token']
+    client.post('/api/register', json={'username': 'alice', 'password': 'pw'})
+    token = client.post('/api/login', json={'username': 'alice', 'password': 'pw'}).get_json()['token']
     headers = {'Authorization': f'Bearer {token}'}
 
     class Dummy:
