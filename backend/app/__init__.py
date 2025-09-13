@@ -1,4 +1,4 @@
-from flask import Flask, Response, request
+from flask import Flask, Response, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_limiter import Limiter
@@ -99,6 +99,7 @@ def create_app():
     # Inicializar base de datos y registrar rutas
     init_db()
     from . import routes
+    from .auth import auth_bp
 
     app.register_blueprint(routes.bp)
     app.register_blueprint(auth_bp)
