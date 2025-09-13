@@ -10,7 +10,8 @@ from langdetect import detect, LangDetectException
 import tempfile
 import uuid
 import logging
-from .pipeline import evaluate_sequences as pipeline_evaluate_sequences
+import time
+from concurrent.futures import ThreadPoolExecutor
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -331,87 +332,99 @@ class BalancedConverter(BaseConverter):
     """Conversión equilibrada para documentos con texto e imágenes"""
     def convert(self, pdf_path, output_path, analysis, metadata=None):
         try:
+            metadata = metadata or {}
+            start_time = time.time()
+
             # Crear EPUB
             book = epub.EpubBook()
-            
+
             # Configurar metadatos
             book.set_title(metadata.get('title', 'Converted Document'))
             book.set_language(metadata.get('language', 'es'))
-            
+
             if 'author' in metadata:
                 book.add_author(metadata['author'])
 
-            # Abrir PDF
-            pdf = fitz.open(pdf_path)
-            
-            # Crear capítulos
-            chapters = []
-            
-            for i, page in enumerate(pdf):
-                # Extraer texto
+            # Determinar número de hilos según recursos disponibles
+            max_workers = metadata.get('max_workers') or max(1, os.cpu_count() or 1)
+            logger.info(f"Using {max_workers} threads for balanced conversion")
+
+            # Obtener número de páginas
+            doc = fitz.open(pdf_path)
+            page_count = len(doc)
+            doc.close()
+
+            def process_page(page_number):
+                local_pdf = fitz.open(pdf_path)
+                page = local_pdf.load_page(page_number)
+
                 text = page.get_text()
-                
-                # Crear capítulo
-                chapter = epub.EpubHtml(
-                    title=f"Page {i+1}", 
-                    file_name=f"page_{i+1}.xhtml"
-                )
-                
-                # Contenido HTML base
+
                 html_content = f"""
                 <html>
                 <head>
-                    <title>Page {i+1}</title>
+                    <title>Page {page_number + 1}</title>
                 </head>
                 <body>
-                    <h1>Page {i+1}</h1>
+                    <h1>Page {page_number + 1}</h1>
                     <div>{text}</div>
                 """
-                
-                # Extraer imágenes de la página
+
                 images = page.get_images()
-                image_files = []
-                
+                image_items = []
+
                 for img_index, img in enumerate(images):
                     xref = img[0]
-                    base_image = pdf.extract_image(xref)
+                    base_image = local_pdf.extract_image(xref)
                     image_bytes = base_image["image"]
                     image_ext = base_image["ext"]
-                    
-                    # Generar nombre único para la imagen
-                    image_filename = f"images/image_p{i+1}_{img_index}.{image_ext}"
-                    
-                    # Crear objeto imagen para EPUB
+
+                    image_filename = f"images/image_p{page_number + 1}_{img_index}.{image_ext}"
+
                     epub_image = epub.EpubItem(
-                        uid=f"image_p{i+1}_{img_index}",
+                        uid=f"image_p{page_number + 1}_{img_index}",
                         file_name=image_filename,
                         media_type=f"image/{image_ext}",
                         content=compress_image(image_bytes, image_ext)
                     )
-                    
-                    book.add_item(epub_image)
-                    image_files.append(image_filename)
-                
-                # Añadir imágenes al HTML
-                for img_file in image_files:
+                    image_items.append(epub_image)
+
                     html_content += f"""
-                    <div class="image-container">
-                        <img src="{img_file}" alt="Image" />
+                    <div class=\"image-container\">
+                        <img src=\"{image_filename}\" alt=\"Image\" />
                     </div>
                     """
-                
+
                 html_content += """
                 </body>
                 </html>
                 """
-                
+
+                chapter = epub.EpubHtml(
+                    title=f"Page {page_number + 1}",
+                    file_name=f"page_{page_number + 1}.xhtml"
+                )
                 chapter.content = html_content
+                local_pdf.close()
+                return page_number, chapter, image_items
+
+            # Procesar páginas en paralelo
+            chapters = []
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                futures = [executor.submit(process_page, i) for i in range(page_count)]
+                results = [f.result() for f in futures]
+
+            # Combinar resultados manteniendo el orden
+            results.sort(key=lambda x: x[0])
+            for _, chapter, image_items in results:
+                for item in image_items:
+                    book.add_item(item)
                 book.add_item(chapter)
                 chapters.append(chapter)
-            
+
             # Añadir capítulos a la tabla de contenidos
             book.toc = chapters
-            
+
             # Añadir CSS
             style = epub.EpubItem(
                 uid="style_default",
@@ -425,17 +438,22 @@ class BalancedConverter(BaseConverter):
                 """
             )
             book.add_item(style)
-            
+
             # Añadir elementos al esqueleto del EPUB
             book.add_item(epub.EpubNcx())
             book.add_item(epub.EpubNav())
-            
+
             # Definir la estructura del EPUB
             book.spine = ['nav'] + chapters
-            
+
             # Escribir EPUB a disco
             epub.write_epub(output_path, book)
-            
+
+            end_time = time.time()
+            logger.info(
+                f"Balanced conversion completed in {end_time - start_time:.2f}s using {max_workers} threads"
+            )
+
             return {
                 "success": True,
                 "message": "Conversion completed successfully with images",
@@ -443,9 +461,11 @@ class BalancedConverter(BaseConverter):
                     "text_preserved": 100,
                     "images_preserved": 90,
                     "overall": 85
-                }
+                },
+                "time_taken": end_time - start_time,
+                "workers_used": max_workers,
             }
-            
+
         except Exception as e:
             logger.error(f"Error in balanced conversion: {str(e)}")
             return {
