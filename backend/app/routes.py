@@ -7,6 +7,7 @@ import uuid
 import datetime
 import jwt
 import logging
+import magic
 from functools import wraps
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 
