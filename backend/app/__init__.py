@@ -1,4 +1,4 @@
-from flask import Flask, Response, request
+from flask import Flask, Response, request, jsonify, current_app
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_limiter import Limiter
@@ -10,15 +10,13 @@ import logging
 import json
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 from .models import init_db
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 
 db = SQLAlchemy()
-limit_value = lambda: os.environ.get('RATE_LIMIT', '5 per minute')
-limiter = Limiter(get_remote_address, default_limits=[limit_value])
 migrate = Migrate()
-limiter = Limiter(key_func=get_remote_address,
-                  default_limits=["200 per day", "50 per hour"])
+limit_value = lambda: current_app.config.get('RATE_LIMIT', '5 per minute')
+limiter = Limiter(key_func=get_remote_address, default_limits=[limit_value])
+
+from .auth import auth_bp
 
 
 class JsonFormatter(logging.Formatter):

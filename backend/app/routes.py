@@ -7,10 +7,12 @@ import uuid
 import datetime
 import jwt
 import logging
+
 try:
     import magic  # type: ignore
 except ImportError:  # pragma: no cover
     magic = None
+
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 
 from .tasks import convert_pdf_to_epub, celery_app
