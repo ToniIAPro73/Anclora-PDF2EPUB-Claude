@@ -3,6 +3,7 @@ import sys
 import tempfile
 from unittest.mock import MagicMock
 import fitz
+import io
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -25,6 +26,8 @@ def _setup_app(tmpdir):
     os.environ['UPLOAD_FOLDER'] = str(tmpdir / 'uploads')
     os.environ['RESULTS_FOLDER'] = str(tmpdir / 'results')
     os.environ['CONVERSION_DB'] = str(tmpdir / 'conv.db')
+    os.environ['DATABASE_URL'] = 'sqlite:///' + str(tmpdir / 'app.db')
+    os.environ['JWT_SECRET'] = 'test-secret'
     return create_app()
 
 
@@ -32,13 +35,16 @@ def test_api_convert_returns_task_id(tmp_path, monkeypatch):
     app = _setup_app(tmp_path)
     client = app.test_client()
 
+    token = client.post('/api/auth/register', json={'email': 'a@a.com', 'password': 'pw'}).get_json()['token']
+    headers = {'Authorization': f'Bearer {token}'}
+
     monkeypatch.setattr(routes, 'create_conversion', lambda task_id: None)
     mock_apply = MagicMock()
     monkeypatch.setattr(routes.convert_pdf_to_epub, 'apply_async', mock_apply)
 
     pdf_path = _create_pdf()
     with open(pdf_path, 'rb') as f:
-        response = client.post('/api/convert', data={'file': (f, 'sample.pdf')})
+        response = client.post('/api/convert', headers=headers, data={'file': (f, 'sample.pdf')})
 
     assert response.status_code == 202
     task_id = response.get_json().get('task_id')
@@ -48,9 +54,57 @@ def test_api_convert_returns_task_id(tmp_path, monkeypatch):
     os.remove(pdf_path)
 
 
+def test_rejects_invalid_mime_and_logs(tmp_path, caplog):
+    app = _setup_app(tmp_path)
+    client = app.test_client()
+
+    fake_file = io.BytesIO(b"not a pdf")
+    with caplog.at_level('WARNING'):
+        response = client.post('/api/convert', data={'file': (fake_file, 'fake.pdf')})
+
+    assert response.status_code == 400
+    assert 'Invalid MIME type' in caplog.text
+
+
+def test_rejects_large_file(tmp_path, monkeypatch):
+    app = _setup_app(tmp_path)
+    client = app.test_client()
+
+    monkeypatch.setattr(routes, 'MAX_FILE_SIZE', 10)
+    pdf_path = _create_pdf()
+    with open(pdf_path, 'rb') as f:
+        response = client.post('/api/convert', data={'file': (f, 'big.pdf')})
+
+    assert response.status_code == 400
+    assert response.get_json()['error'] == 'File too large'
+    os.remove(pdf_path)
+
+
+def test_sanitizes_filename(tmp_path, monkeypatch):
+    app = _setup_app(tmp_path)
+    client = app.test_client()
+
+    monkeypatch.setattr(routes, 'create_conversion', lambda task_id: None)
+    monkeypatch.setattr(routes.convert_pdf_to_epub, 'apply_async', lambda *a, **k: None)
+
+    pdf_path = _create_pdf()
+    with open(pdf_path, 'rb') as f:
+        response = client.post('/api/convert', data={'file': (f, '../evil.pdf')})
+
+    assert response.status_code == 202
+    saved_files = list((tmp_path / 'uploads').iterdir())
+    assert len(saved_files) == 1
+    assert saved_files[0].name.endswith('evil.pdf')
+    assert '..' not in saved_files[0].name
+    os.remove(pdf_path)
+
+
 def test_api_status_returns_result(tmp_path, monkeypatch):
     app = _setup_app(tmp_path)
     client = app.test_client()
+
+    token = client.post('/api/auth/register', json={'email': 'a@a.com', 'password': 'pw'}).get_json()['token']
+    headers = {'Authorization': f'Bearer {token}'}
 
     class Dummy:
         state = 'SUCCESS'
@@ -58,8 +112,16 @@ def test_api_status_returns_result(tmp_path, monkeypatch):
 
     monkeypatch.setattr(routes, 'AsyncResult', lambda tid, app: Dummy())
 
-    response = client.get('/api/status/test-id')
+    response = client.get('/api/status/test-id', headers=headers)
     assert response.status_code == 200
     data = response.get_json()
     assert data['status'] == 'SUCCESS'
     assert data['result'] == {'ok': True}
+
+
+def test_metrics_endpoint(tmp_path):
+    app = _setup_app(tmp_path)
+    client = app.test_client()
+    response = client.get('/metrics')
+    assert response.status_code == 200
+    assert b'http_requests_total' in response.data
