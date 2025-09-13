@@ -82,9 +82,9 @@ def _task_postrun(sender=None, task_id=None, state=None, **kwargs):  # pragma: n
     )
 
 
-@celery_app.task(name="convert_pdf_to_epub")
+@celery_app.task(bind=True, name="convert_pdf_to_epub")
 
-def convert_pdf_to_epub(task_id, input_path, output_path=None, pipeline=None):
+def convert_pdf_to_epub(self, task_id, input_path, output_path=None, pipeline=None):
     """Convert a PDF to EPUB executing each step in the provided pipeline.
 
     Args:
@@ -97,6 +97,7 @@ def convert_pdf_to_epub(task_id, input_path, output_path=None, pipeline=None):
 
     start_time = time.time()
     pipeline = pipeline or ["conversion"]
+    total_steps = len(pipeline)
     pipeline_metrics = []
 
     from . import create_app
@@ -108,7 +109,12 @@ def convert_pdf_to_epub(task_id, input_path, output_path=None, pipeline=None):
     )
 
     context = {}
-    for step in pipeline:
+    for i, step in enumerate(pipeline):
+        progress = int((i / total_steps) * 100)
+        self.update_state(
+            state="PROGRESS",
+            meta={"progress": progress, "message": f"Iniciando {step}"},
+        )
         step_start = time.time()
         step_status = "SUCCESS"
         try:
@@ -176,29 +182,54 @@ def convert_pdf_to_epub(task_id, input_path, output_path=None, pipeline=None):
                 if step_status == "FAILURE":
                     conv.status = "FAILURE"
                     conv.output_path = None
+                    metrics["error"] = context.get(step, {}).get("error")
                 else:
                     conv.status = step.upper()
                 db.session.commit()
         if step_status == "FAILURE":
+            error_msg = context.get(step, {}).get("error", "Unknown error")
             total_duration = time.time() - start_time
-            return {
-                "task_id": task_id,
-                "success": False,
-                "output_path": None,
-                "message": context.get(step, {}).get("error"),
-                "duration": total_duration,
-                "pipeline": pipeline_metrics,
-            }
+            self.update_state(
+                state="FAILURE",
+                meta={"progress": progress, "message": error_msg},
+            )
+            raise Exception(error_msg)
+        progress = int(((i + 1) / total_steps) * 100)
+        self.update_state(
+            state="PROGRESS",
+            meta={"progress": progress, "message": f"Completado {step}"},
+        )
 
     total_duration = time.time() - start_time
     final_result = context.get("conversion", {})
+    self.update_state(
+        state="PROGRESS", meta={"progress": 100, "message": "Proceso completado"}
+    )
     with app.app_context():
         conv = Conversion.query.filter_by(task_id=task_id).first()
         if conv:
             conv.status = "SUCCESS"
             metrics = conv.metrics or {}
-            metrics["total_duration"] = total_duration
+            metrics["duration"] = total_duration
+            if final_result.get("engine_used"):
+                metrics["engine_used"] = final_result.get("engine_used")
+            if final_result.get("quality_metrics"):
+                metrics["quality_metrics"] = final_result.get("quality_metrics")
             conv.metrics = metrics
+            # Generate thumbnail for the source PDF
+            try:
+                from pdf2image import convert_from_path  # type: ignore
+
+                thumb_dir = app.config.get("THUMBNAIL_FOLDER", "thumbnails")
+                os.makedirs(thumb_dir, exist_ok=True)
+                thumb_filename = f"{task_id}.png"
+                thumb_path = os.path.join(thumb_dir, thumb_filename)
+                images = convert_from_path(input_path, first_page=1, last_page=1)
+                if images:
+                    images[0].save(thumb_path, "PNG")
+                    conv.thumbnail_path = thumb_filename
+            except Exception:  # pragma: no cover - optional thumbnail generation
+                logger.exception("thumbnail generation failed", extra={"task_id": task_id})
             db.session.commit()
 
     return {

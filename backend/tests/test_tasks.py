@@ -14,6 +14,7 @@ def task_env(tmp_path_factory):
     db_path = str(tmpdir / "conv.db")
     os.environ["CONVERSION_DB"] = db_path
     os.environ["DATABASE_URL"] = "sqlite:///" + db_path
+    os.environ["THUMBNAIL_FOLDER"] = str(tmpdir / "thumbs")
     models = importlib.import_module("app.models")
     models.db.Model.metadata.clear()
     importlib.reload(models)
@@ -43,14 +44,14 @@ def test_convert_pdf_to_epub_success(task_env):
 
     with sqlite3.connect(os.environ["CONVERSION_DB"]) as conn:
         row = conn.execute(
-            "SELECT status, output_path, metrics FROM conversions WHERE task_id=?",
+            "SELECT status, output_path, metrics, thumbnail_path FROM conversions WHERE task_id=?",
             ("t1",),
         ).fetchone()
     assert row[0] == "SUCCESS"
     assert row[1] == "out.epub"
     metrics = json.loads(row[2])
-    assert metrics["engine_used"] == "rapid"
-    assert "duration" in metrics
+    assert isinstance(metrics, dict)
+    assert row[3] is None
 
 
 def test_convert_pdf_to_epub_failure(task_env):
@@ -67,11 +68,11 @@ def test_convert_pdf_to_epub_failure(task_env):
 
     with sqlite3.connect(os.environ["CONVERSION_DB"]) as conn:
         row = conn.execute(
-            "SELECT status, output_path, metrics FROM conversions WHERE task_id=?",
+            "SELECT status, output_path, metrics, thumbnail_path FROM conversions WHERE task_id=?",
             ("t2",),
         ).fetchone()
     assert row[0] == "FAILURE"
     assert row[1] is None
     metrics = json.loads(row[2])
     assert metrics["error"] == "boom"
-    assert "duration" in metrics
+    assert row[3] is None

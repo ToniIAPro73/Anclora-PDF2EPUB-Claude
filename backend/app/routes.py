@@ -1,4 +1,4 @@
-from flask import Blueprint, request, current_app, jsonify
+from flask import Blueprint, request, current_app, jsonify, send_from_directory, url_for
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from celery.result import AsyncResult
@@ -7,6 +7,8 @@ import uuid
 import datetime
 import jwt
 import logging
+import ebooklib
+from ebooklib import epub
 
 try:
     import magic  # type: ignore
@@ -80,6 +82,8 @@ def analyze():
         file.save(tmp.name)
     try:
         result = suggest_best_pipeline(tmp.name)
+        if 'recommended' in result and 'pipeline_id' not in result:
+            result['pipeline_id'] = result['recommended']
     finally:
         os.unlink(tmp.name)
     return jsonify(result)
@@ -194,7 +198,29 @@ def task_status(task_id):
         response['result'] = result.result
     elif result.state == 'FAILURE':
         response['error'] = str(result.info)
+    elif result.info:
+        # For PROGRESS or other intermediate states
+        if isinstance(result.info, dict):
+            response.update(result.info)
+        else:
+            response['message'] = str(result.info)
     return jsonify(response)
+
+
+@bp.route('/api/preview/<conversion_id>', methods=['GET'])
+@token_required
+def preview(conversion_id):
+    conv = Conversion.query.filter_by(task_id=conversion_id).first()
+    if conv is None and conversion_id.isdigit():
+        conv = Conversion.query.get(int(conversion_id))
+    if not conv or conv.status != 'SUCCESS' or not conv.output_path or not os.path.exists(conv.output_path):
+        return jsonify({'error': 'Preview not available'}), 404
+    book = epub.read_epub(conv.output_path)
+    pages = []
+    for item in book.get_items():
+        if item.get_type() == ebooklib.ITEM_DOCUMENT:
+            pages.append(item.get_content().decode('utf-8', errors='ignore'))
+    return jsonify({'pages': pages})
 
 
 @bp.route('/api/history', methods=['GET'])
@@ -203,7 +229,19 @@ def history():
     page = int(request.args.get('page', 1))
     per_page = int(request.args.get('per_page', 10))
     pagination = Conversion.query.order_by(Conversion.id.desc()).paginate(page=page, per_page=per_page, error_out=False)
-    return jsonify([c.to_dict() for c in pagination.items])
+    results = []
+    for c in pagination.items:
+        item = c.to_dict()
+        if c.thumbnail_path:
+            item['thumbnail_url'] = url_for('routes.thumbnail', filename=c.thumbnail_path, _external=False)
+        results.append(item)
+    return jsonify(results)
+
+
+@bp.route('/thumbnails/<path:filename>', methods=['GET'])
+def thumbnail(filename):
+    thumb_dir = current_app.config['THUMBNAIL_FOLDER']
+    return send_from_directory(thumb_dir, filename)
 
 @bp.route('/metrics')
 def metrics():

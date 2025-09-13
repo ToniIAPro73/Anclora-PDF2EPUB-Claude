@@ -9,10 +9,23 @@ import LoginForm from './LoginForm';
 import RegisterForm from './RegisterForm';
 import ProtectedRoute from './ProtectedRoute';
 
+const getInitialTheme = (): 'light' | 'dark' => {
+  const stored = localStorage.getItem('theme') as 'light' | 'dark' | null;
+  if (stored) return stored;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+};
+
 const MainApp: React.FC = () => {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>(getInitialTheme);
   const [currentSection, setCurrentSection] = useState<string>('inicio');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e: MediaQueryListEvent) => setTheme(e.matches ? 'dark' : 'light');
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
@@ -22,21 +35,21 @@ const MainApp: React.FC = () => {
   const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
 
   return (
-    <div className={`app-container ${theme}`} data-theme={theme}>
+    <div className="min-h-screen bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100" data-theme={theme}>
       <Header theme={theme} toggleTheme={toggleTheme} currentSection={currentSection} />
 
-      <main className="main-content">
+      <main className="container mx-auto p-4 sm:p-6 space-y-8">
         {currentSection === 'inicio' && (
-          <div className="hero-section">
-            <h1>Anclora PDF2EPUB</h1>
-            <p>Conversión inteligente de PDF a EPUB3</p>
+          <div className="flex flex-col items-center text-center gap-4">
+            <h1 className="text-2xl sm:text-3xl font-bold">Anclora PDF2EPUB</h1>
+            <p className="text-lg">Conversión inteligente de PDF a EPUB3</p>
             <FileUploader onFileSelected={setSelectedFile} />
           </div>
         )}
 
         {currentSection === 'conversion' && (
-          <div className="conversion-section">
-            <h2>Convertir PDF a EPUB</h2>
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">Convertir PDF a EPUB</h2>
             <FileUploader onFileSelected={setSelectedFile} />
             <ConversionPanel file={selectedFile} />
             <MetricsDisplay />
@@ -44,8 +57,8 @@ const MainApp: React.FC = () => {
         )}
 
         {currentSection === 'history' && (
-          <div className="history-section">
-            <h2>Historial de Conversiones</h2>
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">Historial de Conversiones</h2>
             <ConversionHistory />
           </div>
         )}
