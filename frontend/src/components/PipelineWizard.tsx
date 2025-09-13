@@ -1,32 +1,38 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
-import PreviewModal from './PreviewModal';
 
-interface ConversionPanelProps {
+interface Pipeline {
+  id: string;
+  quality: string;
+  estimated_time: number;
+  cost: number;
+}
+
+interface PipelineWizardProps {
   file: File | null;
 }
 
-const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
-  const [taskId, setTaskId] = useState<string | null>(null);
-  const [status, setStatus] = useState<string | null>(null);
-  const [progress, setProgress] = useState<number>(0);
-  const [statusMessage, setStatusMessage] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
-  const [isConverting, setIsConverting] = useState<boolean>(false);
-  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
-  const [pipelines, setPipelines] = useState<Array<{ id: string; quality: string; estimated_time: number }>>([]);
-  const [selectedPipeline, setSelectedPipeline] = useState<string>('');
-  const [showPreview, setShowPreview] = useState(false);
+type Step = 'analysis' | 'selection' | 'confirmation';
+
+const PipelineWizard: React.FC<PipelineWizardProps> = ({ file }) => {
   const { token, logout } = useAuth();
   const navigate = useNavigate();
+
+  const [step, setStep] = useState<Step>('analysis');
+  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
+  const [pipelines, setPipelines] = useState<Pipeline[]>([]);
+  const [selected, setSelected] = useState<Pipeline | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isConverting, setIsConverting] = useState<boolean>(false);
+  const [status, setStatus] = useState<string | null>(null);
 
   const analyzeFile = async () => {
     if (!file) return;
     setError(null);
     setIsAnalyzing(true);
     setPipelines([]);
-    setSelectedPipeline('');
+    setSelected(null);
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -46,6 +52,7 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
         throw new Error(data.error || 'Error al analizar');
       }
       setPipelines(data.pipelines || []);
+      setStep('selection');
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -55,25 +62,24 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
 
   useEffect(() => {
     if (file) {
+      setStep('analysis');
       analyzeFile();
     } else {
       setPipelines([]);
-      setSelectedPipeline('');
+      setSelected(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [file]);
 
   const startConversion = async () => {
-    if (!file || !selectedPipeline) return;
+    if (!file || !selected) return;
     setError(null);
-    setTaskId(null);
     setStatus(null);
-    setProgress(0);
-    setStatusMessage('');
     setIsConverting(true);
     try {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('pipeline_id', selectedPipeline);
+      formData.append('pipeline_id', selected.id);
       const res = await fetch('/api/convert', {
         method: 'POST',
         body: formData,
@@ -89,7 +95,6 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
       if (!res.ok) {
         throw new Error(data.error || 'Error en la conversión');
       }
-      setTaskId(data.task_id);
       pollStatus(data.task_id);
     } catch (err: any) {
       setError(err.message);
@@ -100,7 +105,7 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
   const pollStatus = (id: string) => {
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/status/${id}` , {
+        const res = await fetch(`/api/status/${id}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
         if (res.status === 401) {
@@ -112,18 +117,9 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
         }
         const data = await res.json();
         setStatus(data.status);
-        if (data.status === 'PROGRESS') {
-          if (typeof data.progress === 'number') {
-            setProgress(data.progress);
-          }
-          if (data.message) {
-            setStatusMessage(data.message);
-          }
-        } else if (data.status === 'SUCCESS') {
+        if (data.status === 'SUCCESS') {
           clearInterval(interval);
           setIsConverting(false);
-          setProgress(100);
-          setStatusMessage('Conversión completada');
           if (data.result && data.result.output_path) {
             const downloadRes = await fetch(data.result.output_path);
             const blob = await downloadRes.blob();
@@ -140,7 +136,6 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
           clearInterval(interval);
           setIsConverting(false);
           setError(data.error || 'Error en la conversión');
-          setStatusMessage('');
         }
       } catch (err: any) {
         clearInterval(interval);
@@ -151,10 +146,15 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
   };
 
   return (
-    <div className="conversion-panel">
-      {isAnalyzing && <p>Analizando...</p>}
-      {pipelines.length > 0 && (
-        <div className="pipeline-list">
+    <div className="pipeline-wizard">
+      {error && <p className="error">{error}</p>}
+      {step === 'analysis' && (
+        <div>
+          {isAnalyzing ? <p>Analizando...</p> : <p>Preparando análisis...</p>}
+        </div>
+      )}
+      {step === 'selection' && (
+        <div className="pipeline-selection">
           <h3>Opciones de conversión</h3>
           <ul>
             {pipelines.map((p) => (
@@ -164,35 +164,33 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
                     type="radio"
                     name="pipeline"
                     value={p.id}
-                    checked={selectedPipeline === p.id}
-                    onChange={() => setSelectedPipeline(p.id)}
+                    checked={selected?.id === p.id}
+                    onChange={() => setSelected(p)}
                   />
-                  {p.quality} - {p.estimated_time}s
+                  Pipeline {p.quality} - {p.estimated_time}s - {p.cost}$
                 </label>
               </li>
             ))}
           </ul>
+          <button disabled={!selected} onClick={() => setStep('confirmation')}>
+            Confirmar
+          </button>
         </div>
       )}
-      <button onClick={startConversion} disabled={!file || !selectedPipeline || isConverting}>
-        {isConverting ? 'Convirtiendo...' : 'Enviar a convertir'}
-      </button>
-      {isConverting && (
-        <div className="w-full mt-4">
-          <div className="w-full bg-gray-200 rounded h-4">
-            <div
-              className="bg-blue-500 h-4 rounded"
-              style={{ width: `${progress}%` }}
-            ></div>
-          </div>
-          <p className="mt-2 text-sm">{statusMessage || `Progreso: ${progress}%`}</p>
+      {step === 'confirmation' && selected && (
+        <div className="pipeline-confirmation">
+          <h3>Confirmar conversión</h3>
+          <p>Calidad: {selected.quality}</p>
+          <p>Tiempo estimado: {selected.estimated_time}s</p>
+          <p>Costo: {selected.cost}$</p>
+          <button disabled={isConverting} onClick={startConversion}>
+            {isConverting ? 'Convirtiendo...' : 'Convertir'}
+          </button>
+          {status && <p>Estado: {status}</p>}
         </div>
       )}
-      {taskId && <p>Task ID: {taskId}</p>}
-      {status && !isConverting && <p>Estado: {status}</p>}
-      {error && <p className="error">{error}</p>}
     </div>
   );
 };
 
-export default ConversionPanel;
+export default PipelineWizard;

@@ -7,6 +7,8 @@ import uuid
 import datetime
 import jwt
 import logging
+import ebooklib
+from ebooklib import epub
 
 try:
     import magic  # type: ignore
@@ -196,7 +198,29 @@ def task_status(task_id):
         response['result'] = result.result
     elif result.state == 'FAILURE':
         response['error'] = str(result.info)
+    elif result.info:
+        # For PROGRESS or other intermediate states
+        if isinstance(result.info, dict):
+            response.update(result.info)
+        else:
+            response['message'] = str(result.info)
     return jsonify(response)
+
+
+@bp.route('/api/preview/<conversion_id>', methods=['GET'])
+@token_required
+def preview(conversion_id):
+    conv = Conversion.query.filter_by(task_id=conversion_id).first()
+    if conv is None and conversion_id.isdigit():
+        conv = Conversion.query.get(int(conversion_id))
+    if not conv or conv.status != 'SUCCESS' or not conv.output_path or not os.path.exists(conv.output_path):
+        return jsonify({'error': 'Preview not available'}), 404
+    book = epub.read_epub(conv.output_path)
+    pages = []
+    for item in book.get_items():
+        if item.get_type() == ebooklib.ITEM_DOCUMENT:
+            pages.append(item.get_content().decode('utf-8', errors='ignore'))
+    return jsonify({'pages': pages})
 
 
 @bp.route('/api/history', methods=['GET'])

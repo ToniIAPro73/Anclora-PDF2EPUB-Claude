@@ -82,9 +82,9 @@ def _task_postrun(sender=None, task_id=None, state=None, **kwargs):  # pragma: n
     )
 
 
-@celery_app.task(name="convert_pdf_to_epub")
+@celery_app.task(bind=True, name="convert_pdf_to_epub")
 
-def convert_pdf_to_epub(task_id, input_path, output_path=None, pipeline=None):
+def convert_pdf_to_epub(self, task_id, input_path, output_path=None, pipeline=None):
     """Convert a PDF to EPUB executing each step in the provided pipeline.
 
     Args:
@@ -97,6 +97,7 @@ def convert_pdf_to_epub(task_id, input_path, output_path=None, pipeline=None):
 
     start_time = time.time()
     pipeline = pipeline or ["conversion"]
+    total_steps = len(pipeline)
     pipeline_metrics = []
 
     from . import create_app
@@ -108,7 +109,12 @@ def convert_pdf_to_epub(task_id, input_path, output_path=None, pipeline=None):
     )
 
     context = {}
-    for step in pipeline:
+    for i, step in enumerate(pipeline):
+        progress = int((i / total_steps) * 100)
+        self.update_state(
+            state="PROGRESS",
+            meta={"progress": progress, "message": f"Iniciando {step}"},
+        )
         step_start = time.time()
         step_status = "SUCCESS"
         try:
@@ -181,18 +187,24 @@ def convert_pdf_to_epub(task_id, input_path, output_path=None, pipeline=None):
                     conv.status = step.upper()
                 db.session.commit()
         if step_status == "FAILURE":
+            error_msg = context.get(step, {}).get("error", "Unknown error")
             total_duration = time.time() - start_time
-            return {
-                "task_id": task_id,
-                "success": False,
-                "output_path": None,
-                "message": context.get(step, {}).get("error"),
-                "duration": total_duration,
-                "pipeline": pipeline_metrics,
-            }
+            self.update_state(
+                state="FAILURE",
+                meta={"progress": progress, "message": error_msg},
+            )
+            raise Exception(error_msg)
+        progress = int(((i + 1) / total_steps) * 100)
+        self.update_state(
+            state="PROGRESS",
+            meta={"progress": progress, "message": f"Completado {step}"},
+        )
 
     total_duration = time.time() - start_time
     final_result = context.get("conversion", {})
+    self.update_state(
+        state="PROGRESS", meta={"progress": 100, "message": "Proceso completado"}
+    )
     with app.app_context():
         conv = Conversion.query.filter_by(task_id=task_id).first()
         if conv:

@@ -87,7 +87,7 @@ Convertir documentos PDF a formato EPUB3 de manera inteligente, abordando los pr
 │ Message Queue: Redis + Celery (Async Processing)        │
 ├─────────────────────────────────────────────────────────┤
 │ Conversion Engine: Multi-Format Intelligent Processor   │
-│ ├── Basic Conversions (PyMuPDF + EbookLib)             │
+│ ├── Basic Conversions (PyMuPDF + EbookLib)              │
 │ ├── Advanced Formats (OCR + specialized libraries)      │
 │ ├── AI Enhancement (Analysis + quality optimization)    │
 │ └── Monitoring (Logs + custom metrics)                  │
