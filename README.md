@@ -106,7 +106,7 @@ POSTGRES_PASSWORD=anclora_password
 POSTGRES_PORT=5432
 
 # Configuración de la aplicación
-FLASK_ENV=production
+FLASK_ENV=development
 FLASK_APP=app
 SECRET_KEY=your_super_secret_key_here
 JWT_SECRET=your_jwt_secret_here
