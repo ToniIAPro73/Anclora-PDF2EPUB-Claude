@@ -10,6 +10,7 @@ import logging
 
 try:
     import magic  # type: ignore
+
 except ImportError:  # pragma: no cover - optional dependency
     magic = None
 from functools import wraps
@@ -29,21 +30,6 @@ conversion_counter = Counter('pdf_conversions_total', 'Total PDF conversion requ
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-def token_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        auth = request.headers.get('Authorization', '')
-        if not auth.startswith('Bearer '):
-            return jsonify({'error': 'Missing token'}), 401
-        token = auth.split(' ')[1]
-        try:
-            jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
-        except jwt.InvalidTokenError:
-            return jsonify({'error': 'Invalid token'}), 401
-        return f(*args, **kwargs)
-    return decorated
 
 
 @bp.route('/api/register', methods=['POST'])
