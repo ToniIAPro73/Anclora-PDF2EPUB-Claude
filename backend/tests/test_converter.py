@@ -134,6 +134,9 @@ def test_enhanced_converter_uses_recommended_engine(monkeypatch):
     result = converter.convert(pdf_path)
     assert result["engine_used"] == "balanced"
     assert called.get("engine") == "balanced"
+    assert result["pipeline_used"] == ["analyze", "balanced"]
+    assert "quality" in result["pipeline_metrics"]
+    assert "cost" in result["pipeline_metrics"]
     os.remove(pdf_path)
 
 
@@ -145,4 +148,15 @@ def test_rapid_converter_generates_epub(tmp_path):
     result = converter.convert(pdf_path, str(output_path), analysis, metadata={"title": "Test"})
     assert result["success"] is True
     assert output_path.exists()
+    os.remove(pdf_path)
+
+
+def test_suggest_best_pipeline_returns_sequence_and_metrics():
+    pdf_path = _create_simple_pdf()
+    converter = EnhancedPDFToEPUBConverter()
+    pipeline, metrics, analysis = converter.suggest_best_pipeline(pdf_path)
+    assert pipeline[0] == "analyze"
+    assert pipeline[-1] in [e.value for e in ConversionEngine]
+    assert "quality" in metrics and "cost" in metrics
+    assert isinstance(analysis, PDFAnalysis)
     os.remove(pdf_path)

@@ -199,6 +199,36 @@ class PDFAnalyzer:
                 language=None
             )
 
+
+class SequenceEvaluator:
+    """Evaluates different conversion pipelines and suggests the best one."""
+
+    PIPELINE_TEMPLATES = {
+        ConversionEngine.RAPID: {
+            "sequence": ["analyze", ConversionEngine.RAPID.value],
+            "metrics": {"quality": 0.7, "cost": 1},
+        },
+        ConversionEngine.BALANCED: {
+            "sequence": ["analyze", ConversionEngine.BALANCED.value],
+            "metrics": {"quality": 0.85, "cost": 2},
+        },
+        ConversionEngine.QUALITY: {
+            "sequence": ["analyze", ConversionEngine.QUALITY.value],
+            "metrics": {"quality": 0.95, "cost": 3},
+        },
+    }
+
+    def __init__(self, analyzer: PDFAnalyzer):
+        self.analyzer = analyzer
+
+    def evaluate(self, pdf_path, metadata=None):
+        """Return best pipeline (sequence and metrics) and the analysis."""
+        analysis = self.analyzer.analyze_pdf(pdf_path)
+        template = self.PIPELINE_TEMPLATES.get(
+            analysis.recommended_engine, self.PIPELINE_TEMPLATES[ConversionEngine.RAPID]
+        )
+        return template["sequence"], template["metrics"], analysis
+
 class BaseConverter:
     def convert(self, pdf_path, output_path, analysis, metadata=None):
         """Método base que debe ser implementado por subclases"""
@@ -603,16 +633,17 @@ class EnhancedPDFToEPUBConverter:
         self.engines = {
             ConversionEngine.RAPID: RapidConverter(),
             ConversionEngine.BALANCED: BalancedConverter(),
-            ConversionEngine.QUALITY: QualityConverter()
+            ConversionEngine.QUALITY: QualityConverter(),
         }
 
-    def evaluate_sequences(self, pdf_path, analysis=None):
-        """Evalúa las distintas secuencias de conversión disponibles"""
-        if analysis is None:
-            analysis = self.analyzer.analyze_pdf(pdf_path)
-        return pipeline_evaluate_sequences(pdf_path, analysis)
-    
-    def convert(self, pdf_path, output_path=None, engine=None, metadata=None):
+        self.sequence_evaluator = SequenceEvaluator(self.analyzer)
+
+    def suggest_best_pipeline(self, pdf_path, metadata=None):
+        """Suggest an optimal pipeline for the given PDF."""
+        return self.sequence_evaluator.evaluate(pdf_path, metadata)
+
+    def convert(self, pdf_path, output_path=None, engine=None, metadata=None, pipeline=None):
+
         """
         Convierte un PDF a EPUB usando el motor especificado o uno automáticamente seleccionado
         
@@ -641,29 +672,47 @@ class EnhancedPDFToEPUBConverter:
                     'language': 'es',
                 }
             
-            # 1. Analizar PDF
-            logger.info(f"Analyzing PDF: {pdf_path}")
-            analysis = self.analyzer.analyze_pdf(pdf_path)
+            # 1. Obtener pipeline si no se proporciona
+            if pipeline is None:
+                pipeline, pipeline_metrics, analysis = self.suggest_best_pipeline(
+                    pdf_path, metadata
+                )
+            else:
+                pipeline_metrics = {}
+                analysis = self.analyzer.analyze_pdf(pdf_path)
 
+            logger.info(f"Pipeline to execute: {pipeline}")
+
+            # 2. Actualizar metadatos con información del análisis
             if analysis.language:
                 metadata['language'] = analysis.language
             metadata['ocr_languages'] = get_ocr_lang(analysis.language)
 
-            # 2. Seleccionar motor
-            selected_engine = engine or analysis.recommended_engine
-            logger.info(f"Using conversion engine: {selected_engine.value}")
-            
-            # 3. Convertir con el motor seleccionado
-            logger.info(f"Starting conversion with {selected_engine.value} engine")
-            result = self.engines[selected_engine].convert(
-                pdf_path, output_path, analysis, metadata
-            )
-            
+            # 3. Ejecutar la secuencia definida en el pipeline
+            selected_engine = engine
+            result = None
+            for step in pipeline:
+                if step == "analyze":
+                    continue  # análisis ya realizado
+                if step in [e.value for e in ConversionEngine]:
+                    selected_engine = ConversionEngine[step.upper()]
+                    logger.info(f"Starting conversion with {selected_engine.value} engine")
+                    result = self.engines[selected_engine].convert(
+                        pdf_path, output_path, analysis, metadata
+                    )
+
+            if result is None:
+                # Fallback to engine selection if pipeline did not trigger conversion
+                selected_engine = engine or analysis.recommended_engine
+                result = self.engines[selected_engine].convert(
+                    pdf_path, output_path, analysis, metadata
+                )
+
             if result["success"]:
                 logger.info(f"Conversion successful: {output_path}")
             else:
                 logger.error(f"Conversion failed: {result['message']}")
-            
+
             # Añadir información adicional al resultado
             result["output_path"] = output_path
             result["engine_used"] = selected_engine.value
@@ -675,7 +724,9 @@ class EnhancedPDFToEPUBConverter:
                 "issues": analysis.issues,
                 "language": analysis.language,
             }
-            
+            result["pipeline_used"] = pipeline
+            result["pipeline_metrics"] = pipeline_metrics
+
             return result
             
         except Exception as e:
