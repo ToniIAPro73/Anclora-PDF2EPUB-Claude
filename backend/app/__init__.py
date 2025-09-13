@@ -1,5 +1,6 @@
 from flask import Flask
 import os
+from .models import init_db
 
 def create_app():
     app = Flask(__name__)
@@ -16,10 +17,11 @@ def create_app():
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     os.makedirs(app.config['RESULTS_FOLDER'], exist_ok=True)
     
-    # Registrar rutas
+    # Inicializar base de datos y registrar rutas
+    init_db()
     from . import routes
     app.register_blueprint(routes.bp)
-    
+
     return app
 
 # Para ejecución directa
