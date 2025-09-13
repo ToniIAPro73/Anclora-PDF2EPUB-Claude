@@ -47,8 +47,8 @@ services:
       - DATABASE_URL=${DATABASE_URL}
     volumes:
       - ./backend:/app
-      - uploads:/${UPLOAD_FOLDER}
-      - results:/${RESULTS_FOLDER}
+      - uploads:/app/${UPLOAD_FOLDER}
+      - results:/app/${RESULTS_FOLDER}
     depends_on:
       - redis
     networks:
@@ -69,8 +69,8 @@ services:
       - WORKER_METRICS_PORT=${WORKER_METRICS_PORT}
     volumes:
       - ./backend:/app
-      - uploads:/${UPLOAD_FOLDER}
-      - results:/${RESULTS_FOLDER}
+      - uploads:/app/${UPLOAD_FOLDER}
+      - results:/app/${RESULTS_FOLDER}
     depends_on:
       - redis
       - db
