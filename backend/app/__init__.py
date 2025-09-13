@@ -1,12 +1,16 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from datetime import datetime
 import os
 from .models import init_db
 
 db = SQLAlchemy()
 migrate = Migrate()
+limiter = Limiter(key_func=get_remote_address,
+                  default_limits=["200 per day", "50 per hour"])
 
 def create_app():
     app = Flask(__name__)
@@ -26,8 +30,7 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
 
-    with app.app_context():
-        db.create_all()
+    limiter.init_app(app)
     
     # Asegurarse de que existan los directorios
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -39,6 +42,13 @@ def create_app():
     from .auth import auth_bp
     app.register_blueprint(routes.bp)
     app.register_blueprint(auth_bp)
+
+    @app.errorhandler(429)
+    def ratelimit_handler(e):
+        return jsonify({
+            "error": "Rate limit exceeded",
+            "message": e.description
+        }), 429
 
     return app
 
