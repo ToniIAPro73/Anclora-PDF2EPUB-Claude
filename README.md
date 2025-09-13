@@ -312,108 +312,354 @@ anclora-pdf2epub/
 ├── README.md                       # Esta documentación
 └── .gitignore                      # Archivos ignorados por Git
 ```
-Uso del Sistema
-1. Subir un PDF
+## 📖 Guía de Uso
 
-Arrastra y suelta un archivo PDF en la zona de carga o haz clic para seleccionarlo
-Se realizará un análisis automático del documento para detectar su complejidad y recomendaciones
+### 1. 📤 Subir un PDF
 
-2. Iniciar Conversión
+1. **Acceder a la aplicación** en http://localhost
+2. **Iniciar sesión** con tus credenciales
+3. **Arrastrar y soltar** un archivo PDF o hacer clic para seleccionarlo
+4. **Validación automática**: El sistema verifica formato y tamaño (máx. 50MB)
 
-Una vez subido el archivo, presiona el botón "Iniciar Conversión"
-El sistema seleccionará automáticamente el motor de conversión óptimo según la complejidad detectada
-Puedes ver el progreso en tiempo real con detalles de cada etapa
+### 2. 🔍 Análisis Automático
 
-3. Descargar el EPUB
+El sistema analiza automáticamente el documento y detecta:
+- **Tipo de contenido**: Texto, imágenes, escaneado, técnico, académico
+- **Complejidad**: Score de 1-5 basado en múltiples factores
+- **Idioma**: Detección automática
+- **Elementos especiales**: Tablas, fórmulas, gráficos
 
-Al completar la conversión, se mostrarán métricas de calidad
-El botón "Descargar EPUB" te permitirá guardar el archivo convertido
-También puedes ver una vista previa del resultado antes de descargar
+### 3. ⚙️ Selección de Motor
 
-Motores de Conversión
-El sistema utiliza tres motores especializados:
+Basado en el análisis, se recomienda automáticamente el motor óptimo:
+- **🚀 Rapid**: Para documentos simples
+- **⚖️ Balanced**: Para documentos mixtos
+- **💎 Quality**: Para documentos complejos
 
-Motor Rápido (Rapid)
+### 4. 🔄 Conversión en Tiempo Real
 
-Para documentos simples basados principalmente en texto
-Tiempo típico: 3-5 segundos
-Mejor para: artículos, documentos sencillos
+- **Progreso visual**: Barra de progreso con etapas detalladas
+- **Logs en vivo**: Información detallada del procesamiento
+- **Métricas**: Tiempo estimado y calidad esperada
+
+### 5. 📥 Descarga y Resultados
+
+- **Métricas de calidad**: Porcentaje de texto/imágenes preservadas
+- **Descarga automática**: El EPUB se descarga al completarse
+- **Historial**: Todas las conversiones quedan registradas
+
+## 🎯 Motores de Conversión Especializados
+
+### 🚀 **Rapid Engine**
+```yaml
+Propósito: Documentos simples de solo texto
+Tecnologías: PyMuPDF + EbookLib
+Tiempo típico: 2-5 segundos
+Calidad: 95% texto, 0% imágenes
+Casos de uso:
+  - Artículos académicos
+  - Documentos oficiales
+  - Libros de texto simple
+```
+
+### ⚖️ **Balanced Engine**
+```yaml
+Propósito: Documentos con texto e imágenes
+Tecnologías: PyMuPDF + EbookLib + Image Processing
+Tiempo típico: 10-30 segundos
+Calidad: 100% texto, 90% imágenes
+Casos de uso:
+  - Informes empresariales
+  - Presentaciones
+  - Manuales ilustrados
+  - Revistas digitales
+```
+
+### 💎 **Quality Engine**
+```yaml
+Propósito: Documentos complejos y escaneados
+Tecnologías: Tesseract OCR + Advanced Processing
+Tiempo típico: 30-120 segundos
+Calidad: 100% texto (con OCR), 100% imágenes
+Casos de uso:
+  - Documentos escaneados
+  - PDFs con fórmulas matemáticas
+  - Libros técnicos complejos
+  - Documentos históricos
+```
 
 
-Motor Balanceado (Balanced)
 
-Para documentos mixtos con texto e imágenes
-Tiempo típico: 8-12 segundos
-Mejor para: informes, presentaciones, documentos generales
+## ⚙️ Configuración Avanzada
 
+### 🔧 Personalización de Puertos
 
-Motor de Máxima Calidad (Quality)
+Modifica los valores en el archivo `.env`:
 
-Para documentos complejos o escaneados que requieren OCR
-Tiempo típico: 15-25 segundos
-Mejor para: libros, documentos escaneados, documentos técnicos con fórmulas
+```env
+FRONTEND_PORT=3003        # Puerto para el frontend React
+BACKEND_PORT=5175         # Puerto para la API Flask
+NGINX_PORT=80             # Puerto para Nginx
+WORKER_METRICS_PORT=8001  # Puerto métricas del worker
+POSTGRES_PORT=5432        # Puerto PostgreSQL
+REDIS_PORT=6379           # Puerto Redis
+```
 
+### 📈 Escalado de Workers
 
+Para mejorar el rendimiento en conversiones paralelas, ajusta el número de workers:
 
-Configuración Avanzada
-Personalización de Puertos
-Modifica los valores en el archivo .env para cambiar los puertos:
-envFRONTEND_PORT=3003    # Puerto para el frontend React
-BACKEND_PORT=5175     # Puerto para la API Flask
-NGINX_PORT=80         # Puerto para Nginx
-WORKER_METRICS_PORT=8001 # Puerto métricas del worker
-Escalado de Workers
-Para ajustar el número de workers de Celery y mejorar el rendimiento en conversiones paralelas:
-yaml# En docker-compose.yml
+```yaml
+# En docker-compose.yml
 worker:
   deploy:
-    replicas: 4  # Ajusta según tus necesidades
-Solución de Problemas
-Problemas Comunes y Soluciones
+    replicas: 4  # Ajusta según CPU disponible
+  environment:
+    - CELERY_CONCURRENCY=2  # Procesos por worker
+```
 
-Los contenedores no inician correctamente
+### 🔍 Monitoreo y Observabilidad
 
-bash   # Verificar logs
-   docker-compose logs
-   
-   # Reiniciar servicios
-   docker-compose restart
+#### Prometheus Metrics
+- **URL**: http://localhost:9090
+- **Métricas disponibles**:
+  - `conversion_requests_total`
+  - `conversion_duration_seconds`
+  - `conversion_errors_total`
+  - `active_workers`
 
-Error en la conversión de PDFs escaneados
+#### Grafana Dashboard
+- **URL**: http://localhost:3000
+- **Credenciales**: admin/admin
+- **Dashboards preconfigurados**:
+  - Conversions Overview
+  - System Performance
+  - Error Tracking
 
-Asegúrate de que el OCR esté correctamente configurado
-Verifica que el documento escaneado tenga suficiente calidad
+### 🔒 Configuración de Seguridad
 
+```env
+# JWT Configuration
+JWT_SECRET=your_super_secure_jwt_secret_here
+JWT_EXPIRATION=3600  # 1 hora
 
-Problemas de permisos en volúmenes Docker
+# Rate Limiting
+RATE_LIMIT_PER_MINUTE=60
+RATE_LIMIT_PER_HOUR=1000
 
-bash   # Corregir permisos
-   sudo chown -R 1000:1000 ./backend/uploads ./backend/results
-Roadmap
+# File Upload Limits
+MAX_FILE_SIZE=52428800  # 50MB
+ALLOWED_EXTENSIONS=pdf
+```
 
-✅ Versión MVP con soporte básico PDF → EPUB
-✅ Integración de OCR para documentos escaneados
-✅ Análisis automático con IA
-⏳ Vista previa EPUB integrada
-⏳ Panel analytics con KPIs detallados
-⏳ Optimizaciones rendimiento OCR
-🔜 Sistema autenticación OAuth
-🔜 Internacionalización (español, inglés, francés)
+## 🚨 Solución de Problemas
 
-Contribuir
+### Problemas Comunes
 
-Haz un fork del repositorio
-Crea una rama para tu función (git checkout -b feature/amazing-feature)
-Haz commit de tus cambios (git commit -m 'Add amazing feature')
-Push a la rama (git push origin feature/amazing-feature)
-Abre un Pull Request
+#### ❌ Los contenedores no inician correctamente
 
-Licencia
-MIT
-Equipo
+```bash
+# Verificar logs detallados
+docker-compose logs -f
 
-Desarrollado por el equipo Anclora
-Contacto: equipo@anclora.com
+# Verificar estado de servicios
+docker-compose ps
 
+# Reiniciar servicios específicos
+docker-compose restart backend worker
 
-Anclora PDF2EPUB - Parte del ecosistema Anclora para gestión y transformación inteligente de documentos digitales.
+# Reconstruir imágenes
+docker-compose build --no-cache
+```
+
+#### ❌ Error en conversión de PDFs escaneados
+
+```bash
+# Verificar que Tesseract esté instalado
+docker-compose exec worker tesseract --version
+
+# Verificar logs del worker
+docker-compose logs worker
+
+# Probar con motor Quality específicamente
+curl -X POST http://localhost/api/convert \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "file=@document.pdf" \
+  -F "pipeline_id=quality"
+```
+
+#### ❌ Problemas de permisos en volúmenes
+
+```bash
+# Corregir permisos de directorios
+sudo chown -R 1000:1000 ./uploads ./results
+
+# Verificar permisos
+ls -la uploads/ results/
+
+# Recrear volúmenes si es necesario
+docker-compose down -v
+docker-compose up -d
+```
+
+#### ❌ Base de datos no conecta
+
+```bash
+# Verificar PostgreSQL
+docker-compose logs postgres
+
+# Conectar manualmente para debug
+docker-compose exec postgres psql -U anclora_user -d anclora_pdf2epub
+
+# Reinicializar base de datos
+docker-compose down
+docker volume rm anclora-pdf2epub-claude_postgres_data
+docker-compose up -d
+```
+## 🗺️ Roadmap
+
+### ✅ **Completado (v1.0)**
+- ✅ Sistema de conversión PDF→EPUB con 3 motores especializados
+- ✅ Análisis automático con IA (6 tipos de contenido)
+- ✅ Interfaz React moderna con autenticación JWT
+- ✅ Arquitectura de microservicios con Docker
+- ✅ OCR integrado para documentos escaneados
+- ✅ Monitoreo con Prometheus + Grafana
+- ✅ API REST completa con documentación
+- ✅ Tests unitarios e integración
+
+### 🔄 **En Desarrollo (v1.1)**
+- ⏳ Vista previa EPUB integrada en el navegador
+- ⏳ Cache de resultados con Redis
+- ⏳ Batch processing para múltiples archivos
+- ⏳ Editor post-conversión básico
+
+### 🔜 **Próximas Versiones**
+- 🔜 API pública con rate limiting por API key
+- 🔜 Webhooks para notificaciones externas
+- 🔜 Multi-tenancy para organizaciones
+- 🔜 Integración SSO (LDAP, SAML, OAuth)
+- 🔜 Internacionalización (ES, EN, FR)
+- 🔜 Mobile app (React Native)
+
+## 🤝 Contribuir
+
+¡Las contribuciones son bienvenidas! Por favor sigue estos pasos:
+
+### 1. **Fork y Clone**
+```bash
+git clone https://github.com/tu-usuario/Anclora-PDF2EPUB-Claude.git
+cd Anclora-PDF2EPUB-Claude
+```
+
+### 2. **Crear Rama de Feature**
+```bash
+git checkout -b feature/amazing-feature
+```
+
+### 3. **Desarrollo**
+```bash
+# Instalar dependencias
+docker-compose up -d
+
+# Hacer cambios y probar
+npm test  # Frontend
+pytest    # Backend
+```
+
+### 4. **Commit y Push**
+```bash
+git add .
+git commit -m "feat: add amazing feature"
+git push origin feature/amazing-feature
+```
+
+### 5. **Pull Request**
+- Abrir PR con descripción detallada
+- Asegurar que todos los tests pasen
+- Solicitar review del equipo
+
+### 📋 **Guidelines de Contribución**
+- Seguir convenciones de código existentes
+- Añadir tests para nuevas funcionalidades
+- Actualizar documentación cuando sea necesario
+- Usar commits semánticos (feat, fix, docs, etc.)
+
+## 📊 Stack Tecnológico
+
+### **Frontend**
+- **React 18.2** + **TypeScript 5.2**
+- **Vite** (build tool)
+- **Tailwind CSS** (styling)
+- **React Router** (routing)
+- **React Dropzone** (file upload)
+
+### **Backend**
+- **Flask 3.0** (web framework)
+- **Celery 5.3** (async processing)
+- **SQLAlchemy 3.1** (ORM)
+- **PostgreSQL 15** (database)
+- **Redis 7** (message broker)
+- **PyJWT** (authentication)
+
+### **Infraestructura**
+- **Docker** + **Docker Compose**
+- **Nginx** (reverse proxy)
+- **Prometheus** (metrics)
+- **Grafana** (monitoring)
+
+### **Herramientas de Conversión**
+- **PyMuPDF** (PDF processing)
+- **EbookLib** (EPUB generation)
+- **Tesseract OCR** (text recognition)
+- **Pandoc** (document conversion)
+- **pdf2htmlEX** (PDF to HTML)
+
+## 📄 Licencia
+
+Este proyecto está licenciado bajo la **Licencia MIT** - ver el archivo [LICENSE](LICENSE) para más detalles.
+
+```
+MIT License
+
+Copyright (c) 2024 Anclora Team
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+```
+
+## 👥 Equipo y Contacto
+
+### **Desarrollado por**
+- **Equipo Anclora** - Especialistas en transformación digital de documentos
+- **GitHub**: [@ToniIAPro73](https://github.com/ToniIAPro73)
+
+### **Contacto**
+- **Email**: supertoniia@gmail.com
+- **Issues**: [GitHub Issues](https://github.com/ToniIAPro73/Anclora-PDF2EPUB-Claude/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/ToniIAPro73/Anclora-PDF2EPUB-Claude/discussions)
+
+### **Soporte**
+- 📖 **Documentación**: Ver [docs/](docs/)
+- 🐛 **Reportar Bug**: [Crear Issue](https://github.com/ToniIAPro73/Anclora-PDF2EPUB-Claude/issues/new)
+- 💡 **Solicitar Feature**: [Crear Discussion](https://github.com/ToniIAPro73/Anclora-PDF2EPUB-Claude/discussions/new)
+
+---
+
+<div align="center">
+
+**🚀 Anclora PDF2EPUB - Conversión Inteligente de Documentos**
+
+*Parte del ecosistema Anclora para gestión y transformación inteligente de documentos digitales*
+
+[![GitHub stars](https://img.shields.io/github/stars/ToniIAPro73/Anclora-PDF2EPUB-Claude?style=social)](https://github.com/ToniIAPro73/Anclora-PDF2EPUB-Claude/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/ToniIAPro73/Anclora-PDF2EPUB-Claude?style=social)](https://github.com/ToniIAPro73/Anclora-PDF2EPUB-Claude/network/members)
+
+</div>
