@@ -37,6 +37,7 @@ Requisitos Previos
 Docker y Docker Compose
 Node.js 16+ (solo para desarrollo local)
 Python 3.9+ (solo para desarrollo local)
+Pandoc y pdf2htmlEX (para conversiones avanzadas)
 
 Inicio Rápido
 
@@ -93,6 +94,8 @@ bashcd backend
 python -m venv venv
 source venv/bin/activate  # En Windows: venv\Scripts\activate
 pip install -r requirements.txt
+# pypandoc descargará Pandoc automáticamente si no está instalado
+# pdf2htmlEX debe estar disponible en el sistema (ej. `apt-get install pdf2htmlex`)
 flask run --port=5175
 La API estará disponible en http://localhost:5175
 Pruebas

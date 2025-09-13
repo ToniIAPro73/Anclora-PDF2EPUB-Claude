@@ -10,6 +10,7 @@ from langdetect import detect, LangDetectException
 import tempfile
 import uuid
 import logging
+from .pipeline import evaluate_sequences as pipeline_evaluate_sequences
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -634,6 +635,7 @@ class EnhancedPDFToEPUBConverter:
             ConversionEngine.BALANCED: BalancedConverter(),
             ConversionEngine.QUALITY: QualityConverter(),
         }
+
         self.sequence_evaluator = SequenceEvaluator(self.analyzer)
 
     def suggest_best_pipeline(self, pdf_path, metadata=None):
@@ -641,6 +643,7 @@ class EnhancedPDFToEPUBConverter:
         return self.sequence_evaluator.evaluate(pdf_path, metadata)
 
     def convert(self, pdf_path, output_path=None, engine=None, metadata=None, pipeline=None):
+
         """
         Convierte un PDF a EPUB usando el motor especificado o uno automáticamente seleccionado
         
