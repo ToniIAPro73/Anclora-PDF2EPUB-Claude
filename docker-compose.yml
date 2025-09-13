@@ -44,12 +44,14 @@ services:
       - UPLOAD_FOLDER=${UPLOAD_FOLDER}
       - RESULTS_FOLDER=${RESULTS_FOLDER}
       - CONVERSION_TIMEOUT=${CONVERSION_TIMEOUT}
+      - DATABASE_URL=${DATABASE_URL}
     volumes:
       - ./backend:/app
       - uploads:/${UPLOAD_FOLDER}
       - results:/${RESULTS_FOLDER}
     depends_on:
       - redis
+      - db
     networks:
       - anclora-network
 
@@ -64,12 +66,14 @@ services:
       - UPLOAD_FOLDER=${UPLOAD_FOLDER}
       - RESULTS_FOLDER=${RESULTS_FOLDER}
       - CONVERSION_TIMEOUT=${CONVERSION_TIMEOUT}
+      - DATABASE_URL=${DATABASE_URL}
     volumes:
       - ./backend:/app
       - uploads:/${UPLOAD_FOLDER}
       - results:/${RESULTS_FOLDER}
     depends_on:
       - redis
+      - db
     networks:
       - anclora-network
 
@@ -83,10 +87,24 @@ services:
     networks:
       - anclora-network
 
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - anclora-network
+
 volumes:
   uploads:
   results:
   redis_data:
+  postgres_data:
 
 networks:
   anclora-network:

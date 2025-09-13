@@ -1,32 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
-import FileUploader from './components/FileUploader';
 import ConversionPanel from './components/ConversionPanel';
-import MetricsDisplay from './components/MetricsDisplay';
 import ConversionHistory from './components/ConversionHistory';
-import './styles/App.css';
 
 const App: React.FC = () => {
+
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [currentSection, setCurrentSection] = useState<string>('inicio');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   
   // Detectar preferencia de tema del sistema
   useEffect(() => {
-    const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    setTheme(prefersDarkMode ? 'dark' : 'light');
-    
-    // Listener para cambios del sistema
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-      setTheme(e.matches ? 'dark' : 'light');
-    });
-  }, []);
-  
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
-  };
-  
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
+
   return (
+
     <div className={`app-container ${theme}`} data-theme={theme}>
       <Header theme={theme} toggleTheme={toggleTheme} currentSection={currentSection} />
       
@@ -54,6 +47,7 @@ const App: React.FC = () => {
             <ConversionHistory />
           </div>
         )}
+
       </main>
     </div>
   );

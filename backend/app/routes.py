@@ -5,6 +5,7 @@ import os
 import uuid
 
 from .tasks import convert_pdf_to_epub, celery_app
+from .models import create_conversion, fetch_conversions
 
 bp = Blueprint('routes', __name__)
 
@@ -37,7 +38,8 @@ def convert():
     epub_filename = os.path.splitext(os.path.basename(pdf_path))[0] + '.epub'
     epub_path = os.path.join(results_folder, epub_filename)
     task_id = str(uuid.uuid4())
-    convert_pdf_to_epub.apply_async(args=[pdf_path, epub_path], task_id=task_id)
+    create_conversion(task_id)
+    convert_pdf_to_epub.apply_async(args=[task_id, pdf_path, epub_path], task_id=task_id)
     return jsonify({'task_id': task_id}), 202
 
 @bp.route('/api/status/<task_id>', methods=['GET'])
@@ -52,3 +54,11 @@ def task_status(task_id):
     elif result.state == 'FAILURE':
         response['error'] = str(result.info)
     return jsonify(response)
+
+
+@bp.route('/api/history', methods=['GET'])
+def history():
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 10))
+    conversions = fetch_conversions(page, per_page)
+    return jsonify(conversions)
