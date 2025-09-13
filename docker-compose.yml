@@ -75,8 +75,10 @@ services:
       - uploads:/app/${UPLOAD_FOLDER}
       - results:/app/${RESULTS_FOLDER}
     depends_on:
-      - redis
-      - db
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
     networks:
       - anclora-network
     ports:
