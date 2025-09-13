@@ -1,54 +1,95 @@
-Anclora PDF2EPUB
-Sistema de conversión inteligente de documentos PDF a formato EPUB3, diseñado para abordar los problemas más comunes en este tipo de conversiones.
-Mostrar imagen
-Características Principales
+# 📚 Anclora PDF2EPUB
 
-🔍 Análisis automático con IA: Detecta problemas y selecciona el motor óptimo
-🚀 Múltiples motores especializados: Adaptación según el tipo de contenido
-📊 Transparencia total: Logs detallados y métricas en tiempo real
-⚡ Arquitectura Cloud-Ready: Escalable para millones de conversiones
-🌗 Tema Claro/Oscuro: Soporte completo para ambos modos
-🔄 OCR integrado: Procesamiento de documentos escaneados
-📝 Manejo de fórmulas matemáticas: Preservación de ecuaciones en formato MathML
-🖼️ Optimización inteligente de imágenes: Preservación de calidad y posicionamiento
+> **Sistema de conversión inteligente de documentos PDF a formato EPUB3 con IA integrada**
 
-Arquitectura del Sistema
-┌─────────────────────────────────────────────────────────┐
-│ ANCLORA PDF2EPUB                                        │
-├─────────────────────────────────────────────────────────┤
-│ Frontend: React + TypeScript + Tailwind CSS             │
-├─────────────────────────────────────────────────────────┤
-│ API Gateway: Flask + Authentication + Rate Limiting     │
-├─────────────────────────────────────────────────────────┤
-│ Message Queue: Redis + Celery (Async Processing)        │
-├─────────────────────────────────────────────────────────┤
-│ Conversion Engine: Multi-Format Intelligent Processor   │
-│ ├── Basic Conversions (PyMuPDF + EbookLib)             │
-│ ├── Advanced Formats (OCR + specialized libraries)      │
-│ ├── AI Enhancement (Analysis + quality optimization)    │
-│ └── Monitoring (Logs + custom metrics)                  │
-├─────────────────────────────────────────────────────────┤
-│ Data Layer: File Storage + Metadata + Logs              │
-├─────────────────────────────────────────────────────────┤
-│ Infrastructure: Docker + Nginx + Health Checks          │
-└─────────────────────────────────────────────────────────┘
-Requisitos Previos
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
+[![Python](https://img.shields.io/badge/Python-3.11+-green.svg)](https://www.python.org/)
+[![React](https://img.shields.io/badge/React-18.2+-blue.svg)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.2+-blue.svg)](https://www.typescriptlang.org/)
 
-Docker y Docker Compose
-Node.js 16+ (solo para desarrollo local)
-Python 3.9+ (solo para desarrollo local)
-Pandoc y pdf2htmlEX (para conversiones avanzadas)
+Anclora PDF2EPUB es una aplicación web empresarial que revoluciona la conversión de documentos PDF a EPUB3 mediante análisis inteligente con IA y motores de conversión especializados. Diseñada para editores digitales, instituciones educativas y desarrolladores que requieren conversiones de alta calidad y escalabilidad.
 
-Inicio Rápido
+## ✨ Características Principales
 
-Clonar el repositorio:
+### 🧠 **Análisis Inteligente con IA**
+- Detección automática de 6 tipos de contenido diferentes
+- Análisis de complejidad con score 1-5
+- Recomendación automática del motor óptimo
+- Detección de idioma y elementos especiales
 
-bashgit clone https://github.com/tu-usuario/anclora-pdf2epub.git
-cd anclora-pdf2epub
+### 🚀 **Motores de Conversión Especializados**
+- **Rapid Engine**: Documentos simples (2-5 segundos)
+- **Balanced Engine**: Documentos mixtos (10-30 segundos)
+- **Quality Engine**: Documentos complejos con OCR (30-120 segundos)
 
-Configurar el archivo .env en la raíz del proyecto:
+### 📊 **Transparencia Total**
+- Métricas detalladas de calidad en tiempo real
+- Logs estructurados para auditoría
+- Dashboard de monitoreo con Prometheus + Grafana
+- Historial completo de conversiones
 
-env# Configuración de puertos
+### ⚡ **Arquitectura Cloud-Ready**
+- Microservicios escalables con Docker
+- Procesamiento asíncrono con Celery
+- Base de datos PostgreSQL para alta concurrencia
+- API REST completa con autenticación JWT
+
+### 🎨 **Experiencia de Usuario Moderna**
+- Interfaz React + TypeScript responsive
+- Tema claro/oscuro con persistencia
+- Drag & drop con validación en tiempo real
+- Descarga automática de resultados
+
+## 🏗️ Arquitectura del Sistema
+
+```mermaid
+flowchart TD
+    U[👤 Usuario] --> N[🌐 Nginx]
+    N --> FE[⚛️ React Frontend]
+    N --> API[🔧 Flask API]
+
+    API --> AUTH[🔐 JWT Auth]
+    API --> DB[(🗄️ PostgreSQL)]
+    API --> Q[📬 Redis Queue]
+
+    Q --> W[👷 Celery Workers]
+    W --> ANA[🧠 PDF Analyzer]
+    W --> ENG[⚙️ Conversion Engines]
+
+    ENG --> RAPID[🚀 Rapid]
+    ENG --> BAL[⚖️ Balanced]
+    ENG --> QUAL[💎 Quality + OCR]
+
+    API --> PROM[📊 Prometheus]
+    PROM --> GRAF[📈 Grafana]
+```
+## 🚀 Inicio Rápido
+
+### Requisitos Previos
+
+- **Docker** y **Docker Compose** (requerido)
+- **Git** para clonar el repositorio
+- **Node.js 18+** (solo para desarrollo local)
+- **Python 3.11+** (solo para desarrollo local)
+
+### Instalación con Docker (Recomendado)
+
+1. **Clonar el repositorio:**
+```bash
+git clone https://github.com/ToniIAPro73/Anclora-PDF2EPUB-Claude.git
+cd Anclora-PDF2EPUB-Claude
+```
+
+2. **Configurar variables de entorno:**
+```bash
+# Crear archivo .env en la raíz del proyecto
+cp .env.example .env
+```
+
+Contenido del archivo `.env`:
+```env
+# Configuración de puertos
 FRONTEND_PORT=3003
 BACKEND_PORT=5175
 NGINX_PORT=80
@@ -58,12 +99,17 @@ WORKER_METRICS_PORT=8001
 REDIS_PORT=6379
 REDIS_PASSWORD=anclora_redis_password
 
+# Configuración de PostgreSQL
+POSTGRES_DB=anclora_pdf2epub
+POSTGRES_USER=anclora_user
+POSTGRES_PASSWORD=anclora_password
+POSTGRES_PORT=5432
+
 # Configuración de la aplicación
-FLASK_ENV=development
+FLASK_ENV=production
 FLASK_APP=app
-SECRET_KEY=anclora_dev_secret_key
-# Configuración JWT
-JWT_SECRET=anclora_jwt_secret
+SECRET_KEY=your_super_secret_key_here
+JWT_SECRET=your_jwt_secret_here
 JWT_EXPIRATION=3600
 
 # Configuración de almacenamiento
@@ -73,16 +119,45 @@ RESULTS_FOLDER=results
 # Configuración de recursos
 MAX_WORKERS=4
 CONVERSION_TIMEOUT=300
+```
 
-Iniciar con Docker Compose:
+3. **Iniciar todos los servicios:**
+```bash
+docker-compose up -d
+```
 
-bashdocker-compose up -d
+4. **Verificar que todos los servicios estén ejecutándose:**
+```bash
+docker-compose ps
+```
 
-Acceder a la aplicación:
+5. **Acceder a la aplicación:**
+- **Aplicación principal**: http://localhost
+- **Frontend directo**: http://localhost:3003
+- **API Backend**: http://localhost:5175/api
+- **Grafana Dashboard**: http://localhost:3000 (admin/admin)
+- **Prometheus Metrics**: http://localhost:9090
 
-http://localhost           # A través de Nginx
-http://localhost:3003      # Frontend directo
-http://localhost:5175/api  # Backend API directo
+### Primer Uso
+
+1. **Registrar un usuario:**
+```bash
+curl -X POST http://localhost/api/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"admin","password":"admin123"}'
+```
+
+2. **Iniciar sesión:**
+```bash
+curl -X POST http://localhost/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"admin","password":"admin123"}'
+```
+
+3. **Usar la interfaz web:**
+   - Navegar a http://localhost
+   - Iniciar sesión con las credenciales creadas
+   - Subir un archivo PDF y comenzar la conversión
 Desarrollo Local
 Frontend
 bashcd frontend
