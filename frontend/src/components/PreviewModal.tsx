@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../AuthContext';
+import renderMathInElement from 'katex/contrib/auto-render';
 
 interface PreviewModalProps {
   taskId: string;
@@ -23,6 +24,17 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ taskId, onClose }) => {
     };
     load();
   }, [taskId, token]);
+
+  useEffect(() => {
+    document.querySelectorAll('.preview-body').forEach((el) => {
+      renderMathInElement(el as HTMLElement, {
+        delimiters: [
+          { left: '$$', right: '$$', display: true },
+          { left: '\\(', right: '\\)', display: false },
+        ],
+      });
+    });
+  }, [pages, index]);
 
   const next = () => setIndex((i) => Math.min(i + 1, pages.length - 1));
   const prev = () => setIndex((i) => Math.max(i - 1, 0));

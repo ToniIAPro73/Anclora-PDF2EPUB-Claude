@@ -20,3 +20,14 @@ test('loads pages and navigates', async () => {
   fireEvent.click(screen.getByText(/siguiente/i));
   await waitFor(() => expect(screen.getByText('dos')).toBeInTheDocument());
 });
+
+test('renders math formulas with KaTeX', async () => {
+  const fetchMock = vi.fn(() =>
+    Promise.resolve({ ok: true, json: () => Promise.resolve({ pages: ['<p>$$x^2$$</p>'] }) })
+  );
+  // @ts-ignore
+  global.fetch = fetchMock;
+  render(<PreviewModal taskId="1" onClose={() => {}} />);
+  await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+  await waitFor(() => expect(document.querySelector('.katex')).not.toBeNull());
+});
