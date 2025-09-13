@@ -57,7 +57,8 @@ def api_url():
 
 def test_pdf_conversion(api_url):
     base_url = api_url
-    token = requests.post(base_url + "/api/auth/register", json={"email": "a@a.com", "password": "pw"}).json()["token"]
+    requests.post(base_url + "/api/register", json={"username": "alice", "password": "pw"})
+    token = requests.post(base_url + "/api/login", json={"username": "alice", "password": "pw"}).json()["token"]
     headers = {"Authorization": f"Bearer {token}"}
     pdf_path = Path(__file__).parent / "sample.pdf"
     with pdf_path.open("rb") as f:

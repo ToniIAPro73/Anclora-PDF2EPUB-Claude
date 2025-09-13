@@ -1,4 +1,5 @@
 import os
+import os
 import io
 from flask import Blueprint
 from test_routes import _create_pdf, _setup_app
@@ -14,7 +15,6 @@ def test_rate_limiting(tmp_path, monkeypatch):
     os.environ['RATE_LIMIT'] = '2 per minute'
     app = _setup_app(tmp_path)
     client = app.test_client()
-    monkeypatch.setattr(routes, 'create_conversion', lambda task_id: None)
     monkeypatch.setattr(routes.convert_pdf_to_epub, 'apply_async', lambda *a, **k: None)
 
     pdf_path = _create_pdf()

@@ -9,15 +9,9 @@ import time
 import logging
 import json
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
-from .models import init_db
 
 db = SQLAlchemy()
 migrate = Migrate()
-limit_value = lambda: current_app.config.get('RATE_LIMIT', '5 per minute')
-limiter = Limiter(key_func=get_remote_address, default_limits=[limit_value])
-
-from .auth import auth_bp
-
 
 class JsonFormatter(logging.Formatter):
     """Simple JSON formatter for structured logs."""
@@ -95,13 +89,11 @@ def create_app():
     def metrics():
         return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
 
-    # Inicializar base de datos y registrar rutas
-    init_db()
+    # Registrar rutas
     from . import routes
     from .auth import auth_bp
 
     app.register_blueprint(routes.bp)
-    app.register_blueprint(auth_bp)
 
     with app.app_context():
         db.create_all()
@@ -114,15 +106,6 @@ def create_app():
         }), 429
 
     return app
-
-
-class Conversion(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    filename = db.Column(db.String(255), nullable=False)
-    status = db.Column(db.String(50), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    metrics = db.Column(db.JSON)
-
 # Para ejecución directa
 if __name__ == '__main__':
     app = create_app()

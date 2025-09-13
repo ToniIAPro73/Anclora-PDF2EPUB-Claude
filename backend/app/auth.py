@@ -6,16 +6,7 @@ from flask import Blueprint, request, jsonify, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from . import db
-
-__all__ = ["auth_bp", "token_required"]
-
-
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(255), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-
+from .models import User
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
