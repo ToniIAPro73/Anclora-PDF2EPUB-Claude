@@ -103,18 +103,23 @@ def convert_pdf_to_epub(self, task_id, input_path, output_path=None, pipeline=No
     from . import create_app
     app = create_app()
 
+    if not getattr(self.request, "id", None):
+        self.request.id = task_id
+
     logger.info(
         "pipeline start",
         extra={"task_id": task_id, "task_name": "convert_pdf_to_epub", "pipeline": pipeline},
     )
+    def _update(state, meta):
+        try:
+            self.update_state(state=state, meta=meta)
+        except Exception:
+            pass
 
     context = {}
     for i, step in enumerate(pipeline):
         progress = int((i / total_steps) * 100)
-        self.update_state(
-            state="PROGRESS",
-            meta={"progress": progress, "message": f"Iniciando {step}"},
-        )
+        _update("PROGRESS", {"progress": progress, "message": f"Iniciando {step}"})
         step_start = time.time()
         step_status = "SUCCESS"
         try:
@@ -189,26 +194,24 @@ def convert_pdf_to_epub(self, task_id, input_path, output_path=None, pipeline=No
         if step_status == "FAILURE":
             error_msg = context.get(step, {}).get("error", "Unknown error")
             total_duration = time.time() - start_time
-            self.update_state(
-                state="FAILURE",
-                meta={"progress": progress, "message": error_msg},
-            )
-            raise Exception(error_msg)
+            _update("FAILURE", {"progress": progress, "message": error_msg})
+            context["conversion"] = {
+                "success": False,
+                "message": error_msg,
+                "output_path": None,
+            }
+            break
         progress = int(((i + 1) / total_steps) * 100)
-        self.update_state(
-            state="PROGRESS",
-            meta={"progress": progress, "message": f"Completado {step}"},
-        )
+        _update("PROGRESS", {"progress": progress, "message": f"Completado {step}"})
 
     total_duration = time.time() - start_time
     final_result = context.get("conversion", {})
-    self.update_state(
-        state="PROGRESS", meta={"progress": 100, "message": "Proceso completado"}
-    )
+    _update("PROGRESS", {"progress": 100, "message": "Proceso completado"})
     with app.app_context():
         conv = Conversion.query.filter_by(task_id=task_id).first()
         if conv:
-            conv.status = "SUCCESS"
+            if conv.status != "FAILURE":
+                conv.status = "SUCCESS"
             metrics = conv.metrics or {}
             metrics["duration"] = total_duration
             if final_result.get("engine_used"):

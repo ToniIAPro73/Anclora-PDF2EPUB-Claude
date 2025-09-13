@@ -1,4 +1,5 @@
 import os
+import re
 import fitz  # PyMuPDF
 import ebooklib
 from ebooklib import epub
@@ -204,6 +205,8 @@ class PDFAnalyzer:
 class SequenceEvaluator:
     """Evaluates different conversion pipelines and suggests the best one."""
 
+    MATH_RE = re.compile(r"[∑∫√π≠≤≥±÷×]")
+
     PIPELINE_TEMPLATES = {
         ConversionEngine.RAPID: {
             "sequence": ["analyze", ConversionEngine.RAPID.value],
@@ -225,6 +228,12 @@ class SequenceEvaluator:
     def evaluate(self, pdf_path, metadata=None):
         """Return best pipeline (sequence and metrics) and the analysis."""
         analysis = self.analyzer.analyze_pdf(pdf_path)
+        issues_text = " ".join(analysis.issues)
+        if (
+            "Tables detected" in issues_text
+            or self.MATH_RE.search(issues_text)
+        ):
+            return ["pdf2htmlex", "pandoc_mathml"], {"quality": 0.9, "cost": 3}, analysis
         template = self.PIPELINE_TEMPLATES.get(
             analysis.recommended_engine, self.PIPELINE_TEMPLATES[ConversionEngine.RAPID]
         )

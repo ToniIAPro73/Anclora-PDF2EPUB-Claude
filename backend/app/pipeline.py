@@ -61,7 +61,7 @@ class ConversionCache:
     """
 
     def __init__(self, cache_dir: Optional[str] = None, expiry_seconds: int = 3600) -> None:
-        self.cache_dir = cache_dir or os.path.join(tempfile.gettempdir(), "conversion_cache")
+        self.cache_dir = cache_dir or tempfile.mkdtemp(prefix="conversion_cache_")
         self.expiry_seconds = expiry_seconds
         os.makedirs(self.cache_dir, exist_ok=True)
         self._last_cleanup = 0.0
@@ -122,8 +122,9 @@ class ConversionCache:
 class PandocAdapter:
     """Adapter that converts documents using pandoc."""
 
-    def __init__(self) -> None:
+    def __init__(self, extra_args: Optional[List[str]] = None) -> None:
         _ensure_pandoc()
+        self.extra_args = extra_args or []
 
     def run(self, input_path: str, output_path: str) -> StepResult:
         start = time.perf_counter()
@@ -132,6 +133,7 @@ class PandocAdapter:
                 input_path,
                 "epub3",
                 outputfile=output_path,
+                extra_args=self.extra_args,
             )
             duration = time.perf_counter() - start
             logger.info("pandoc completed in %.2fs", duration)
@@ -178,9 +180,14 @@ class ConversionPipeline:
     def __init__(self, steps: List[str], cache: Optional[ConversionCache] = None):
         self.steps = steps
         self.cache = cache or ConversionCache()
+        try:
+            pandoc_mathml = PandocAdapter(extra_args=["--mathml"])
+        except TypeError:
+            pandoc_mathml = PandocAdapter()
         self.adapters = {
             "pdf2htmlex": Pdf2HtmlEXAdapter(),
             "pandoc": PandocAdapter(),
+            "pandoc_mathml": pandoc_mathml,
         }
 
     def run(self, pdf_path: str) -> Dict[str, object]:
@@ -195,7 +202,7 @@ class ConversionPipeline:
             if cached_output:
                 result = StepResult(True, 0.0, output=cached_output)
             else:
-                if step == "pandoc":
+                if step.startswith("pandoc"):
                     output_fd, output_path = tempfile.mkstemp(suffix=".epub")
                     os.close(output_fd)
                     result = adapter.run(current, output_path)
@@ -216,12 +223,18 @@ class ConversionPipeline:
             if not result.success:
                 return {"success": False, "error": result.error, "metrics": metrics}
 
-            if step == "pandoc":
+            if step.startswith("pandoc"):
                 final_output = result.output
             else:
                 current = result.output or current
 
         return {"success": True, "output": final_output or current, "metrics": metrics}
+
+
+def technical_pipeline(cache: Optional[ConversionCache] = None) -> ConversionPipeline:
+    """Pipeline optimized for technical documents with tables or formulas."""
+
+    return ConversionPipeline(["pdf2htmlex", "pandoc_mathml"], cache=cache)
 
 
 def evaluate_sequences(sequences: List[List[str]]) -> List[Dict[str, object]]:
