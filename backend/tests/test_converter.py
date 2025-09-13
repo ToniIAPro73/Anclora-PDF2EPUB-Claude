@@ -1,6 +1,7 @@
 import os
 import sys
 import tempfile
+import zipfile
 import fitz
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from app.converter import (
@@ -187,3 +188,20 @@ def test_suggest_best_pipeline_returns_sequence_and_metrics():
     assert "quality" in metrics and "cost" in metrics
     assert isinstance(analysis, PDFAnalysis)
     os.remove(pdf_path)
+
+
+def test_convert_injects_tables(monkeypatch):
+    pdf_path = _create_simple_pdf()
+    converter = EnhancedPDFToEPUBConverter()
+
+    def fake_extract(_):
+        return [{"page": 1, "content": "<table><tr><td>1</td></tr></table>"}]
+
+    monkeypatch.setattr("app.converter.extract_tables", fake_extract)
+    result = converter.convert(pdf_path)
+    assert result["success"] is True
+    with zipfile.ZipFile(result["output_path"], "r") as zf:
+        html = zf.read("EPUB/page_1.xhtml").decode("utf-8")
+        assert "<table>" in html
+    os.remove(pdf_path)
+    os.remove(result["output_path"])

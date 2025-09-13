@@ -1,6 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../AuthContext';
 import renderMathInElement from 'katex/contrib/auto-render';
+
+declare global {
+  interface Window {
+    MathJax?: {
+      typesetPromise?: (elements?: Element[]) => Promise<void>;
+    };
+  }
+}
 
 interface PreviewModalProps {
   taskId: string;
@@ -11,6 +19,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ taskId, onClose }) => {
   const { token } = useAuth();
   const [pages, setPages] = useState<string[]>([]);
   const [index, setIndex] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -46,6 +55,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ taskId, onClose }) => {
         {pages.length > 0 ? (
           <div>
             <div
+              ref={containerRef}
               className="preview-body"
               dangerouslySetInnerHTML={{ __html: pages[index] }}
             />

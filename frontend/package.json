@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "mathjax": "^4.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-dropzone": "^14.2.3",
@@ -17,14 +18,14 @@
     "test": "vitest --environment jsdom"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.1.2",
+    "@testing-library/react": "^14.0.0",
     "@vitejs/plugin-react": "^4.0.0",
     "autoprefixer": "^10.4.16",
+    "jsdom": "^22.1.0",
     "postcss": "^8.4.31",
     "tailwindcss": "^3.3.5",
     "vite": "^5.0.0",
-    "vitest": "^0.34.6",
-    "@testing-library/react": "^14.0.0",
-    "@testing-library/jest-dom": "^6.1.2",
-    "jsdom": "^22.1.0"
+    "vitest": "^0.34.6"
   }
 }

@@ -39,7 +39,8 @@ def test_convert_pdf_to_epub_success(task_env):
             }
 
     tasks.converter = DummyConverter()
-    result = tasks.convert_pdf_to_epub("t1", "input.pdf")
+    tasks.convert_pdf_to_epub.update_state = lambda *a, **k: None
+    result = tasks.convert_pdf_to_epub.run("t1", "input.pdf")
     assert result["success"] is True
 
     with sqlite3.connect(os.environ["CONVERSION_DB"]) as conn:
@@ -63,8 +64,9 @@ def test_convert_pdf_to_epub_failure(task_env):
             raise RuntimeError("boom")
 
     tasks.converter = DummyConverter()
-    result = tasks.convert_pdf_to_epub("t2", "input.pdf")
-    assert result["success"] is False
+    tasks.convert_pdf_to_epub.update_state = lambda *a, **k: None
+    with pytest.raises(Exception):
+        tasks.convert_pdf_to_epub.run("t2", "input.pdf")
 
     with sqlite3.connect(os.environ["CONVERSION_DB"]) as conn:
         row = conn.execute(

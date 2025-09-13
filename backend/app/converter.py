@@ -1,4 +1,5 @@
 import os
+import re
 import fitz  # PyMuPDF
 import ebooklib
 from ebooklib import epub
@@ -10,6 +11,9 @@ from langdetect import detect, LangDetectException
 import tempfile
 import uuid
 import logging
+import zipfile
+
+from .table_extractor import extract_tables
 
 from .pipelines import evaluate_sequences as pipeline_evaluate_sequences
 
@@ -82,6 +86,8 @@ class PDFAnalysis:
 class PDFAnalyzer:
     IMAGE_HEAVY_RATIO = 1.5
     TABLE_KEYWORDS = ["table", "tabla", "tabella", "tabelle", "tableau"]
+    FORMULA_KEYWORDS = ["equation", "formula", "theorem", "proof"]
+    MATH_SYMBOLS = ["∑", "∫", "√", "∞", "≈", "≠", "≤", "≥", "÷", "×", "π", "±"]
 
     def analyze_pdf(self, pdf_path):
         """Analiza un PDF y devuelve métricas y recomendaciones"""
@@ -144,26 +150,48 @@ class PDFAnalyzer:
             if image_count == 0 and page_count > 0:
                 issues.append("No images detected")
 
-            # Verificar si hay tablas
+            # Verificar si hay tablas y fórmulas
             table_hits = 0
+            formula_pages = 0
+            formula_symbols = 0
             for page in doc:
-                text_lower = page.get_text().lower()
+                text = page.get_text("text")
+                text_lower = text.lower()
+
                 for kw in self.TABLE_KEYWORDS:
                     if kw in text_lower:
                         table_hits += 1
                         break
 
-            has_tables = table_hits >= 2
+                page_symbol_count = sum(text.count(sym) for sym in self.MATH_SYMBOLS)
+                if any(kw in text_lower for kw in self.FORMULA_KEYWORDS) or page_symbol_count > 0:
+                    formula_pages += 1
+                formula_symbols += page_symbol_count
 
-            if has_tables:
+            table_density = table_hits / page_count if page_count else 0
+            formula_density = formula_symbols / page_count if page_count else 0
+
+            has_tables = table_hits >= 2
+            dense_tables = table_density > 0.1
+            dense_formulas = formula_density > 1 or (formula_pages / page_count if page_count else 0) > 0.1
+
+            if dense_tables:
                 issues.append("Tables detected, may require special handling")
+            if dense_formulas:
+                issues.append("Formulas detected, may require special handling")
 
             # 5. Calcular complejidad
-            complexity_score = min(5, 1 +
-                                 (0 if text_extractable else 2) +
-                                 (0 if image_count < page_count * 0.8 else 1) +
-                                 (0 if not has_tables else 1) +
-                                 (0 if page_count < 20 else 1))
+            complexity_score = 1 + \
+                                 (0 if text_extractable else 2) + \
+                                 (0 if image_count < page_count * 0.8 else 1) + \
+                                 (0 if not has_tables else 1) + \
+                                 (0 if page_count < 20 else 1)
+
+            if dense_tables or dense_formulas:
+                complexity_score += 1
+                complexity_score = max(complexity_score, 4)
+
+            complexity_score = min(5, complexity_score)
 
             # 6. Recomendar motor
             if complexity_score <= 1:
@@ -204,6 +232,8 @@ class PDFAnalyzer:
 class SequenceEvaluator:
     """Evaluates different conversion pipelines and suggests the best one."""
 
+    MATH_RE = re.compile(r"[∑∫√π≠≤≥±÷×]")
+
     PIPELINE_TEMPLATES = {
         ConversionEngine.RAPID: {
             "sequence": ["analyze", ConversionEngine.RAPID.value],
@@ -225,6 +255,12 @@ class SequenceEvaluator:
     def evaluate(self, pdf_path, metadata=None):
         """Return best pipeline (sequence and metrics) and the analysis."""
         analysis = self.analyzer.analyze_pdf(pdf_path)
+        issues_text = " ".join(analysis.issues)
+        if (
+            "Tables detected" in issues_text
+            or self.MATH_RE.search(issues_text)
+        ):
+            return ["pdf2htmlex", "pandoc_mathml"], {"quality": 0.9, "cost": 3}, analysis
         template = self.PIPELINE_TEMPLATES.get(
             analysis.recommended_engine, self.PIPELINE_TEMPLATES[ConversionEngine.RAPID]
         )
@@ -711,6 +747,14 @@ class EnhancedPDFToEPUBConverter:
             # 3. Ejecutar la secuencia definida en el pipeline
             selected_engine = engine
             result = None
+
+            table_map = {}
+            try:
+                for tbl in extract_tables(pdf_path):
+                    table_map.setdefault(tbl["page"], []).append(tbl["content"])
+            except Exception as e:
+                logger.warning(f"Table extraction failed: {e}")
+
             for step in pipeline:
                 if step == "analyze":
                     continue  # análisis ya realizado
@@ -730,6 +774,16 @@ class EnhancedPDFToEPUBConverter:
 
             if result["success"]:
                 logger.info(f"Conversion successful: {output_path}")
+
+                if table_map:
+                    with zipfile.ZipFile(output_path, "a") as zf:
+                        for page, tables in table_map.items():
+                            page_name = f"EPUB/page_{page}.xhtml"
+                            if page_name in zf.namelist():
+                                html = zf.read(page_name).decode("utf-8")
+                                for table_html in tables:
+                                    html = html.replace("</body>", f"{table_html}</body>")
+                                zf.writestr(page_name, html)
             else:
                 logger.error(f"Conversion failed: {result['message']}")
 
