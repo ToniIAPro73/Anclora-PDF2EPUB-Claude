@@ -1,4 +1,5 @@
 import os
+import os
 import sys
 import tempfile
 import time
@@ -25,7 +26,7 @@ class DummyPandocAdapter:
     def __init__(self):
         self.calls = 0
 
-    def run(self, input_path, output_path):
+    def run(self, input_path, output_path, pdf_path=None):
         self.calls += 1
         with open(output_path, "w", encoding="utf-8") as f:
             f.write("epub")
@@ -41,7 +42,9 @@ def test_pipeline_uses_cache(monkeypatch, tmp_path):
     monkeypatch.setattr("app.pipeline.Pdf2HtmlEXAdapter", lambda: html_adapter)
     monkeypatch.setattr("app.pipeline.PandocAdapter", lambda: epub_adapter)
 
-    pipeline = ConversionPipeline(["pdf2htmlex", "pandoc"], cache=ConversionCache())
+    pipeline = ConversionPipeline(
+        ["pdf2htmlex", "pandoc"], cache=ConversionCache(cache_dir=str(tmp_path / "cache"))
+    )
 
     first = pipeline.run(str(pdf_path))
     assert first["success"] is True
