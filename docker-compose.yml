@@ -50,15 +50,10 @@ services:
       - uploads:/app/${UPLOAD_FOLDER}
       - results:/app/${RESULTS_FOLDER}
     depends_on:
-<<<<<<< HEAD
-      - redis
-      - db
-=======
       redis:
         condition: service_started
       db:
         condition: service_healthy
->>>>>>> 5f593d68be5c1d46de58f07a789fc6777c63a20f
     networks:
       - anclora-network
 
