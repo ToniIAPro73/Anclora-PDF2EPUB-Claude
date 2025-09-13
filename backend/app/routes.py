@@ -194,6 +194,12 @@ def task_status(task_id):
         response['result'] = result.result
     elif result.state == 'FAILURE':
         response['error'] = str(result.info)
+    elif result.info:
+        # For PROGRESS or other intermediate states
+        if isinstance(result.info, dict):
+            response.update(result.info)
+        else:
+            response['message'] = str(result.info)
     return jsonify(response)
 
 
