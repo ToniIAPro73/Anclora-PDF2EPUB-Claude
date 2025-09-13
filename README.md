@@ -135,7 +135,7 @@ docker-compose ps
 - **Aplicación principal**: http://localhost
 - **Frontend directo**: http://localhost:3003
 - **API Backend**: http://localhost:5175/api
-- **Grafana Dashboard**: http://localhost:3000 (admin/admin)
+- **Grafana Dashboard**: http://localhost:3004 (admin/admin)
 - **Prometheus Metrics**: http://localhost:9090
 
 ### Primer Uso
@@ -429,7 +429,7 @@ worker:
   - `active_workers`
 
 #### Grafana Dashboard
-- **URL**: http://localhost:3000
+- **URL**: http://localhost:3004
 - **Credenciales**: admin/admin
 - **Dashboards preconfigurados**:
   - Conversions Overview
