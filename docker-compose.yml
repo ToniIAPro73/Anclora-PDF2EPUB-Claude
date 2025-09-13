@@ -67,6 +67,7 @@ services:
       - RESULTS_FOLDER=${RESULTS_FOLDER}
       - CONVERSION_TIMEOUT=${CONVERSION_TIMEOUT}
       - DATABASE_URL=${DATABASE_URL}
+      - WORKER_METRICS_PORT=${WORKER_METRICS_PORT}
     volumes:
       - ./backend:/app
       - uploads:/${UPLOAD_FOLDER}
@@ -76,6 +77,8 @@ services:
       - db
     networks:
       - anclora-network
+    ports:
+      - "${WORKER_METRICS_PORT}:${WORKER_METRICS_PORT}"
 
   redis:
     image: redis:7-alpine
@@ -100,11 +103,35 @@ services:
     networks:
       - anclora-network
 
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - backend
+      - worker
+    networks:
+      - anclora-network
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - anclora-network
+
 volumes:
   uploads:
   results:
   redis_data:
   postgres_data:
+  grafana_data:
 
 networks:
   anclora-network:

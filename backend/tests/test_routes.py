@@ -117,3 +117,11 @@ def test_api_status_returns_result(tmp_path, monkeypatch):
     data = response.get_json()
     assert data['status'] == 'SUCCESS'
     assert data['result'] == {'ok': True}
+
+
+def test_metrics_endpoint(tmp_path):
+    app = _setup_app(tmp_path)
+    client = app.test_client()
+    response = client.get('/metrics')
+    assert response.status_code == 200
+    assert b'http_requests_total' in response.data

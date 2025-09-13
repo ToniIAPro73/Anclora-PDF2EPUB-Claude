@@ -51,6 +51,7 @@ env# Configuración de puertos
 FRONTEND_PORT=3003
 BACKEND_PORT=5175
 NGINX_PORT=80
+WORKER_METRICS_PORT=8001
 
 # Configuración de Redis
 REDIS_PORT=6379
@@ -96,6 +97,22 @@ flask run --port=5175
 La API estará disponible en http://localhost:5175
 Pruebas
 bashpytest
+Monitoreo y Logs
+-----------------
+Tras levantar la pila con `docker-compose up -d` se exponen métricas y dashboards básicos:
+
+- Backend: http://localhost:5175/metrics
+- Worker:  http://localhost:8001/metrics
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3000 (usuario `admin`, contraseña `admin` por defecto)
+
+Los contenedores generan logs estructurados en formato JSON. Puedes verlos con:
+
+```bash
+docker-compose logs -f backend
+docker-compose logs -f worker
+```
+
 Estructura del Proyecto
 anclora-pdf2epub/
 ├── frontend/                 # Aplicación React + TypeScript
@@ -180,6 +197,7 @@ Modifica los valores en el archivo .env para cambiar los puertos:
 envFRONTEND_PORT=3003    # Puerto para el frontend React
 BACKEND_PORT=5175     # Puerto para la API Flask
 NGINX_PORT=80         # Puerto para Nginx
+WORKER_METRICS_PORT=8001 # Puerto métricas del worker
 Escalado de Workers
 Para ajustar el número de workers de Celery y mejorar el rendimiento en conversiones paralelas:
 yaml# En docker-compose.yml
