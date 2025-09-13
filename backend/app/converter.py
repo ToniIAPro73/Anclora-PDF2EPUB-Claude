@@ -724,8 +724,6 @@ class EnhancedPDFToEPUBConverter:
                 "issues": analysis.issues,
                 "language": analysis.language,
             }
-            result["pipeline_used"] = pipeline
-            result["pipeline_metrics"] = pipeline_metrics
 
             return result
             
@@ -742,6 +740,47 @@ class EnhancedPDFToEPUBConverter:
             }
 
 # Función de utilidad para uso desde línea de comandos
+
+
+def suggest_best_pipeline(pdf_path):
+    """Analiza un PDF y sugiere las mejores opciones de conversión."""
+    converter = EnhancedPDFToEPUBConverter()
+    analysis = converter.analyzer.analyze_pdf(pdf_path)
+
+    time_factors = {
+        ConversionEngine.RAPID: 1,
+        ConversionEngine.BALANCED: 2,
+        ConversionEngine.QUALITY: 3,
+    }
+
+    quality_estimates = {
+        ConversionEngine.RAPID: 70,
+        ConversionEngine.BALANCED: 85,
+        ConversionEngine.QUALITY: 95,
+    }
+
+    options = []
+    for engine in converter.engines:
+        options.append({
+            "id": engine.value,
+            "estimated_time": analysis.page_count * time_factors[engine],
+            "estimated_quality": quality_estimates[engine],
+        })
+
+    return {
+        "recommended": analysis.recommended_engine.value,
+        "options": options,
+        "analysis": {
+            "page_count": analysis.page_count,
+            "file_size": analysis.file_size,
+            "content_type": analysis.content_type.value,
+            "complexity_score": analysis.complexity_score,
+            "issues": analysis.issues,
+            "language": analysis.language,
+        },
+    }
+
+
 def convert_pdf_to_epub(pdf_path, output_path=None, engine_name=None):
     """Función de conveniencia para uso desde CLI"""
     converter = EnhancedPDFToEPUBConverter()

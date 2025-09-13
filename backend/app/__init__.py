@@ -12,6 +12,7 @@ from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_
 
 db = SQLAlchemy()
 migrate = Migrate()
+limiter = Limiter(key_func=get_remote_address)
 
 class JsonFormatter(logging.Formatter):
     """Simple JSON formatter for structured logs."""
@@ -94,6 +95,7 @@ def create_app():
     from .auth import auth_bp
 
     app.register_blueprint(routes.bp)
+    app.register_blueprint(auth_bp)
 
     with app.app_context():
         db.create_all()

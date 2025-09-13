@@ -6,7 +6,7 @@ from celery import Celery
 from celery.signals import task_prerun, task_postrun
 from prometheus_client import Counter, Histogram, start_http_server
 
-from app.converter import EnhancedPDFToEPUBConverter
+from app.converter import EnhancedPDFToEPUBConverter, ConversionEngine
 from .models import Conversion
 from . import db
 
@@ -75,11 +75,17 @@ def _task_postrun(sender=None, task_id=None, state=None, **kwargs):  # pragma: n
 
 
 @celery_app.task(name="convert_pdf_to_epub")
-def convert_pdf_to_epub(task_id, input_path, output_path=None):
+def convert_pdf_to_epub(task_id, input_path, output_path=None, pipeline_id=None):
     """Convert a PDF file to EPUB capturing metrics and updating history."""
     start_time = time.time()
     try:
-        result = converter.convert(input_path, output_path)
+        engine = None
+        if pipeline_id:
+            try:
+                engine = ConversionEngine[pipeline_id.upper()]
+            except KeyError:
+                engine = None
+        result = converter.convert(input_path, output_path, engine)
         duration = time.time() - start_time
         metrics = {
             "duration": duration,
