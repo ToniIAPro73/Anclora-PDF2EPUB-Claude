@@ -176,6 +176,7 @@ def convert_pdf_to_epub(task_id, input_path, output_path=None, pipeline=None):
                 if step_status == "FAILURE":
                     conv.status = "FAILURE"
                     conv.output_path = None
+                    metrics["error"] = context.get(step, {}).get("error")
                 else:
                     conv.status = step.upper()
                 db.session.commit()
@@ -197,8 +198,26 @@ def convert_pdf_to_epub(task_id, input_path, output_path=None, pipeline=None):
         if conv:
             conv.status = "SUCCESS"
             metrics = conv.metrics or {}
-            metrics["total_duration"] = total_duration
+            metrics["duration"] = total_duration
+            if final_result.get("engine_used"):
+                metrics["engine_used"] = final_result.get("engine_used")
+            if final_result.get("quality_metrics"):
+                metrics["quality_metrics"] = final_result.get("quality_metrics")
             conv.metrics = metrics
+            # Generate thumbnail for the source PDF
+            try:
+                from pdf2image import convert_from_path  # type: ignore
+
+                thumb_dir = app.config.get("THUMBNAIL_FOLDER", "thumbnails")
+                os.makedirs(thumb_dir, exist_ok=True)
+                thumb_filename = f"{task_id}.png"
+                thumb_path = os.path.join(thumb_dir, thumb_filename)
+                images = convert_from_path(input_path, first_page=1, last_page=1)
+                if images:
+                    images[0].save(thumb_path, "PNG")
+                    conv.thumbnail_path = thumb_filename
+            except Exception:  # pragma: no cover - optional thumbnail generation
+                logger.exception("thumbnail generation failed", extra={"task_id": task_id})
             db.session.commit()
 
     return {

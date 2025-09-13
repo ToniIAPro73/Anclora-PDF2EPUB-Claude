@@ -1,4 +1,4 @@
-from flask import Blueprint, request, current_app, jsonify
+from flask import Blueprint, request, current_app, jsonify, send_from_directory, url_for
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from celery.result import AsyncResult
@@ -80,6 +80,8 @@ def analyze():
         file.save(tmp.name)
     try:
         result = suggest_best_pipeline(tmp.name)
+        if 'recommended' in result and 'pipeline_id' not in result:
+            result['pipeline_id'] = result['recommended']
     finally:
         os.unlink(tmp.name)
     return jsonify(result)
@@ -203,7 +205,19 @@ def history():
     page = int(request.args.get('page', 1))
     per_page = int(request.args.get('per_page', 10))
     pagination = Conversion.query.order_by(Conversion.id.desc()).paginate(page=page, per_page=per_page, error_out=False)
-    return jsonify([c.to_dict() for c in pagination.items])
+    results = []
+    for c in pagination.items:
+        item = c.to_dict()
+        if c.thumbnail_path:
+            item['thumbnail_url'] = url_for('routes.thumbnail', filename=c.thumbnail_path, _external=False)
+        results.append(item)
+    return jsonify(results)
+
+
+@bp.route('/thumbnails/<path:filename>', methods=['GET'])
+def thumbnail(filename):
+    thumb_dir = current_app.config['THUMBNAIL_FOLDER']
+    return send_from_directory(thumb_dir, filename)
 
 @bp.route('/metrics')
 def metrics():
