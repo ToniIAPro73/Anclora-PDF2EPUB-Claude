@@ -2,6 +2,7 @@ import os
 import sys
 import tempfile
 import fitz
+from ebooklib import epub
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from app.converter import (
     PDFAnalyzer,
@@ -30,6 +31,18 @@ def _create_empty_pdf() -> str:
     os.close(fd)
     doc = fitz.open()
     doc.new_page()
+    doc.save(path)
+    doc.close()
+    return path
+
+
+def _create_pdf_with_metadata(text: str, title: str, author: str) -> str:
+    fd, path = tempfile.mkstemp(suffix=".pdf")
+    os.close(fd)
+    doc = fitz.open()
+    page = doc.new_page()
+    page.insert_text((72, 72), text)
+    doc.set_metadata({"title": title, "author": author})
     doc.save(path)
     doc.close()
     return path
@@ -148,6 +161,24 @@ def test_rapid_converter_generates_epub(tmp_path):
     result = converter.convert(pdf_path, str(output_path), analysis, metadata={"title": "Test"})
     assert result["success"] is True
     assert output_path.exists()
+    os.remove(pdf_path)
+
+
+def test_converter_extracts_metadata_and_detects_language(tmp_path):
+    pdf_path = _create_pdf_with_metadata(
+        text="Hola mundo. Este es un texto en español.",
+        title="Titulo PDF",
+        author="Autor Prueba",
+    )
+    output_path = tmp_path / "meta.epub"
+    converter = EnhancedPDFToEPUBConverter()
+    result = converter.convert(pdf_path, str(output_path))
+    assert result["success"] is True
+    book = epub.read_epub(str(output_path))
+    assert book.get_metadata('DC', 'title')[0][0] == "Titulo PDF"
+    assert book.get_metadata('DC', 'creator')[0][0] == "Autor Prueba"
+    language = book.get_metadata('DC', 'language')[0][0]
+    assert language.startswith('es')
     os.remove(pdf_path)
 
 

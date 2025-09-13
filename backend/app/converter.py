@@ -10,7 +10,7 @@ from langdetect import detect, LangDetectException
 import tempfile
 import uuid
 import logging
-from .pipeline import evaluate_sequences as pipeline_evaluate_sequences
+from pypdf import PdfReader
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -50,6 +50,42 @@ def compress_image(image_bytes, image_ext):
     except Exception as e:
         logger.warning(f"Image compression failed: {e}")
     return image_bytes
+
+
+def extract_pdf_metadata(pdf_path):
+    """Extract basic metadata from a PDF using pypdf and detect language if missing."""
+    metadata = {}
+
+    try:
+        reader = PdfReader(pdf_path)
+        info = reader.metadata
+        if info:
+            if info.title:
+                metadata["title"] = info.title
+            if info.author:
+                metadata["author"] = info.author
+            # pypdf does not always expose language; check common fields
+            lang = getattr(info, "language", None)
+            if lang:
+                metadata["language"] = lang
+    except Exception as e:
+        logger.warning(f"Failed to read PDF metadata: {e}")
+
+    if "language" not in metadata:
+        try:
+            doc = fitz.open(pdf_path)
+            text_sample = ""
+            for i in range(min(5, len(doc))):
+                text_sample += doc[i].get_text()
+            doc.close()
+            if text_sample.strip():
+                metadata["language"] = detect(text_sample)
+        except LangDetectException:
+            logger.warning("Language detection failed")
+        except Exception as e:
+            logger.warning(f"Failed during language detection: {e}")
+
+    return metadata
 
 class ContentType(Enum):
     TEXT_ONLY = "text_only"
@@ -663,14 +699,19 @@ class EnhancedPDFToEPUBConverter:
                 pdf_name, _ = os.path.splitext(pdf_basename)
                 output_path = f"{pdf_name}_{uuid.uuid4().hex[:8]}.epub"
             
-            # Metadatos por defecto
+            # Metadatos iniciales extraídos del PDF
+            extracted = extract_pdf_metadata(pdf_path)
+
             if metadata is None:
-                pdf_basename = os.path.basename(pdf_path)
-                pdf_name, _ = os.path.splitext(pdf_basename)
-                metadata = {
-                    'title': pdf_name,
-                    'language': 'es',
-                }
+                metadata = extracted
+            else:
+                for key, value in extracted.items():
+                    metadata.setdefault(key, value)
+
+            pdf_basename = os.path.basename(pdf_path)
+            pdf_name, _ = os.path.splitext(pdf_basename)
+            metadata.setdefault('title', pdf_name)
+            metadata.setdefault('language', 'es')
             
             # 1. Obtener pipeline si no se proporciona
             if pipeline is None:
@@ -724,6 +765,8 @@ class EnhancedPDFToEPUBConverter:
                 "issues": analysis.issues,
                 "language": analysis.language,
             }
+            result["pipeline_used"] = pipeline
+            result["pipeline_metrics"] = pipeline_metrics
 
             return result
             
