@@ -1,6 +1,8 @@
 from flask import Flask, Response, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from datetime import datetime
 import os
 import time
@@ -11,6 +13,8 @@ from .models import init_db
 
 db = SQLAlchemy()
 migrate = Migrate()
+limiter = Limiter(key_func=get_remote_address,
+                  default_limits=["200 per day", "50 per hour"])
 
 
 class JsonFormatter(logging.Formatter):
@@ -52,10 +56,14 @@ def create_app():
         CONVERSION_TIMEOUT=int(os.environ.get('CONVERSION_TIMEOUT', 300)),
         SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URL', 'sqlite:///app.db'),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        JWT_SECRET=os.environ.get('JWT_SECRET', 'dev'),
+        JWT_EXPIRATION=int(os.environ.get('JWT_EXPIRATION', 3600)),
     )
 
     db.init_app(app)
     migrate.init_app(app, db)
+
+    limiter.init_app(app)
     
     # Asegurarse de que existan los directorios
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
@@ -90,6 +98,14 @@ def create_app():
     from . import routes
 
     app.register_blueprint(routes.bp)
+    app.register_blueprint(auth_bp)
+
+    @app.errorhandler(429)
+    def ratelimit_handler(e):
+        return jsonify({
+            "error": "Rate limit exceeded",
+            "message": e.description
+        }), 429
 
     return app
 

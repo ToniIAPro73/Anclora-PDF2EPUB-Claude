@@ -3,14 +3,17 @@ import { Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import ConversionPanel from './components/ConversionPanel';
 import ConversionHistory from './components/ConversionHistory';
+import FileUploader from './components/FileUploader';
+import MetricsDisplay from './components/MetricsDisplay';
+import LoginForm from './LoginForm';
+import RegisterForm from './RegisterForm';
+import ProtectedRoute from './ProtectedRoute';
 
-const App: React.FC = () => {
-
+const MainApp: React.FC = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [currentSection, setCurrentSection] = useState<string>('inicio');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  
-  // Detectar preferencia de tema del sistema
+
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
     localStorage.setItem('theme', theme);
@@ -19,10 +22,9 @@ const App: React.FC = () => {
   const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
 
   return (
-
     <div className={`app-container ${theme}`} data-theme={theme}>
       <Header theme={theme} toggleTheme={toggleTheme} currentSection={currentSection} />
-      
+
       <main className="main-content">
         {currentSection === 'inicio' && (
           <div className="hero-section">
@@ -31,7 +33,7 @@ const App: React.FC = () => {
             <FileUploader onFileSelected={setSelectedFile} />
           </div>
         )}
-        
+
         {currentSection === 'conversion' && (
           <div className="conversion-section">
             <h2>Convertir PDF a EPUB</h2>
@@ -40,17 +42,31 @@ const App: React.FC = () => {
             <MetricsDisplay />
           </div>
         )}
-        
+
         {currentSection === 'history' && (
           <div className="history-section">
             <h2>Historial de Conversiones</h2>
             <ConversionHistory />
           </div>
         )}
-
       </main>
     </div>
   );
 };
+
+const App: React.FC = () => (
+  <Routes>
+    <Route path="/login" element={<LoginForm />} />
+    <Route path="/register" element={<RegisterForm />} />
+    <Route
+      path="/*"
+      element={
+        <ProtectedRoute>
+          <MainApp />
+        </ProtectedRoute>
+      }
+    />
+  </Routes>
+);
 
 export default App;
