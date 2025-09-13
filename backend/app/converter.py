@@ -10,6 +10,7 @@ from langdetect import detect, LangDetectException
 import tempfile
 import uuid
 import logging
+from .pipeline import evaluate_sequences as pipeline_evaluate_sequences
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -604,6 +605,12 @@ class EnhancedPDFToEPUBConverter:
             ConversionEngine.BALANCED: BalancedConverter(),
             ConversionEngine.QUALITY: QualityConverter()
         }
+
+    def evaluate_sequences(self, pdf_path, analysis=None):
+        """Evalúa las distintas secuencias de conversión disponibles"""
+        if analysis is None:
+            analysis = self.analyzer.analyze_pdf(pdf_path)
+        return pipeline_evaluate_sequences(pdf_path, analysis)
     
     def convert(self, pdf_path, output_path=None, engine=None, metadata=None):
         """
