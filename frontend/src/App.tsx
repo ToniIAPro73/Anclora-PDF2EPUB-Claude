@@ -9,6 +9,7 @@ import './styles/App.css';
 const App: React.FC = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [currentSection, setCurrentSection] = useState<string>('inicio');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   
   // Detectar preferencia de tema del sistema
   useEffect(() => {
@@ -34,15 +35,15 @@ const App: React.FC = () => {
           <div className="hero-section">
             <h1>Anclora PDF2EPUB</h1>
             <p>Conversión inteligente de PDF a EPUB3</p>
-            <FileUploader />
+            <FileUploader onFileSelected={setSelectedFile} />
           </div>
         )}
         
         {currentSection === 'conversion' && (
           <div className="conversion-section">
             <h2>Convertir PDF a EPUB</h2>
-            <FileUploader />
-            <ConversionPanel />
+            <FileUploader onFileSelected={setSelectedFile} />
+            <ConversionPanel file={selectedFile} />
             <MetricsDisplay />
           </div>
         )}

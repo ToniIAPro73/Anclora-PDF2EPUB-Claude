@@ -7,7 +7,6 @@ interface FileUploaderProps {
 
 const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected }) => {
   const [file, setFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -47,24 +46,9 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected }) => {
     multiple: false
   });
   
-  const startConversion = () => {
-    if (!file) return;
-    
-    setIsUploading(true);
-    
-    // Simulación de carga para demo
-    setTimeout(() => {
-      setIsUploading(false);
-      console.log('Conversión iniciada para:', file.name);
-      
-      // Aquí iría la lógica real de envío al backend
-    }, 1500);
-  };
-  
   const resetUpload = () => {
     setFile(null);
     setError(null);
-    setIsUploading(false);
   };
   
   return (
@@ -96,23 +80,17 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected }) => {
         )}
       </div>
       
-      <div className="action-buttons">
-        <button 
-          className={`convert-button ${!file || isUploading ? 'disabled' : 'active'}`}
-          disabled={!file || isUploading}
-          onClick={startConversion}
-        >
-          {isUploading ? 'Procesando...' : 'Iniciar Conversión'}
-        </button>
-        
-        <button 
-          className={`reset-button ${!file ? 'disabled' : 'active'}`}
-          disabled={!file}
-          onClick={resetUpload}
-        >
-          Reiniciar
-        </button>
-      </div>
+      {file && (
+        <div className="action-buttons">
+          <button
+            className={`reset-button ${!file ? 'disabled' : 'active'}`}
+            disabled={!file}
+            onClick={resetUpload}
+          >
+            Reiniciar
+          </button>
+        </div>
+      )}
     </div>
   );
 };
