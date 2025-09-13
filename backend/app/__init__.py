@@ -19,10 +19,15 @@ def create_app():
         CONVERSION_TIMEOUT=int(os.environ.get('CONVERSION_TIMEOUT', 300)),
         SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URL', 'sqlite:///app.db'),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        JWT_SECRET=os.environ.get('JWT_SECRET', 'dev'),
+        JWT_EXPIRATION=int(os.environ.get('JWT_EXPIRATION', 3600)),
     )
 
     db.init_app(app)
     migrate.init_app(app, db)
+
+    with app.app_context():
+        db.create_all()
     
     # Asegurarse de que existan los directorios
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -31,7 +36,9 @@ def create_app():
     # Inicializar base de datos y registrar rutas
     init_db()
     from . import routes
+    from .auth import auth_bp
     app.register_blueprint(routes.bp)
+    app.register_blueprint(auth_bp)
 
     return app
 
