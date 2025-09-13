@@ -1,0 +1,90 @@
+import os
+import sys
+import tempfile
+import fitz
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from app.converter import (
+    PDFAnalyzer,
+    ContentType,
+    PDFAnalysis,
+    ConversionEngine,
+    EnhancedPDFToEPUBConverter,
+    RapidConverter,
+)
+
+
+def _create_simple_pdf(text: str = "Hello world") -> str:
+    fd, path = tempfile.mkstemp(suffix=".pdf")
+    os.close(fd)
+    doc = fitz.open()
+    page = doc.new_page()
+    page.insert_text((72, 72), text)
+    doc.save(path)
+    doc.close()
+    return path
+
+
+def _analysis_for(pdf_path: str) -> PDFAnalysis:
+    return PDFAnalysis(
+        page_count=1,
+        file_size=os.path.getsize(pdf_path),
+        text_extractable=True,
+        image_count=0,
+        content_type=ContentType.TEXT_ONLY,
+        issues=[],
+        complexity_score=1,
+        recommended_engine=ConversionEngine.RAPID,
+    )
+
+
+def test_pdf_analyzer_detects_basic_metrics():
+    pdf_path = _create_simple_pdf()
+    analyzer = PDFAnalyzer()
+    analysis = analyzer.analyze_pdf(pdf_path)
+    assert analysis.page_count == 1
+    assert analysis.text_extractable is True
+    assert analysis.image_count == 0
+    assert analysis.content_type == ContentType.TEXT_ONLY
+    os.remove(pdf_path)
+
+
+def test_enhanced_converter_uses_recommended_engine(monkeypatch):
+    pdf_path = _create_simple_pdf()
+    converter = EnhancedPDFToEPUBConverter()
+
+    fake_analysis = PDFAnalysis(
+        page_count=1,
+        file_size=100,
+        text_extractable=True,
+        image_count=0,
+        content_type=ContentType.TEXT_ONLY,
+        issues=[],
+        complexity_score=1,
+        recommended_engine=ConversionEngine.BALANCED,
+    )
+
+    monkeypatch.setattr(converter.analyzer, "analyze_pdf", lambda path: fake_analysis)
+
+    called = {}
+
+    def fake_balanced(pdf_path_arg, output_path, analysis, metadata):
+        called["engine"] = "balanced"
+        return {"success": True, "quality_metrics": {}}
+
+    monkeypatch.setattr(converter.engines[ConversionEngine.BALANCED], "convert", fake_balanced)
+
+    result = converter.convert(pdf_path)
+    assert result["engine_used"] == "balanced"
+    assert called.get("engine") == "balanced"
+    os.remove(pdf_path)
+
+
+def test_rapid_converter_generates_epub(tmp_path):
+    pdf_path = _create_simple_pdf()
+    output_path = tmp_path / "output.epub"
+    analysis = _analysis_for(pdf_path)
+    converter = RapidConverter()
+    result = converter.convert(pdf_path, str(output_path), analysis, metadata={"title": "Test"})
+    assert result["success"] is True
+    assert output_path.exists()
+    os.remove(pdf_path)
