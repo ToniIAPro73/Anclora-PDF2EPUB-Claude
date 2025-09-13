@@ -22,6 +22,7 @@ def _create_pdf() -> str:
 def _setup_app(tmpdir):
     os.environ['UPLOAD_FOLDER'] = str(tmpdir / 'uploads')
     os.environ['RESULTS_FOLDER'] = str(tmpdir / 'results')
+    os.environ['THUMBNAIL_FOLDER'] = str(tmpdir / 'thumbnails')
     os.environ['DATABASE_URL'] = 'sqlite:///' + str(tmpdir / 'app.db')
     os.environ['SECRET_KEY'] = 'test-secret'
     app = create_app()
@@ -59,7 +60,7 @@ def test_convert_accepts_pipeline_id(tmp_path, monkeypatch):
 
     pdf_path = _create_pdf()
     with open(pdf_path, 'rb') as f:
-        response = client.post('/api/convert', data={'file': (f, 'sample.pdf'), 'pipeline_id': 'sample'})
+        response = client.post('/api/convert', data={'file': (f, 'sample.pdf'), 'pipeline_id': 'rapid'})
 
     os.remove(pdf_path)
     assert response.status_code == 202, 'pipeline_id not handled'

@@ -10,8 +10,8 @@ from langdetect import detect, LangDetectException
 import tempfile
 import uuid
 import logging
-import time
-from concurrent.futures import ThreadPoolExecutor
+
+from .pipelines import evaluate_sequences as pipeline_evaluate_sequences
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -698,7 +698,7 @@ class EnhancedPDFToEPUBConverter:
                     pdf_path, metadata
                 )
             else:
-                pipeline_metrics = {}
+                pipeline_metrics = []
                 analysis = self.analyzer.analyze_pdf(pdf_path)
 
             logger.info(f"Pipeline to execute: {pipeline}")
@@ -744,6 +744,8 @@ class EnhancedPDFToEPUBConverter:
                 "issues": analysis.issues,
                 "language": analysis.language,
             }
+            result["pipeline_used"] = pipeline
+            result["pipeline_metrics"] = pipeline_metrics
 
             return result
             

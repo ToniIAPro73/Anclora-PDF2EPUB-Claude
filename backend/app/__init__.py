@@ -50,6 +50,7 @@ def create_app():
         SECRET_KEY=os.environ.get('SECRET_KEY', 'dev'),
         UPLOAD_FOLDER=os.environ.get('UPLOAD_FOLDER', 'uploads'),
         RESULTS_FOLDER=os.environ.get('RESULTS_FOLDER', 'results'),
+        THUMBNAIL_FOLDER=os.environ.get('THUMBNAIL_FOLDER', 'thumbnails'),
         CONVERSION_TIMEOUT=int(os.environ.get('CONVERSION_TIMEOUT', 300)),
         SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URL', 'sqlite:///app.db'),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
@@ -61,10 +62,11 @@ def create_app():
     migrate.init_app(app, db)
 
     limiter.init_app(app)
-    
+
     # Asegurarse de que existan los directorios
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
     os.makedirs(app.config["RESULTS_FOLDER"], exist_ok=True)
+    os.makedirs(app.config["THUMBNAIL_FOLDER"], exist_ok=True)
 
     @app.before_request
     def start_timer():  # pragma: no cover - simple middleware
