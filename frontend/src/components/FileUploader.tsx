@@ -122,7 +122,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected }) => {
                 className="w-full h-full object-contain"
               />
             </div>
-            <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-uploader)' }} translate="no">
+            <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-uploader)' }}>
               {isDragActive ? t('fileUploader.dropHere') : t('fileUploader.uploadTitle')}
             </h3>
             <p className="mb-4 font-medium" style={{ color: 'var(--text-uploader)', opacity: '0.9' }}>
