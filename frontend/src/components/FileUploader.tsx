@@ -120,7 +120,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected }) => {
                 className="w-full h-full object-contain"
               />
             </div>
-            <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-uploader)' }}>
+            <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-uploader)' }} translate="no">
               {isDragActive ? '¡Suelta tu PDF aquí!' : 'Sube tu archivo PDF'}
             </h3>
             <p className="mb-4 font-medium" style={{ color: 'var(--text-uploader)', opacity: '0.9' }}>
@@ -217,3 +217,5 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected }) => {
 };
 
 export default FileUploader;
+
+
