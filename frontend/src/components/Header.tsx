@@ -11,8 +11,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, setCurrentSection }) => {
   const { logout, user } = useAuth();
 
-  // Debug log temporal
-  console.log('Header render - user value:', JSON.stringify(user));
+  // User object is available for debugging if needed
 
 
 
@@ -21,18 +20,45 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
   };
 
   // Helper function to get user initials
-  const getUserInitials = (username: string | null): string => {
-    if (!username) return 'U';
+  const getUserInitials = (user: any): string => {
+    // Handle null/undefined user
+    if (!user) return 'U';
 
-    const words = username.trim().split(' ');
-    if (words.length >= 2) {
-      // If there are multiple words, take first letter of first two words
-      return (words[0][0] + words[1][0]).toUpperCase();
-    } else {
-      // If single word, take first two letters or just first if only one character
-      return username.length >= 2
-        ? username.substring(0, 2).toUpperCase()
-        : username[0].toUpperCase();
+    // Handle non-object user (shouldn't happen but defensive)
+    if (typeof user !== 'object') return 'U';
+
+    try {
+      let displayName = 'U';
+
+      // Priority: username from metadata > email prefix > 'U'
+      if (user.user_metadata && typeof user.user_metadata === 'object') {
+        if (user.user_metadata.username && typeof user.user_metadata.username === 'string') {
+          displayName = user.user_metadata.username.trim();
+        }
+      }
+
+      // Fallback to email if no username
+      if (displayName === 'U' && user.email && typeof user.email === 'string') {
+        displayName = user.email.split('@')[0].trim();
+      }
+
+      // Ensure we have a valid string
+      if (!displayName || displayName === 'U') return 'U';
+
+      // Get initials
+      const words = displayName.split(/\s+/).filter(word => word.length > 0);
+      if (words.length >= 2) {
+        return (words[0][0] + words[1][0]).toUpperCase();
+      } else if (words.length === 1 && words[0].length >= 2) {
+        return words[0].substring(0, 2).toUpperCase();
+      } else if (words.length === 1 && words[0].length === 1) {
+        return words[0][0].toUpperCase();
+      }
+
+      return 'U';
+    } catch (error) {
+      console.error('Error in getUserInitials:', error);
+      return 'U';
     }
   };
 
@@ -122,7 +148,12 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
                         backgroundColor: 'rgba(0,0,0,0.1)',
                         whiteSpace: 'nowrap'
                       }}>
-                  {user || 'Usuario'}
+                  {(() => {
+                    if (!user) return 'Usuario';
+                    if (user.user_metadata?.username) return user.user_metadata.username;
+                    if (user.email) return user.email.split('@')[0];
+                    return 'Usuario';
+                  })()}
                 </span>
               </div>
             </div>

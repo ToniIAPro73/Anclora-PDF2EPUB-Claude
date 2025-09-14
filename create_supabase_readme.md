@@ -1,57 +1,130 @@
--- File: create_supabase_readme.md
+# Supabase Setup Guide
 
--- README: create_supabase_readme.md
+## Table of Contents
 
-# Supabase schema, RLS policies, and Edge Function
+- [Overview](#overview)
+- [Prerequisites](#prerequisites)
+- [What This Package Contains](#what-this-package-contains)
+- [SQL Schema Summary](#sql-schema-summary)
+- [Edge Function: create-admin-user](#edge-function-create-admin-user)
+- [Deployment Instructions](#deployment-instructions)
+- [Usage Examples](#usage-examples)
+- [Testing and Validation](#testing-and-validation)
+- [Best Practices](#best-practices)
+- [Performance Optimization](#performance-optimization)
+- [Troubleshooting](#troubleshooting)
+- [Appendix](#appendix)
 
-## What this package contains
+## Overview
 
-- create_supabase_tables.sql: SQL to create public.profiles, RLS policies, indexes, trigger, and private.profile_audit.
-- create-admin-user Edge Function: TypeScript (Deno) function to create auth users using the Service Role Key and insert a profile row.
+This guide covers the setup of Supabase schema, Row Level Security (RLS) policies, and an Edge Function for creating admin users in the Anclora PDF2EPUB project.
 
-## SQL summary
+## Prerequisites
 
-- public.profiles: stores public profile data and links to auth.users via user_id UUID foreign key.
-- RLS: enabled on public.profiles with policies for SELECT/INSERT/UPDATE/DELETE restricted to the row owner via (SELECT auth.uid())::uuid = user_id.
-- Indexes: created for user_id and audit table.
-- Trigger: set_updated_at to keep updated_at timestamp current.
-- private.profile_audit: audit table stored in private schema to reduce exposure via API.
+- Supabase project set up
+- Supabase CLI installed
+- Access to Supabase Dashboard
+- Environment variables: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+
+## What This Package Contains
+
+- `create_supabase_tables_mejorado.sql`: Improved SQL script to create public.profiles, RLS policies, indexes, triggers, audit logging, and private.profile_audit.
+- `supabase_setup.sql`: SQL script for setting up the conversions table and related functionality for PDF2EPUB processing.
+- `create-admin-user.ts`: TypeScript Edge Function code for creating admin users.
+
+All scripts are located at the root level of the project.
+
+## SQL Schema Summary
+
+### Tables
+
+- `public.profiles`: Stores user profile data linked to `auth.users` via `user_id` UUID foreign key.
+- `public.conversions`: Stores PDF2EPUB conversion tasks and metadata.
+- `private.profile_audit`: Audit table in private schema for security.
+
+### Security
+
+- RLS enabled on `public.profiles` and `public.conversions` with policies restricting access to row owners.
+
+### Performance
+
+- Indexes on `user_id`, `task_id`, `status`, and audit table for efficient queries.
+
+### Automation
+
+- Triggers to update `updated_at` timestamps and log profile changes.
+- Audit logging for profile modifications.
 
 ## Edge Function: create-admin-user
 
-Purpose:
-- Create an auth user with the Admin API using the SUPABASE_SERVICE_ROLE_KEY.
-- Insert a matching row into public.profiles with user_id set to the created user's id.
-- Rollback (delete auth user) if profile insertion fails.
+### Purpose
 
-Deployment:
-1. Save the Edge Function code as `create-admin-user/index.ts` in your project functions folder.
-2. Deploy with the Supabase CLI or Dashboard. The environment variables SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are available in both local and hosted environments.
+- Creates auth users using the Admin API with SUPABASE_SERVICE_ROLE_KEY.
+- Inserts corresponding profile row.
+- Includes validation and uniqueness checks.
+- Rolls back user creation if profile insertion fails.
 
-Example invocation (curl):
+### Features
 
+- Input validation for email, password, username.
+- Duplicate prevention for username and email.
+- Error handling with rollback mechanism.
+- Secure key management.
+
+## Deployment Instructions
+
+1. Execute SQL scripts in Supabase SQL Editor or via psql:
+   - `psql $SUPABASE_DB_URL -f create_supabase_tables_mejorado.sql`
+   - `psql $SUPABASE_DB_URL -f supabase_setup.sql`
+
+2. Deploy Edge Function:
+   - Save `create-admin-user.ts` as `create-admin-user/index.ts` in Supabase functions folder.
+   - Deploy with Supabase CLI: `supabase functions deploy create-admin-user`.
+
+Environment variables are auto-available in Supabase environment.
+
+## Usage Examples
+
+### Creating an Admin User
+
+```bash
 curl -X POST "<PROJECT_FUNCTIONS_URL>/create-admin-user" \
   -H "Content-Type: application/json" \
   -H "apikey: <SERVICE_ROLE_KEY>" \
   -H "Authorization: Bearer <SERVICE_ROLE_KEY>" \
   -d '{"email":"antonio@anclora.com","password":"ancloraadm","username":"anclora_admin","full_name":"Antonio"}'
+```
 
-## SQL execution and testing
+## Testing and Validation
 
-1. Run the SQL file in the SQL editor or via psql. Example:
-   psql $SUPABASE_DB_URL -f create_supabase_tables.sql
+1. Execute SQL scripts and verify tables/policies in Supabase Dashboard.
+2. Test RLS as different users.
+3. Test Edge Function with valid/invalid inputs.
 
-2. Confirm RLS policies exist and test as different users:
-   - As anon: should not see other users' profiles.
-   - As authenticated user A: can SELECT/INSERT/UPDATE/DELETE only their profile.
-
-## Notes & recommendations
+## Best Practices
 
 - Keep SUPABASE_SERVICE_ROLE_KEY secret.
-- Revoke EXECUTE on any SECURITY DEFINER helper functions from anon/authenticated (none created here).
-- Consider using `id uuid PRIMARY KEY` for profiles if you want profiles.id to equal auth.users.id. Current design keeps separate bigint id for profile records and user_id uuid FK.
-- Add policies for admin/service_role roles if you need cross-user admin operations.
+- Use HTTPS for all requests.
+- Test RLS policies thoroughly.
+- Regularly audit access logs.
+- Validate inputs on both client and server side.
 
-## Appendix: Full Edge Function code
+## Performance Optimization
 
-(See create-admin-user/index.ts)
+- Monitor query performance in Supabase Dashboard.
+- Ensure indexes are used for common queries.
+- Optimize RLS policies to avoid complex conditions.
+- Use connection pooling for high-traffic scenarios.
+
+## Troubleshooting
+
+- **Deployment fails**: Check CLI version and permissions.
+- **RLS not working**: Verify policies in Dashboard.
+- **Edge Function errors**: Check logs in Supabase Dashboard.
+- **User creation fails**: Ensure valid email and unique username.
+- **SQL execution errors**: Check database permissions and syntax.
+
+## Appendix
+
+- Full Edge Function code: `create-admin-user.ts`
+- SQL scripts: `create_supabase_tables_mejorado.sql`, `supabase_setup.sql`
