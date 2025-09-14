@@ -11,8 +11,29 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, setCurrentSection }) => {
   const { logout, user } = useAuth();
 
+  // Debug log temporal
+  console.log('Header render - user value:', JSON.stringify(user));
+
+
+
   const handleLogout = () => {
     logout();
+  };
+
+  // Helper function to get user initials
+  const getUserInitials = (username: string | null): string => {
+    if (!username) return 'U';
+
+    const words = username.trim().split(' ');
+    if (words.length >= 2) {
+      // If there are multiple words, take first letter of first two words
+      return (words[0][0] + words[1][0]).toUpperCase();
+    } else {
+      // If single word, take first two letters or just first if only one character
+      return username.length >= 2
+        ? username.substring(0, 2).toUpperCase()
+        : username[0].toUpperCase();
+    }
   };
 
   const navigationItems = [
@@ -81,21 +102,28 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
               }}
             >
               <span>{theme === 'dark' ? '☀️' : '🌙'}</span>
-              <span className="hidden sm:inline">
+              <span className="hidden sm:inline" translate="no">
                 {theme === 'dark' ? 'Claro' : 'Oscuro'}
               </span>
             </button>
 
             {/* Usuario */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <div className="flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold text-white"
+                   translate="no"
                    style={{ background: 'var(--gradient-nexus)' }}>
-                {user?.charAt(0).toUpperCase() || 'U'}
+                {getUserInitials(user)}
               </div>
               <div className="hidden sm:block">
-                <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                <span className="text-sm font-medium px-2 py-1 rounded"
+                      translate="no"
+                      style={{
+                        color: 'var(--text-primary)',
+                        backgroundColor: 'rgba(0,0,0,0.1)',
+                        whiteSpace: 'nowrap'
+                      }}>
                   {user || 'Usuario'}
-                </p>
+                </span>
               </div>
             </div>
 

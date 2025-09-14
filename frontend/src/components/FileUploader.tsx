@@ -75,22 +75,23 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected }) => {
         className={`
           relative overflow-hidden rounded-2xl border-2 border-dashed transition-all duration-300 cursor-pointer
           ${isDragActive
-            ? 'border-blue-400 bg-blue-50 scale-105'
+            ? 'border-blue-400 scale-105'
             : file
-              ? 'border-green-400 bg-green-50'
+              ? 'border-green-400'
               : error
-                ? 'border-red-400 bg-red-50'
-                : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+                ? 'border-red-400'
+                : 'border-gray-300 hover:border-gray-400'
           }
           ${isUploading ? 'pointer-events-none' : ''}
+          ${!isDragActive && !file && !error ? 'bg-uploader-pattern' : ''}
         `}
         style={{
           borderColor: isDragActive ? 'var(--accent-primary)' :
                       file ? '#10b981' :
                       error ? '#ef4444' : 'var(--border-color)',
-          backgroundColor: isDragActive ? 'rgba(46, 175, 196, 0.1)' :
+          backgroundColor: isDragActive ? 'rgba(46, 175, 196, 0.15)' :
                           file ? 'rgba(16, 185, 129, 0.1)' :
-                          error ? 'rgba(239, 68, 68, 0.1)' : 'transparent'
+                          error ? 'rgba(239, 68, 68, 0.1)' : undefined
         }}
       >
         <input {...getInputProps()} />
