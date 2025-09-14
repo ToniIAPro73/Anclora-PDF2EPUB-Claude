@@ -47,7 +47,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected }) => {
     if (onFileSelected) {
       onFileSelected(selectedFile);
     }
-  }, [onFileSelected]);
+  }, [onFileSelected, t]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -106,7 +106,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected }) => {
               <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             </div>
             <p className="text-lg font-medium" style={{ color: 'var(--text-primary)' }}>
-              Procesando archivo...
+              {t('fileUploader.processing')}
             </p>
           </div>
         )}
@@ -123,15 +123,15 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected }) => {
               />
             </div>
             <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-uploader)' }} translate="no">
-              {isDragActive ? '¡Suelta tu PDF aquí!' : 'Sube tu archivo PDF'}
+              {isDragActive ? t('fileUploader.dropHere') : t('fileUploader.uploadTitle')}
             </h3>
             <p className="mb-4 font-medium" style={{ color: 'var(--text-uploader)', opacity: '0.9' }}>
-              Arrastra y suelta tu archivo o haz clic para seleccionarlo
+              {t('fileUploader.uploadInstructions')}
             </p>
             <div className="flex items-center gap-4 text-sm font-medium" style={{ color: 'var(--text-uploader)', opacity: '0.8' }}>
-              <span>📋 Solo PDF</span>
-              <span>📏 Máx. 50MB</span>
-              <span>⚡ Conversión rápida</span>
+              <span>📋 {t('fileUploader.onlyPDF')}</span>
+              <span>📏 {t('fileUploader.maxSize')}</span>
+              <span>⚡ {t('fileUploader.fastConversion')}</span>
             </div>
           </div>
         )}
@@ -179,7 +179,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected }) => {
               </div>
             </div>
             <h3 className="text-lg font-semibold mb-2 text-red-600">
-              Error al subir archivo
+              {t('fileUploader.uploadError')}
             </h3>
             <p className="text-red-500 mb-4">
               {error}
@@ -188,7 +188,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected }) => {
               onClick={resetUpload}
               className="btn btn-secondary"
             >
-              Intentar de nuevo
+              {t('fileUploader.tryAgain')}
             </button>
           </div>
         )}
@@ -201,7 +201,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected }) => {
             onClick={resetUpload}
             className="btn btn-secondary"
           >
-            🔄 Cambiar archivo
+            🔄 {t('fileUploader.changeFile')}
           </button>
           <button
             className="btn btn-primary"
@@ -210,7 +210,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected }) => {
               console.log('Iniciar conversión de:', file.name);
             }}
           >
-            ⚡ Convertir ahora
+            ⚡ {t('fileUploader.convertNow')}
           </button>
         </div>
       )}
