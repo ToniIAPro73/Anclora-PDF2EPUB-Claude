@@ -5,7 +5,7 @@ import { useAuth } from './AuthContext';
 const RegisterForm: React.FC = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -30,10 +30,10 @@ const RegisterForm: React.FC = () => {
     }
 
     try {
-      await register(username, password);
+      await register(email, password);
       navigate('/');
-    } catch (err) {
-      setError('Error al crear la cuenta. El usuario podría ya existir.');
+    } catch (err: any) {
+      setError(err.message || 'Error al crear la cuenta. El email podría ya existir.');
     } finally {
       setIsLoading(false);
     }
@@ -70,21 +70,20 @@ const RegisterForm: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium mb-2">
-                Usuario
+              <label htmlFor="email" className="block text-sm font-medium mb-2">
+                Email
               </label>
               <input
-                id="username"
-                type="text"
-                placeholder="Elige un nombre de usuario"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                id="email"
+                type="email"
+                placeholder="Ingresa tu email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="input"
                 required
                 disabled={isLoading}
-                minLength={3}
               />
-              <p className="text-xs text-gray-500 mt-1">Mínimo 3 caracteres</p>
+              <p className="text-xs text-gray-500 mt-1">Usaremos este email para tu cuenta</p>
             </div>
 
             <div>

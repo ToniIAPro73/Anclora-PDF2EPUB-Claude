@@ -7,8 +7,7 @@ from celery.signals import task_prerun, task_postrun
 from prometheus_client import Counter, Histogram, start_http_server
 
 from app.converter import EnhancedPDFToEPUBConverter, ConversionEngine
-from .models import Conversion
-from . import db
+from .supabase_client import update_conversion_status, get_conversion_by_task_id
 
 
 celery_app = Celery(
@@ -174,23 +173,28 @@ def convert_pdf_to_epub(self, task_id, input_path, output_path=None, pipeline=No
             },
         )
 
-        with app.app_context():
-            conv = Conversion.query.filter_by(task_id=task_id).first()
-            if conv:
-                metrics = conv.metrics or {}
-                metrics.setdefault("pipeline", []).append(
-                    {"step": step, "status": step_status, "duration": step_duration}
-                )
-                conv.metrics = metrics
-                if step in {"conversion", "convert"} and step_status == "SUCCESS":
-                    conv.output_path = output_path
-                if step_status == "FAILURE":
-                    conv.status = "FAILURE"
-                    conv.output_path = None
-                    metrics["error"] = context.get(step, {}).get("error")
-                else:
-                    conv.status = step.upper()
-                db.session.commit()
+        # Update conversion status in Supabase
+        conv = get_conversion_by_task_id(task_id)
+        if conv:
+            metrics = conv.get('metrics') or {}
+            metrics.setdefault("pipeline", []).append(
+                {"step": step, "status": step_status, "duration": step_duration}
+            )
+
+            update_data = {"metrics": metrics}
+
+            if step in {"conversion", "convert"} and step_status == "SUCCESS":
+                update_data["output_path"] = output_path
+
+            if step_status == "FAILURE":
+                update_data["status"] = "FAILED"
+                update_data["output_path"] = None
+                metrics["error"] = context.get(step, {}).get("error")
+                update_data["metrics"] = metrics
+            else:
+                update_data["status"] = "PROCESSING"
+
+            update_conversion_status(task_id, update_data["status"], **{k: v for k, v in update_data.items() if k != "status"})
         if step_status == "FAILURE":
             error_msg = context.get(step, {}).get("error", "Unknown error")
             total_duration = time.time() - start_time
@@ -207,22 +211,26 @@ def convert_pdf_to_epub(self, task_id, input_path, output_path=None, pipeline=No
     total_duration = time.time() - start_time
     final_result = context.get("conversion", {})
     _update("PROGRESS", {"progress": 100, "message": "Proceso completado"})
-    with app.app_context():
-        conv = Conversion.query.filter_by(task_id=task_id).first()
-        if conv:
-            if conv.status != "FAILURE":
-                conv.status = "SUCCESS"
-            metrics = conv.metrics or {}
-            metrics["duration"] = total_duration
-            if final_result.get("engine_used"):
-                metrics["engine_used"] = final_result.get("engine_used")
-            if final_result.get("quality_metrics"):
-                metrics["quality_metrics"] = final_result.get("quality_metrics")
-            conv.metrics = metrics
-            # Generate thumbnail for the source PDF
-            try:
-                from pdf2image import convert_from_path  # type: ignore
 
+    # Update final conversion status in Supabase
+    conv = get_conversion_by_task_id(task_id)
+    if conv:
+        final_status = "COMPLETED" if conv.get("status") != "FAILED" else "FAILED"
+        metrics = conv.get('metrics') or {}
+        metrics["duration"] = total_duration
+
+        if final_result.get("engine_used"):
+            metrics["engine_used"] = final_result.get("engine_used")
+        if final_result.get("quality_metrics"):
+            metrics["quality_metrics"] = final_result.get("quality_metrics")
+
+        update_data = {"metrics": metrics}
+
+        # Generate thumbnail for the source PDF
+        try:
+            from pdf2image import convert_from_path  # type: ignore
+
+            with app.app_context():
                 thumb_dir = app.config.get("THUMBNAIL_FOLDER", "thumbnails")
                 os.makedirs(thumb_dir, exist_ok=True)
                 thumb_filename = f"{task_id}.png"
@@ -230,10 +238,11 @@ def convert_pdf_to_epub(self, task_id, input_path, output_path=None, pipeline=No
                 images = convert_from_path(input_path, first_page=1, last_page=1)
                 if images:
                     images[0].save(thumb_path, "PNG")
-                    conv.thumbnail_path = thumb_filename
-            except Exception:  # pragma: no cover - optional thumbnail generation
-                logger.exception("thumbnail generation failed", extra={"task_id": task_id})
-            db.session.commit()
+                    update_data["thumbnail_path"] = thumb_filename
+        except Exception:  # pragma: no cover - optional thumbnail generation
+            logger.exception("thumbnail generation failed", extra={"task_id": task_id})
+
+        update_conversion_status(task_id, final_status, **update_data)
 
     return {
         "task_id": task_id,

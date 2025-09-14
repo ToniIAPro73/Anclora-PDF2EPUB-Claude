@@ -1,86 +1,72 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from './lib/supabase';
+import type { User, Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
-  token: string | null;
-  user: string | null;
-  login: (username: string, password: string) => Promise<void>;
-  register: (username: string, password: string) => Promise<void>;
-  logout: () => void;
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Helper function to decode JWT token
-const decodeToken = (token: string): string | null => {
-  if (!token) {
-    return null;
-  }
-
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) {
-      return null;
-    }
-
-    const payload = JSON.parse(atob(parts[1]));
-    return payload.sub || null;
-  } catch (error) {
-    console.error('Error decoding token:', error);
-    return null;
-  }
-};
-
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [token, setToken] = useState<string | null>(() => {
-    return localStorage.getItem('token');
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const [user, setUser] = useState<string | null>(() => {
-    const storedToken = localStorage.getItem('token');
-    return storedToken ? decodeToken(storedToken) : null;
-  });
-
-  const login = async (username: string, password: string) => {
-    const response = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
     });
-    if (!response.ok) {
-      throw new Error('Login failed');
-    }
-    const data = await response.json();
-    localStorage.setItem('token', data.token);
-    setToken(data.token);
-    setUser(decodeToken(data.token));
-  };
 
-  const register = async (username: string, password: string) => {
-    const response = await fetch('/api/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
     });
-    if (!response.ok) {
-      throw new Error('Registration failed');
-    }
-    const data = await response.json();
-    // If backend returns token on registration
-    if (data.token) {
-      localStorage.setItem('token', data.token);
-      setToken(data.token);
-      setUser(decodeToken(data.token));
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const login = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) {
+      throw new Error(error.message);
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setToken(null);
-    setUser(null);
+  const register = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+    if (error) {
+      throw new Error(error.message);
+    }
+  };
+
+  const logout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      throw new Error(error.message);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, session, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

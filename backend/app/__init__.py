@@ -1,6 +1,4 @@
 from flask import Flask, Response, request, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from datetime import datetime
@@ -10,8 +8,6 @@ import logging
 import json
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 
-db = SQLAlchemy()
-migrate = Migrate()
 limiter = Limiter(key_func=get_remote_address)
 
 class JsonFormatter(logging.Formatter):
@@ -52,14 +48,10 @@ def create_app():
         RESULTS_FOLDER=os.environ.get('RESULTS_FOLDER', 'results'),
         THUMBNAIL_FOLDER=os.environ.get('THUMBNAIL_FOLDER', 'thumbnails'),
         CONVERSION_TIMEOUT=int(os.environ.get('CONVERSION_TIMEOUT', 300)),
-        SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URL', 'sqlite:///app.db'),
-        SQLALCHEMY_TRACK_MODIFICATIONS=False,
         RATE_LIMIT=os.environ.get('RATE_LIMIT', '5 per minute'),
         JWT_SECRET=os.environ.get('JWT_SECRET', 'dev'),
+        JWT_EXPIRATION=int(os.environ.get('JWT_EXPIRATION', 3600)),
     )
-
-    db.init_app(app)
-    migrate.init_app(app, db)
 
     limiter.init_app(app)
 
@@ -94,13 +86,8 @@ def create_app():
 
     # Registrar rutas
     from . import routes
-    from .auth import auth_bp
 
     app.register_blueprint(routes.bp)
-    app.register_blueprint(auth_bp)
-
-    with app.app_context():
-        db.create_all()
 
     @app.errorhandler(429)
     def ratelimit_handler(e):

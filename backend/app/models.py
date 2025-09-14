@@ -1,19 +1,18 @@
 from datetime import datetime
-import sqlite3
-import os
-from . import db
+from sqlalchemy import Column, Integer, String, DateTime, JSON, Boolean
+from .database import Base
 
 
-class Conversion(db.Model):
+class Conversion(Base):
     __tablename__ = 'conversions'
 
-    id = db.Column(db.Integer, primary_key=True)
-    task_id = db.Column(db.String(36), unique=True, nullable=False)
-    status = db.Column(db.String(50), nullable=False, default='PENDING')
-    output_path = db.Column(db.String(255))
-    thumbnail_path = db.Column(db.String(255))
-    metrics = db.Column(db.JSON)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    id = Column(Integer, primary_key=True, index=True)
+    task_id = Column(String(36), unique=True, nullable=False, index=True)
+    status = Column(String(50), nullable=False, default='PENDING')
+    output_path = Column(String(255))
+    thumbnail_path = Column(String(255))
+    metrics = Column(JSON)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     def to_dict(self) -> dict:
         return {
@@ -27,39 +26,14 @@ class Conversion(db.Model):
         }
 
 
-class User(db.Model):
-    __tablename__ = 'user'
+class User(Base):
+    __tablename__ = 'users'
 
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(255), nullable=False)
-    email = db.Column(db.String(255), nullable=True)
-
-
-def init_db():
-    db_path = os.environ.get('CONVERSION_DB', 'app.db')
-    with sqlite3.connect(db_path) as conn:
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS conversions ("
-            "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-            " task_id TEXT UNIQUE,"
-            " status TEXT,"
-            " output_path TEXT,"
-            " thumbnail_path TEXT,"
-            " metrics TEXT,"
-            " created_at TEXT)"
-        )
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT, email TEXT)"
-        )
-        conn.commit()
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(80), unique=True, nullable=False, index=True)
+    password = Column(String(255), nullable=False)
+    email = Column(String(255), nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
 
-def create_conversion(task_id):
-    db_path = os.environ.get('CONVERSION_DB', 'app.db')
-    with sqlite3.connect(db_path) as conn:
-        conn.execute(
-            "INSERT INTO conversions (task_id, status, created_at) VALUES (?, ?, ?)",
-            (task_id, 'PENDING', datetime.utcnow().isoformat()),
-        )
-        conn.commit()

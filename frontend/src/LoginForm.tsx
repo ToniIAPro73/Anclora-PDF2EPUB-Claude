@@ -5,7 +5,7 @@ import { useAuth } from './AuthContext';
 const LoginForm: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -16,10 +16,10 @@ const LoginForm: React.FC = () => {
     setError(null);
 
     try {
-      await login(username, password);
+      await login(email, password);
       navigate('/');
-    } catch (err) {
-      setError('Credenciales inválidas');
+    } catch (err: any) {
+      setError(err.message || 'Credenciales inválidas');
     } finally {
       setIsLoading(false);
     }
@@ -56,15 +56,15 @@ const LoginForm: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium mb-2">
-                Usuario
+              <label htmlFor="email" className="block text-sm font-medium mb-2">
+                Email
               </label>
               <input
-                id="username"
-                type="text"
-                placeholder="Ingresa tu usuario"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                id="email"
+                type="email"
+                placeholder="Ingresa tu email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="input"
                 required
                 disabled={isLoading}

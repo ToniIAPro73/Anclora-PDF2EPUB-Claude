@@ -16,7 +16,7 @@ interface PipelineWizardProps {
 type Step = 'analysis' | 'selection' | 'confirmation';
 
 const PipelineWizard: React.FC<PipelineWizardProps> = ({ file }) => {
-  const { token, logout } = useAuth();
+  const { session, logout } = useAuth();
   const navigate = useNavigate();
 
   const [step, setStep] = useState<Step>('analysis');
@@ -39,7 +39,7 @@ const PipelineWizard: React.FC<PipelineWizardProps> = ({ file }) => {
       const res = await fetch('/api/analyze', {
         method: 'POST',
         body: formData,
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
       });
       if (res.status === 401) {
         logout();
@@ -83,7 +83,7 @@ const PipelineWizard: React.FC<PipelineWizardProps> = ({ file }) => {
       const res = await fetch('/api/convert', {
         method: 'POST',
         body: formData,
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
       });
       if (res.status === 401) {
         logout();
@@ -106,7 +106,7 @@ const PipelineWizard: React.FC<PipelineWizardProps> = ({ file }) => {
     const interval = setInterval(async () => {
       try {
         const res = await fetch(`/api/status/${id}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
         });
         if (res.status === 401) {
           clearInterval(interval);

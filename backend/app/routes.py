@@ -19,9 +19,15 @@ from functools import wraps
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST, REGISTRY
 
 from .tasks import convert_pdf_to_epub, celery_app
-from .models import Conversion, User
 from .converter import ConversionEngine, suggest_best_pipeline
-from . import db, limiter
+from .supabase_auth import supabase_auth_required, get_current_user_id
+from .supabase_client import (
+    create_conversion_record,
+    update_conversion_status,
+    get_user_conversions,
+    get_conversion_by_task_id
+)
+from . import limiter
 
 bp = Blueprint('routes', __name__)
 
@@ -38,20 +44,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def token_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        auth_header = request.headers.get('Authorization', '')
-        if not auth_header.lower().startswith('bearer '):
-            return jsonify({'error': 'Missing token'}), 401
-        token = auth_header.split(' ', 1)[1]
-        try:
-            jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
-        except Exception:
-            return jsonify({'error': 'Invalid token'}), 401
-        return f(*args, **kwargs)
-
-    return decorated
+# Authentication now handled by Supabase decorators
 
 
 @bp.route('/api/analyze', methods=['POST'])
@@ -89,42 +82,17 @@ def analyze():
     return jsonify(result)
 
 
-@bp.route('/api/register', methods=['POST'])
-def register():
-    data = request.get_json() or {}
-    username = data.get('username')
-    password = data.get('password')
-    if not username or not password:
-        return jsonify({'error': 'Username and password required'}), 400
-    if User.query.filter_by(username=username).first():
-        return jsonify({'error': 'User exists'}), 400
-    user = User(username=username, password=generate_password_hash(password))
-    db.session.add(user)
-    db.session.commit()
-    return jsonify({'message': 'User created'}), 201
-
-
-@bp.route('/api/login', methods=['POST'])
-def login():
-    data = request.get_json() or {}
-    username = data.get('username')
-    password = data.get('password')
-    user = User.query.filter_by(username=username).first()
-    if not user or not check_password_hash(user.password, password):
-        return jsonify({'error': 'Invalid credentials'}), 401
-    payload = {'sub': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)}
-    token = jwt.encode(payload, current_app.config['SECRET_KEY'], algorithm='HS256')
-    return jsonify({'token': token})
+# Authentication routes removed - now handled by Supabase
 
 
 @bp.route('/api/protected', methods=['GET'])
-@token_required
+@supabase_auth_required
 def protected():
     return jsonify({'message': 'Access granted'})
 
 @bp.route('/api/convert', methods=['POST'])
 @limiter.limit(lambda: current_app.config.get('RATE_LIMIT', '5 per minute'))
-
+@supabase_auth_required
 def convert():
     logger.info('Conversion requested')
     if 'file' not in request.files:
@@ -180,14 +148,17 @@ def convert():
         return jsonify({'error': 'Invalid pipeline_id'}), 400
 
     task_id = str(uuid.uuid4())
-    db.session.add(Conversion(task_id=task_id, status='PENDING'))
-    db.session.commit()
+    user_id = get_current_user_id()
+
+    # Create conversion record in Supabase
+    create_conversion_record(user_id, task_id, filename)
+
     convert_pdf_to_epub.apply_async(args=[task_id, pdf_path, epub_path, pipeline_id], task_id=task_id)
     conversion_counter.inc()
     return jsonify({'task_id': task_id}), 202
 
 @bp.route('/api/status/<task_id>', methods=['GET'])
-@token_required
+@supabase_auth_required
 def task_status(task_id):
     result = AsyncResult(task_id, app=celery_app)
     response = {
@@ -208,14 +179,13 @@ def task_status(task_id):
 
 
 @bp.route('/api/preview/<conversion_id>', methods=['GET'])
-@token_required
+@supabase_auth_required
 def preview(conversion_id):
-    conv = Conversion.query.filter_by(task_id=conversion_id).first()
-    if conv is None and conversion_id.isdigit():
-        conv = Conversion.query.get(int(conversion_id))
-    if not conv or conv.status != 'SUCCESS' or not conv.output_path or not os.path.exists(conv.output_path):
+    conv = get_conversion_by_task_id(conversion_id)
+    if not conv or conv.get('status') != 'COMPLETED' or not conv.get('output_path') or not os.path.exists(conv['output_path']):
         return jsonify({'error': 'Preview not available'}), 404
-    book = epub.read_epub(conv.output_path)
+
+    book = epub.read_epub(conv['output_path'])
     pages = []
     for item in book.get_items():
         if item.get_type() == ebooklib.ITEM_DOCUMENT:
@@ -224,17 +194,22 @@ def preview(conversion_id):
 
 
 @bp.route('/api/history', methods=['GET'])
-@token_required
+@supabase_auth_required
 def history():
     page = int(request.args.get('page', 1))
     per_page = int(request.args.get('per_page', 10))
-    pagination = Conversion.query.order_by(Conversion.id.desc()).paginate(page=page, per_page=per_page, error_out=False)
+    offset = (page - 1) * per_page
+
+    user_id = get_current_user_id()
+    conversions = get_user_conversions(user_id, per_page, offset)
+
     results = []
-    for c in pagination.items:
-        item = c.to_dict()
-        if c.thumbnail_path:
-            item['thumbnail_url'] = url_for('routes.thumbnail', filename=c.thumbnail_path, _external=False)
+    for c in conversions:
+        item = dict(c)
+        if c.get('thumbnail_path'):
+            item['thumbnail_url'] = url_for('routes.thumbnail', filename=c['thumbnail_path'], _external=False)
         results.append(item)
+
     return jsonify(results)
 
 
