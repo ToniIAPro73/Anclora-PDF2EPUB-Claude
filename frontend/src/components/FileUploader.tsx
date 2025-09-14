@@ -150,7 +150,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected }) => {
                 <h4 className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
                   {file.name}
                 </h4>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                   {formatFileSize(file.size)} • PDF
                 </p>
               </div>
