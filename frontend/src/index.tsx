@@ -7,10 +7,12 @@ import { AuthProvider } from './AuthContext';
 
 // establecer tema inicial
 const storedTheme = localStorage.getItem('theme');
-if (
-  storedTheme === 'dark' ||
-  (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)
-) {
+const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+const initialTheme = storedTheme || (prefersDark ? 'dark' : 'light');
+
+// Aplicar tema al documento
+document.documentElement.setAttribute('data-theme', initialTheme);
+if (initialTheme === 'dark') {
   document.documentElement.classList.add('dark');
 }
 

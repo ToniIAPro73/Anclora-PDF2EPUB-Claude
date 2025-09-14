@@ -29,27 +29,116 @@ const MainApp: React.FC = () => {
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
+    document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
 
   const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
 
   return (
-    <div className="min-h-screen bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100" data-theme={theme}>
-      <Header theme={theme} toggleTheme={toggleTheme} currentSection={currentSection} />
+    <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }} data-theme={theme}>
+      <Header theme={theme} toggleTheme={toggleTheme} currentSection={currentSection} setCurrentSection={setCurrentSection} />
 
-      <main className="container mx-auto p-4 sm:p-6 space-y-8">
+      <main className="min-h-[calc(100vh-4rem)]">
         {currentSection === 'inicio' && (
-          <div className="flex flex-col items-center text-center gap-4">
-            <h1 className="text-2xl sm:text-3xl font-bold">Anclora PDF2EPUB</h1>
-            <p className="text-lg">Conversión inteligente de PDF a EPUB3</p>
-            <FileUploader onFileSelected={setSelectedFile} />
+          <div className="animate-fade-in">
+            {/* Hero Section */}
+            <section className="relative overflow-hidden py-20 px-4" style={{ background: 'var(--gradient-hero)' }}>
+              <div className="max-w-4xl mx-auto text-center text-white">
+                <div className="mb-8">
+                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-6 p-3"
+                       style={{ background: 'rgba(255, 255, 255, 0.2)' }}>
+                    <img
+                      src="/images/iconos/Anclora PDF2EPUB fodo transparente.png"
+                      alt="Anclora PDF2EPUB"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <h1 className="text-5xl md:text-6xl font-bold mb-6" style={{ fontFamily: 'var(--font-heading)' }}>
+                    Anclora PDF2EPUB
+                  </h1>
+                  <p className="text-xl md:text-2xl mb-8 opacity-90">
+                    Conversión inteligente de PDF a EPUB3
+                  </p>
+                  <p className="text-lg opacity-80 max-w-2xl mx-auto">
+                    Arrastra tu PDF aquí o haz clic para seleccionarlo
+                  </p>
+                </div>
+
+                {/* File Uploader integrado */}
+                <div className="max-w-2xl mx-auto">
+                  <FileUploader onFileSelected={setSelectedFile} />
+                </div>
+              </div>
+
+              {/* Decorative elements */}
+              <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+                <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full opacity-10"
+                     style={{ background: 'var(--anclora-amber)' }}></div>
+                <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full opacity-10"
+                     style={{ background: 'var(--anclora-blue-sky)' }}></div>
+              </div>
+            </section>
+
+            {/* Features Section */}
+            <section className="py-16 px-4" style={{ background: 'var(--bg-secondary)' }}>
+              <div className="max-w-6xl mx-auto">
+                <div className="text-center mb-12">
+                  <h2 className="text-3xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
+                    ¿Por qué elegir Anclora PDF2EPUB?
+                  </h2>
+                  <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>
+                    Tecnología avanzada para conversiones perfectas
+                  </p>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-8">
+                  <div className="card text-center animate-slide-in">
+                    <div className="w-16 h-16 rounded-xl mx-auto mb-4 flex items-center justify-center text-2xl"
+                         style={{ background: 'var(--gradient-nexus)' }}>
+                      <span className="text-white">🤖</span>
+                    </div>
+                    <h3 className="text-xl font-semibold mb-3">IA Inteligente</h3>
+                    <p style={{ color: 'var(--text-secondary)' }}>
+                      Detección automática de estructura, tablas y fórmulas matemáticas
+                    </p>
+                  </div>
+
+                  <div className="card text-center animate-slide-in" style={{ animationDelay: '0.1s' }}>
+                    <div className="w-16 h-16 rounded-xl mx-auto mb-4 flex items-center justify-center text-2xl"
+                         style={{ background: 'var(--gradient-action)' }}>
+                      <span style={{ color: 'var(--anclora-dark)' }}>⚡</span>
+                    </div>
+                    <h3 className="text-xl font-semibold mb-3">Súper Rápido</h3>
+                    <p style={{ color: 'var(--text-secondary)' }}>
+                      Procesamiento optimizado para conversiones en segundos
+                    </p>
+                  </div>
+
+                  <div className="card text-center animate-slide-in" style={{ animationDelay: '0.2s' }}>
+                    <div className="w-16 h-16 rounded-xl mx-auto mb-4 flex items-center justify-center text-2xl"
+                         style={{ background: 'var(--gradient-press)' }}>
+                      <span style={{ color: 'var(--anclora-dark)' }}>✨</span>
+                    </div>
+                    <h3 className="text-xl font-semibold mb-3">Calidad Premium</h3>
+                    <p style={{ color: 'var(--text-secondary)' }}>
+                      EPUBs perfectos compatibles con todos los lectores
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
           </div>
         )}
 
         {currentSection === 'conversion' && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Convertir PDF a EPUB</h2>
+          <div className="max-w-4xl mx-auto p-6 space-y-6 animate-fade-in">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold mb-4 gradient-text">Convertir PDF a EPUB</h2>
+              <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>
+                Sube tu archivo y configura las opciones de conversión
+              </p>
+            </div>
             <FileUploader onFileSelected={setSelectedFile} />
             <ConversionPanel file={selectedFile} />
             <MetricsDisplay />
@@ -57,8 +146,13 @@ const MainApp: React.FC = () => {
         )}
 
         {currentSection === 'history' && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Historial de Conversiones</h2>
+          <div className="max-w-6xl mx-auto p-6 space-y-6 animate-fade-in">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold mb-4 gradient-text">Historial de Conversiones</h2>
+              <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>
+                Revisa y descarga tus conversiones anteriores
+              </p>
+            </div>
             <ConversionHistory />
           </div>
         )}

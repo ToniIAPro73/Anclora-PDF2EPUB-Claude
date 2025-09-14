@@ -98,7 +98,7 @@ def register():
         return jsonify({'error': 'Username and password required'}), 400
     if User.query.filter_by(username=username).first():
         return jsonify({'error': 'User exists'}), 400
-    user = User(username=username, password_hash=generate_password_hash(password))
+    user = User(username=username, password=generate_password_hash(password))
     db.session.add(user)
     db.session.commit()
     return jsonify({'message': 'User created'}), 201
@@ -110,7 +110,7 @@ def login():
     username = data.get('username')
     password = data.get('password')
     user = User.query.filter_by(username=username).first()
-    if not user or not check_password_hash(user.password_hash, password):
+    if not user or not check_password_hash(user.password, password):
         return jsonify({'error': 'Invalid credentials'}), 401
     payload = {'sub': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)}
     token = jwt.encode(payload, current_app.config['SECRET_KEY'], algorithm='HS256')

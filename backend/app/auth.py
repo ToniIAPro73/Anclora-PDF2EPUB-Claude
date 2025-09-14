@@ -46,7 +46,7 @@ def register():
         return jsonify({"error": "Missing email or password"}), 400
     if User.query.filter_by(email=email).first():
         return jsonify({"error": "User already exists"}), 400
-    user = User(email=email, password_hash=generate_password_hash(password))
+    user = User(email=email, password=generate_password_hash(password))
     db.session.add(user)
     db.session.commit()
     token = _generate_token(user.id)
@@ -61,7 +61,7 @@ def login():
     if not email or not password:
         return jsonify({"error": "Missing email or password"}), 400
     user = User.query.filter_by(email=email).first()
-    if user is None or not check_password_hash(user.password_hash, password):
+    if user is None or not check_password_hash(user.password, password):
         return jsonify({"error": "Invalid credentials"}), 401
     token = _generate_token(user.id)
     return jsonify({"token": token})

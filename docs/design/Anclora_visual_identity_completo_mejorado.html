@@ -1,0 +1,2610 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Anclora · Design System v5.0</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --sidebar-width: 260px;
+    }
+    
+    /* MODO CLARO */
+    [data-theme="light"] {
+      --sidebar-bg: #F6F7F9;
+      --sidebar-text: #162032;
+      --sidebar-active: #E3F2FD;
+      --sidebar-accent: #2EAFC4;
+      --sidebar-border: #DCE8F0;
+      --header-bg: #FFFFFF;
+      --header-text: #162032;
+      --header-border: #DCE8F0;
+      --main-bg: #FFFFFF;
+      --main-text: #162032;
+      --card-bg: #FFFFFF;
+      --card-border: #E1E8ED;
+    }
+    
+    /* MODO OSCURO */
+    [data-theme="dark"] {
+      --sidebar-bg: #202837;
+      --sidebar-text: #edf0f7;
+      --sidebar-active: #2EAFC433;
+      --sidebar-accent: #2EAFC4;
+      --sidebar-border: #313848;
+      --header-bg: #202837;
+      --header-text: #F6F7F9;
+      --header-border: #313848;
+      --main-bg: #162032;
+      --main-text: #F6F7F9;
+      --card-bg: #263043;
+      --card-border: #313848;
+    }
+    
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--main-bg);
+      color: var(--main-text);
+      transition: background-color 0.3s, color 0.3s;
+    }
+    
+    /* SIDEBAR */
+    .sidebar {
+      position: fixed;
+      left: 0; top: 0; bottom: 0;
+      width: var(--sidebar-width);
+      background: var(--sidebar-bg);
+      color: var(--sidebar-text);
+      border-right: 2px solid var(--sidebar-border);
+      z-index: 300;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.3s;
+    }
+    
+    .sidebar-header {
+      padding: 24px 20px 16px 24px;
+      border-bottom: 2px solid var(--sidebar-border);
+      background: linear-gradient(120deg, #23436B, #2EAFC4);
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .logo-icon {
+      font-size: 2.2rem;
+      width: 50px; height: 50px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .logo-text h2 {
+      font-size: 1.1rem;
+      letter-spacing: 0.1em;
+      font-family: 'Libre Baskerville', serif;
+      margin: 0;
+    }
+    
+    .logo-text p {
+      font-size: 0.85rem;
+      margin: 0;
+      opacity: 0.9;
+    }
+    
+    .sidebar-menu {
+      padding: 20px 0;
+      overflow-y: auto;
+      flex: 1;
+    }
+    
+    .menu-section {
+      margin-bottom: 32px;
+    }
+    
+    .menu-label {
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: var(--sidebar-accent);
+      letter-spacing: 0.8px;
+      margin: 8px 0 16px 28px;
+    }
+    
+    .menu-item {
+      width: 100%;
+      padding: 12px 20px 12px 32px;
+      background: none;
+      border: none;
+      outline: none;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      font-size: 1.1rem;
+      color: var(--sidebar-text);
+      border-radius: 12px 0 0 12px;
+      transition: all 0.2s;
+      text-align: left;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+    }
+    
+    .menu-item:hover,
+    .menu-item.active {
+      background: var(--sidebar-active);
+      color: var(--sidebar-accent);
+      font-weight: 600;
+      box-shadow: 4px 0 0 var(--sidebar-accent) inset;
+      transform: translateX(2px);
+    }
+    
+    /* HEADER */
+    .main-header {
+      height: 64px;
+      background: var(--header-bg);
+      border-bottom: 2px solid var(--header-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 36px 0 calc(var(--sidebar-width) + 20px);
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      transition: all 0.3s;
+    }
+    
+    .sidebar-toggle {
+      background: none;
+      border: none;
+      color: var(--sidebar-accent);
+      font-size: 1.8rem;
+      cursor: pointer;
+      display: none;
+    }
+    
+    .main-title {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 1.3rem;
+      color: var(--header-text);
+      letter-spacing: 0.03em;
+      font-weight: 600;
+    }
+    
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    
+    .theme-toggle {
+      border: none;
+      background: linear-gradient(120deg, #2EAFC4 70%, #ffc979 100%);
+      color: #29324a;
+      border-radius: 16px;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 2px 15px rgba(46,175,196,0.15);
+    }
+    
+    .theme-toggle:hover {
+      background: linear-gradient(90deg, #ffc979 70%, #2EAFC4 100%);
+      transform: translateY(-1px);
+    }
+    
+    .user-button {
+      background: var(--card-bg);
+      border: 2px solid var(--sidebar-accent);
+      border-radius: 50%;
+      width: 40px; height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.2s;
+    }
+    
+    .user-button:hover {
+      border-color: #ffc979;
+      box-shadow: 0 0 0 3px rgba(255,201,121,0.2);
+      transform: scale(1.05);
+    }
+    
+    .user-avatar {
+      font-size: 1.5rem;
+      color: #ffc979;
+    }
+    
+    /* MAIN CONTENT */
+    main {
+      margin-left: var(--sidebar-width);
+      padding: 40px;
+      background: var(--main-bg);
+      color: var(--main-text);
+      min-height: 100vh;
+      transition: all 0.3s;
+    }
+    
+    .main-section {
+      margin-bottom: 50px;
+      display: none;
+    }
+    
+    .main-section.active {
+      display: block;
+    }
+    
+    .main-section h2 {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 2.2rem;
+      margin-bottom: 16px;
+      color: var(--main-text);
+      border-bottom: 2px solid var(--sidebar-accent);
+      padding-bottom: 8px;
+    }
+    
+    .main-section p {
+      font-size: 1.1rem;
+      line-height: 1.6;
+      color: var(--main-text);
+      opacity: 0.9;
+    }
+    
+    /* ESTILOS PARA PÁGINA DE INICIO */
+    .hero-banner {
+      background: linear-gradient(120deg, #2EAFC4, #37B5A4);
+      border-radius: 24px;
+      padding: 50px 40px;
+      text-align: center;
+      color: white;
+      margin-bottom: 40px;
+      box-shadow: 0 8px 40px rgba(46, 175, 196, 0.2);
+    }
+    
+    .hero-title {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 3rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      letter-spacing: 0.02em;
+    }
+    
+    .hero-subtitle {
+      font-size: 1.3rem;
+      margin-bottom: 0;
+      opacity: 0.95;
+    }
+    
+    .intro-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 40px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    
+    .intro-text {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 1.8rem;
+      font-style: italic;
+      color: var(--sidebar-accent);
+      margin-bottom: 24px;
+      line-height: 1.4;
+    }
+    
+    .intro-description {
+      font-size: 1.2rem;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    
+    .intro-quote {
+      background: var(--card-bg);
+      border-left: 4px solid var(--sidebar-accent);
+      padding: 20px 24px;
+      border-radius: 0 12px 12px 0;
+      font-family: 'Libre Baskerville', serif;
+      font-style: italic;
+      font-size: 1.15rem;
+      color: var(--sidebar-accent);
+      margin: 24px 0;
+    }
+    
+    /* NUEVA SECCIÓN DE COLORES COMPLETA */
+    .colors-intro {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+    
+    .colors-title {
+      font-size: 2.5rem;
+      color: var(--sidebar-accent);
+      margin-bottom: 20px;
+      font-family: 'Libre Baskerville', serif;
+    }
+    
+    .colors-subtitle {
+      font-size: 1.2rem;
+      color: var(--main-text);
+      opacity: 0.8;
+    }
+    
+    /* PALETA BASE */
+    .palette-section {
+      background: var(--card-bg);
+      border: 2px solid var(--card-border);
+      border-radius: 25px;
+      padding: 40px;
+      margin-bottom: 40px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    }
+    
+    .palette-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .palette-grid.six-colors {
+      grid-template-columns: repeat(6, 1fr);
+    }
+    
+    .color-card {
+      border-radius: 18px;
+      padding: 30px 20px;
+      color: white;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      transition: transform 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 180px;
+    }
+    
+    .color-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .color-card.white-card {
+      color: #162032;
+      border: 2px solid #E5E7EB;
+    }
+    
+    .color-card.light-card {
+      color: #162032;
+    }
+    
+    .color-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    
+    .color-hex {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      opacity: 0.9;
+      margin-bottom: 8px;
+    }
+    
+    .color-usage {
+      font-size: 0.85rem;
+      opacity: 0.8;
+      line-height: 1.3;
+    }
+    
+    /* PALETA BASE ESPECÍFICA */
+    .base-palette-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .base-color-card {
+      border-radius: 18px;
+      padding: 25px 20px;
+      color: white;
+      text-align: left;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      transition: transform 0.3s ease;
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    
+    .base-color-card:hover {
+      transform: translateY(-3px);
+    }
+    
+    .base-color-card.white-card {
+      color: #162032;
+      border: 2px solid #E5E7EB;
+    }
+    
+    .base-color-card.light-card {
+      color: #162032;
+    }
+    
+    .base-color-name {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 15px;
+    }
+    
+    .base-color-details {
+      margin-bottom: 15px;
+    }
+    
+    .base-color-subtitle {
+      font-size: 1rem;
+      margin-bottom: 5px;
+    }
+    
+    .base-color-hex {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      opacity: 0.9;
+      margin-bottom: 10px;
+    }
+    
+    .base-color-usage {
+      font-size: 0.85rem;
+      opacity: 0.85;
+      line-height: 1.4;
+    }
+    
+    /* PRODUCTOS Y DEGRADADOS */
+    .product-palette-section {
+      margin-bottom: 40px;
+    }
+    
+    .product-palette-header {
+      color: var(--sidebar-accent);
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 15px;
+      font-family: 'Libre Baskerville', serif;
+    }
+    
+    .product-palette-subtitle {
+      font-size: 1rem;
+      color: var(--main-text);
+      opacity: 0.8;
+      margin-bottom: 25px;
+    }
+    
+    .simple-color-row {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    
+    .simple-color-chip {
+      flex: 1;
+      min-width: 120px;
+      height: 80px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      font-size: 0.9rem;
+      box-shadow: 0 3px 15px rgba(0,0,0,0.2);
+      transition: transform 0.2s ease;
+    }
+    
+    .simple-color-chip:hover {
+      transform: translateY(-2px);
+    }
+    
+    .simple-color-chip.light-text {
+      color: #162032;
+    }
+    
+    /* DEGRADADOS */
+    .gradient-section {
+      margin-top: 50px;
+    }
+    
+    .gradient-title {
+      font-size: 2rem;
+      color: var(--sidebar-accent);
+      margin-bottom: 20px;
+      text-align: center;
+      font-family: 'Libre Baskerville', serif;
+    }
+    
+    .gradient-subtitle {
+      font-size: 1.1rem;
+      color: var(--main-text);
+      opacity: 0.8;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    
+    .gradient-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+    }
+    
+    .gradient-card {
+      background: var(--card-bg);
+      border: 2px solid var(--card-border);
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.1);
+    }
+    
+    .gradient-preview {
+      height: 120px;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.2rem;
+      font-weight: 700;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    
+    .gradient-info {
+      text-align: left;
+    }
+    
+    .gradient-name {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--main-text);
+      margin-bottom: 10px;
+    }
+    
+    .gradient-code {
+      background: #2a3441;
+      color: #e6eaf8;
+      padding: 12px 15px;
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      margin-bottom: 15px;
+      overflow-x: auto;
+    }
+    
+    .gradient-usage {
+      font-size: 0.95rem;
+      color: var(--main-text);
+      opacity: 0.8;
+      line-height: 1.4;
+    }
+    
+    /* EFECTOS VISUALES NUEVOS */
+    .visual-effects-section {
+      margin-top: 50px;
+    }
+    
+    .visual-effects-title {
+      font-size: 2rem;
+      color: var(--sidebar-accent);
+      margin-bottom: 20px;
+      text-align: center;
+      font-family: 'Libre Baskerville', serif;
+    }
+    
+    .visual-effects-subtitle {
+      font-size: 1.1rem;
+      color: var(--main-text);
+      opacity: 0.8;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    
+    .effects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 25px;
+      margin-bottom: 40px;
+    }
+    
+    .effect-card {
+      background: var(--card-bg);
+      border: 2px solid var(--card-border);
+      border-radius: 20px;
+      padding: 30px 25px;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease;
+    }
+    
+    .effect-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .effect-header {
+      color: var(--sidebar-accent);
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      font-family: 'Libre Baskerville', serif;
+    }
+    
+    .effect-demo {
+      margin-bottom: 20px;
+    }
+    
+    .button-demo {
+      background: linear-gradient(90deg, #2EAFC4, #FFC979);
+      color: #162032;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(46, 175, 196, 0.3);
+    }
+    
+    .button-demo:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(46, 175, 196, 0.4);
+    }
+    
+    .text-gradient-demo {
+      font-size: 2rem;
+      font-weight: 700;
+      font-family: 'Libre Baskerville', serif;
+      background: linear-gradient(90deg, #2EAFC4, #FFC979);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+    }
+    
+    .progress-demo {
+      width: 100%;
+      height: 12px;
+      background: var(--card-border);
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #2EAFC4, #FFC979);
+      width: 75%;
+      border-radius: 10px;
+      transition: width 2s ease;
+    }
+    
+    .glass-effect-demo {
+      background: rgba(46, 175, 196, 0.15);
+      border: 1px solid rgba(46, 175, 196, 0.2);
+      border-radius: 16px;
+      padding: 20px;
+      backdrop-filter: blur(10px);
+      color: var(--main-text);
+    }
+    
+    .glass-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--main-text);
+    }
+    
+    .glass-description {
+      font-size: 0.9rem;
+      line-height: 1.4;
+      opacity: 0.8;
+    }
+    
+    .effect-description {
+      font-size: 0.95rem;
+      color: var(--main-text);
+      opacity: 0.8;
+      line-height: 1.4;
+    }
+    
+    /* PRINCIPIOS DE APLICACIÓN */
+    .principles-section {
+      margin-top: 50px;
+    }
+    
+    .principles-title {
+      font-size: 2rem;
+      color: var(--sidebar-accent);
+      margin-bottom: 20px;
+      text-align: center;
+      font-family: 'Libre Baskerville', serif;
+    }
+    
+    .principles-subtitle {
+      font-size: 1.1rem;
+      color: var(--main-text);
+      opacity: 0.8;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    
+    .principles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 25px;
+    }
+    
+    .principle-card {
+      background: var(--card-bg);
+      border: 2px solid var(--card-border);
+      border-radius: 18px;
+      padding: 25px 20px;
+      text-align: center;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease;
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    
+    .principle-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .principle-icon {
+      font-size: 2.5rem;
+      margin-bottom: 15px;
+      background: var(--card-border);
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 15px auto;
+    }
+    
+    .principle-card.grid-card .principle-icon {
+      background: #23436B;
+    }
+    
+    .principle-card.gradients-card .principle-icon {
+      background: linear-gradient(90deg, #2EAFC4, #FFC979);
+    }
+    
+    .principle-card.accent-card .principle-icon {
+      background: #2EAFC4;
+    }
+    
+    .principle-card.accessibility-card .principle-icon {
+      background: #D6F8E3;
+    }
+    
+    .principle-card.clarity-card .principle-icon {
+      background: #37475A;
+    }
+    
+    .principle-card.equilibrium-card .principle-icon {
+      background: #FFC979;
+    }
+    
+    .principle-name {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--main-text);
+      margin-bottom: 12px;
+    }
+    
+    .principle-description {
+      font-size: 0.9rem;
+      color: var(--main-text);
+      opacity: 0.8;
+      line-height: 1.4;
+    }
+    
+    /* SISTEMA TIPOGRÁFICO NUEVO - CORREGIDO */
+    .typography-intro {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    
+    .typography-subtitle {
+      font-size: 1.2rem;
+      color: var(--main-text);
+      opacity: 0.8;
+      margin-top: 16px;
+    }
+    
+    .font-families {
+      display: flex;
+      gap: 30px;
+      margin-bottom: 60px;
+      flex-wrap: wrap;
+    }
+    
+    /* FONT CARD CORREGIDO - CONTENIDO DENTRO DEL CARD */
+    .font-card {
+      flex: 1;
+      min-width: 300px;
+      max-width: 400px;
+      background: var(--card-bg);
+      border: 2px solid var(--card-border);
+      border-radius: 20px;
+      padding: 30px 25px 35px 25px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      overflow: hidden;
+      word-wrap: break-word;
+    }
+    
+    .font-title {
+      color: var(--sidebar-accent);
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      letter-spacing: 0.02em;
+      word-wrap: break-word;
+    }
+    
+    .font-sample {
+      font-size: 1.8rem;
+      margin-bottom: 15px;
+      color: var(--main-text);
+      line-height: 1.1;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+    
+    .font-numbers {
+      font-size: 1.3rem;
+      margin-bottom: 20px;
+      color: var(--main-text);
+      opacity: 0.8;
+      line-height: 1.2;
+    }
+    
+    .font-description {
+      color: var(--main-text);
+      font-size: 1rem;
+      margin-bottom: 20px;
+      line-height: 1.4;
+      word-wrap: break-word;
+    }
+    
+    .font-weights {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .weight-tag {
+      background: var(--sidebar-border);
+      color: var(--main-text);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    
+    /* JERARQUÍA Y USOS ESPECÍFICOS */
+    .hierarchy-section {
+      margin-top: 60px;
+    }
+    
+    .hierarchy-title {
+      font-size: 2rem;
+      color: var(--sidebar-accent);
+      margin-bottom: 30px;
+      text-align: center;
+      font-family: 'Libre Baskerville', serif;
+    }
+    
+    .hierarchy-examples {
+      space-y: 40px;
+    }
+    
+    .hierarchy-item {
+      background: var(--card-bg);
+      border: 2px solid var(--card-border);
+      border-radius: 20px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    
+    .hierarchy-label {
+      color: var(--sidebar-accent);
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+    }
+    
+    .hierarchy-demo {
+      margin-bottom: 20px;
+    }
+    
+    .hierarchy-specs {
+      background: var(--card-border);
+      padding: 20px;
+      border-radius: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--main-text);
+      opacity: 0.8;
+      line-height: 1.4;
+    }
+    
+    /* CÓDIGO ESPECÍFICO */
+    .code-section {
+      background: var(--card-bg);
+      border: 2px solid var(--card-border);
+      border-radius: 20px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    
+    .code-label {
+      color: var(--sidebar-accent);
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+    }
+    
+    .code-description {
+      font-size: 1rem;
+      color: var(--main-text);
+      margin-bottom: 20px;
+    }
+    
+    .code-block {
+      background: #2a3441;
+      color: #e6eaf8;
+      padding: 20px;
+      border-radius: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      overflow-x: auto;
+      margin-bottom: 20px;
+    }
+    
+    .code-specs {
+      background: var(--card-border);
+      padding: 15px;
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--main-text);
+      opacity: 0.8;
+    }
+    
+    /* CITA/BLOCKQUOTE */
+    .quote-section {
+      background: var(--card-bg);
+      border: 2px solid var(--card-border);
+      border-radius: 20px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    
+    .quote-label {
+      color: var(--sidebar-accent);
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+    }
+    
+    .quote-demo {
+      border-left: 4px solid var(--sidebar-accent);
+      padding-left: 20px;
+      margin: 20px 0;
+    }
+    
+    .quote-text {
+      font-family: 'Libre Baskerville', serif;
+      font-style: italic;
+      font-size: 1.2rem;
+      color: var(--sidebar-accent);
+      line-height: 1.5;
+      margin: 0;
+    }
+    
+    /* COMPONENTES ESPECÍFICOS */
+    .product-card {
+      max-width: 450px;
+      border-radius: 20px;
+      padding: 32px 28px;
+      margin-bottom: 40px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+      transition: transform 0.3s;
+    }
+    
+    .product-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .paleta-mini {
+      display: flex;
+      gap: 5px;
+      margin: 10px 0;
+    }
+    
+    .paleta-mini span {
+      display: inline-block;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.3);
+    }
+    
+    /* CHATBOX */
+    .chatbox-fab {
+      position: fixed;
+      right: 30px; bottom: 30px;
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, #2EAFC4 65%, #ffc979 100%);
+      color: white;
+      font-size: 2.5rem;
+      cursor: pointer;
+      z-index: 999;
+      box-shadow: 0 8px 30px rgba(46,175,196,0.3);
+      transition: all 0.3s;
+    }
+    
+    .chatbox-fab:hover {
+      transform: scale(1.1);
+    }
+    
+    .chatbox-bubble {
+      position: fixed;
+      right: 30px; bottom: 110px;
+      z-index: 999;
+      width: 360px;
+      max-width: calc(100vw - 60px);
+      box-shadow: 0 15px 80px rgba(0,0,0,0.2);
+    }
+    
+    .chatbox-main {
+      border-radius: 20px;
+      background: var(--card-bg);
+      border: 2px solid var(--sidebar-accent);
+      overflow: hidden;
+    }
+    
+    .chatbox-header {
+      background: linear-gradient(120deg, #2EAFC4 85%, #ffc979 100%);
+      color: white;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .chatbot-avatar {
+      font-size: 1.8rem;
+      margin-right: 10px;
+    }
+    
+    .chatbot-title {
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+    
+    .chatbox-close {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.8rem;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 0;
+    }
+    
+    .chatbox-messages {
+      height: 220px;
+      overflow-y: auto;
+      padding: 16px;
+      background: var(--main-bg);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .chat-msg {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    
+    .chat-msg.chat-in .chat-msg-inner {
+      background: var(--card-bg);
+      color: var(--main-text);
+      border-radius: 12px 12px 12px 4px;
+      padding: 10px 14px;
+      max-width: 80%;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .chat-msg.chat-out {
+      justify-content: flex-end;
+    }
+    
+    .chat-msg.chat-out .chat-msg-inner {
+      background: #2EAFC4;
+      color: white;
+      border-radius: 12px 12px 4px 12px;
+      padding: 10px 14px;
+      max-width: 80%;
+    }
+    
+    .chatbox-input-row {
+      display: flex;
+      gap: 8px;
+      padding: 16px;
+      background: var(--main-bg);
+    }
+    
+    .chatbox-input-row input {
+      flex: 1;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 1rem;
+      background: var(--card-bg);
+      color: var(--main-text);
+      outline: none;
+    }
+    
+    .chatbox-input-row button {
+      background: #ffc979;
+      color: #333;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .chatbox-input-row button:hover {
+      background: #ffb347;
+    }
+    
+    /* MODAL MEJORADO - SOLO 2 PESTAÑAS */
+    .modal-user {
+      position: fixed;
+      left: 0; top: 0;
+      width: 100vw; height: 100vh;
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(8px);
+    }
+    
+    .modal-user-main {
+      background: white;
+      color: #333;
+      padding: 0;
+      border-radius: 24px;
+      box-shadow: 0 20px 100px rgba(0,0,0,0.3);
+      min-width: 420px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .modal-user-close {
+      position: absolute;
+      top: 20px; right: 24px;
+      background: none;
+      border: none;
+      color: #FFC979;
+      font-size: 2rem;
+      font-weight: bold;
+      cursor: pointer;
+      z-index: 10;
+    }
+    
+    .modal-user-tabs {
+      display: flex;
+      padding: 20px 20px 0 20px;
+      gap: 0;
+      margin-bottom: 0;
+    }
+    
+    .modal-user-tabs button {
+      flex: 1;
+      padding: 16px 20px;
+      border: none;
+      background: #E5E7EB;
+      color: #6B7280;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0;
+    }
+    
+    .modal-user-tabs button:first-child {
+      border-radius: 16px 0 0 0;
+    }
+    
+    .modal-user-tabs button:last-child {
+      border-radius: 0 16px 0 0;
+    }
+    
+    .modal-user-tabs button.active {
+      background: linear-gradient(135deg, #2EAFC4, #37B5A4);
+      color: white;
+    }
+    
+    .modal-user-content {
+      padding: 30px 40px 40px 40px;
+      background: white;
+    }
+    
+    .modal-user-content form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    .modal-user-content input {
+      border: 2px solid #E5E7EB;
+      border-radius: 16px;
+      padding: 16px 20px;
+      font-size: 1.05rem;
+      background: white;
+      color: #333;
+      transition: border-color 0.2s;
+    }
+    
+    .modal-user-content input:focus {
+      outline: none;
+      border-color: #2EAFC4;
+    }
+    
+    .modal-user-content input::placeholder {
+      color: #9CA3AF;
+    }
+    
+    .btn-user-main {
+      background: linear-gradient(135deg, #2EAFC4, #37B5A4);
+      color: white;
+      border: none;
+      border-radius: 16px;
+      padding: 16px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: all 0.2s;
+    }
+    
+    .btn-user-main:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(46, 175, 196, 0.3);
+    }
+    
+    /* ENLACE DE RECUPERACIÓN */
+    .forgot-password-link {
+      text-align: center;
+      margin-top: -8px;
+      margin-bottom: 8px;
+    }
+    
+    .forgot-password-link a {
+      color: #6B7280;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: color 0.2s;
+    }
+    
+    .forgot-password-link a:hover {
+      color: #2EAFC4;
+      text-decoration: underline;
+    }
+    
+    /* DIVISOR Y LOGIN SOCIAL */
+    .social-divider {
+      text-align: center;
+      margin: 24px 0 20px 0;
+      position: relative;
+      color: #9CA3AF;
+      font-size: 0.95rem;
+    }
+    
+    .social-divider::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #E5E7EB;
+      z-index: 1;
+    }
+    
+    .social-divider span {
+      background: white;
+      padding: 0 16px;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .social-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    
+    .btn-social {
+      flex: 1;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .btn-social.google {
+      background: #EA4335;
+      color: white;
+    }
+    
+    .btn-social.github {
+      background: #24292f;
+      color: white;
+    }
+    
+    .btn-social.apple {
+      background: #000000;
+      color: white;
+    }
+    
+    .btn-social:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    /* RESPONSIVE */
+    @media (max-width: 900px) {
+      .sidebar {
+        left: -260px;
+        transition: left 0.3s;
+      }
+      
+      .sidebar.show {
+        left: 0;
+      }
+      
+      main {
+        margin-left: 0;
+        padding: 20px;
+      }
+      
+      .main-header {
+        padding: 0 20px;
+      }
+      
+      .sidebar-toggle {
+        display: block;
+      }
+      
+      .hero-title {
+        font-size: 2.2rem;
+      }
+      
+      .hero-subtitle {
+        font-size: 1.1rem;
+      }
+      
+      .intro-text {
+        font-size: 1.5rem;
+      }
+      
+      .modal-user-main {
+        min-width: 90vw;
+        margin: 20px;
+      }
+      
+      .modal-user-content {
+        padding: 20px 24px 30px 24px;
+      }
+      
+      .social-buttons {
+        flex-direction: column;
+      }
+      
+      .font-families {
+        flex-direction: column;
+      }
+      
+      .font-card {
+        min-width: 100%;
+        max-width: 100%;
+      }
+      
+      .font-sample {
+        font-size: 1.5rem;
+      }
+      
+      .font-numbers {
+        font-size: 1.1rem;
+      }
+      
+      .palette-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+      }
+      
+      .palette-grid.six-colors {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      
+      .base-palette-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .gradient-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .effects-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .principles-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .simple-color-row {
+        flex-direction: column;
+      }
+      
+      .simple-color-chip {
+        min-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-icon">⚓</div>
+    <div class="logo-text">
+      <h2>ANCLORA</h2>
+      <p>Design System v5.0</p>
+    </div>
+  </div>
+  
+  <nav class="sidebar-menu">
+    <div class="menu-section">
+      <button class="menu-item" data-section="inicio">
+        🏠 <span>Inicio</span>
+      </button>
+    </div>
+    
+    <div class="menu-section">
+      <div class="menu-label">COMPONENTES</div>
+      <button class="menu-item" data-section="progress-bars">
+        📊 <span>Progress Bars</span>
+      </button>
+      <button class="menu-item" data-section="botones">
+        🟣 <span>Botones</span>
+      </button>
+      <button class="menu-item" data-section="chatbot">
+        🤖 <span>Chatbot</span>
+      </button>
+      <button class="menu-item" data-section="tarjetas">
+        📁 <span>Tarjetas</span>
+      </button>
+    </div>
+    
+    <div class="menu-section">
+      <div class="menu-label">PRODUCTOS</div>
+      <button class="menu-item" data-section="nexus">
+        📄 <span>Nexus</span>
+      </button>
+      <button class="menu-item" data-section="press">
+        📝 <span>Press</span>
+      </button>
+      <button class="menu-item" data-section="kairon">
+        ⏰ <span>Kairon</span>
+      </button>
+      <button class="menu-item" data-section="render">
+        🛠️ <span>Render</span>
+      </button>
+      <button class="menu-item" data-section="guardian">
+        🛡️ <span>Guardian</span>
+      </button>
+    </div>
+    
+    <div class="menu-section">
+      <div class="menu-label">RECURSOS</div>
+      <button class="menu-item" data-section="tipografia">
+        🔤 <span>Tipografía</span>
+      </button>
+      <button class="menu-item" data-section="colores">
+        🎨 <span>Colores</span>
+      </button>
+      <button class="menu-item" onclick="toggleChatbox(true)">
+        💬 <span>Soporte IA</span>
+      </button>
+    </div>
+  </nav>
+</aside>
+
+<!-- HEADER -->
+<header class="main-header">
+  <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+  <h1 class="main-title">Sistema de Identidad Visual</h1>
+  <div class="header-actions">
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">
+      <span id="themeIcon">🌞</span>
+      <span id="modeText">Modo Claro</span>
+    </button>
+    <button class="user-button" onclick="showUserModal()">
+      <span class="user-avatar">👤</span>
+    </button>
+  </div>
+</header>
+
+<!-- CONTENIDO PRINCIPAL -->
+<main>
+
+  <!-- NUEVA PÁGINA DE INICIO -->
+  <section id="inicio" class="main-section">
+    <div class="hero-banner">
+      <h1 class="hero-title">Ecosistema Anclora v5.0</h1>
+      <p class="hero-subtitle">Sistema visual completo • Modo claro/oscuro • Componentes avanzados</p>
+    </div>
+    
+    <div class="intro-card">
+      <p class="intro-text">En un mar de ruido y herramientas desconectadas, Anclora ofrece el punto de anclaje.</p>
+      
+      <p class="intro-description">
+        Diseñamos con <strong>calma competente</strong> y <em>pragmatismo empático</em>: lo esencial por encima del adorno.
+      </p>
+      
+      <div class="intro-quote">
+        "No prometemos cambiar tu vida. Prometemos devolverte el control sobre tu trabajo."
+      </div>
+    </div>
+  </section>
+
+  <!-- NUEVA SECCIÓN DE COLORES COMPLETA CON EFECTOS Y PRINCIPIOS -->
+  <section id="colores" class="main-section">
+    <div class="colors-intro">
+      <h2 class="colors-title">Paleta Base Anclora</h2>
+      <p class="colors-subtitle">Los colores fundamentales que definen nuestra identidad visual</p>
+    </div>
+    
+    <!-- PALETA BASE CON DETALLE -->
+    <div class="palette-section">
+      <div class="base-palette-grid">
+        <!-- AZUL PROFUNDO -->
+        <div class="base-color-card" style="background: #23436B;">
+          <div class="base-color-name">Azul profundo</div>
+          <div class="base-color-details">
+            <div class="base-color-subtitle">Azul profundo</div>
+            <div class="base-color-hex">#23436B</div>
+            <div class="base-color-usage">Color principal, headers, fundaciones</div>
+          </div>
+        </div>
+        
+        <!-- AZUL CLARO -->
+        <div class="base-color-card" style="background: #2EAFC4;">
+          <div class="base-color-name">Azul claro</div>
+          <div class="base-color-details">
+            <div class="base-color-subtitle">Azul claro/Teal</div>
+            <div class="base-color-hex">#2EAFC4</div>
+            <div class="base-color-usage">Acciones primarias, enlaces, CTAs</div>
+          </div>
+        </div>
+        
+        <!-- ÁMBAR SUAVE -->
+        <div class="base-color-card light-card" style="background: #FFC979;">
+          <div class="base-color-name">Ámbar suave</div>
+          <div class="base-color-details">
+            <div class="base-color-subtitle">Ámbar suave</div>
+            <div class="base-color-hex">#FFC979</div>
+            <div class="base-color-usage">Acentos cálidos, highlights, energía</div>
+          </div>
+        </div>
+        
+        <!-- GRIS CLARO -->
+        <div class="base-color-card light-card" style="background: #F6F7F9;">
+          <div class="base-color-name">Gris claro</div>
+          <div class="base-color-details">
+            <div class="base-color-subtitle">Gris claro</div>
+            <div class="base-color-hex">#F6F7F9</div>
+            <div class="base-color-usage">Fondos secundarios, separadores</div>
+          </div>
+        </div>
+        
+        <!-- NEGRO AZULADO -->
+        <div class="base-color-card" style="background: #162032;">
+          <div class="base-color-name">Negro azulado</div>
+          <div class="base-color-details">
+            <div class="base-color-subtitle">Negro azulado</div>
+            <div class="base-color-hex">#162032</div>
+            <div class="base-color-usage">Textos principales, íconos</div>
+          </div>
+        </div>
+        
+        <!-- BLANCO -->
+        <div class="base-color-card white-card" style="background: #FFFFFF;">
+          <div class="base-color-name">Blanco</div>
+          <div class="base-color-details">
+            <div class="base-color-subtitle">Blanco</div>
+            <div class="base-color-hex">#FFFFFF</div>
+            <div class="base-color-usage">Fondos primarios, contraste máximo</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- PALETAS POR PRODUCTO -->
+    <div class="product-palette-section">
+      <h3 class="product-palette-header">Paletas por Producto</h3>
+      <p class="product-palette-subtitle">Cada producto mantiene la identidad base con acentos específicos</p>
+      
+      <!-- ANCLORA NEXUS -->
+      <div class="palette-section">
+        <h4 style="color: var(--sidebar-accent); font-size: 1.5rem; margin-bottom: 10px; font-family: 'Libre Baskerville', serif;">ANCLORA NEXUS</h4>
+        <p style="color: var(--main-text); opacity: 0.8; margin-bottom: 25px;">Gestión documental - "La inteligencia que conecta tus documentos"</p>
+        <div class="simple-color-row">
+          <div class="simple-color-chip" style="background: #23436B;">#23436B</div>
+          <div class="simple-color-chip" style="background: #38BDF8;">#38BDF8</div>
+          <div class="simple-color-chip light-text" style="background: #F6F7F9;">#F6F7F9</div>
+          <div class="simple-color-chip" style="background: #162032;">#162032</div>
+          <div class="simple-color-chip light-text" style="background: #FFFFFF;">#FFFFFF</div>
+        </div>
+      </div>
+      
+      <!-- ANCLORA PRESS -->
+      <div class="palette-section">
+        <h4 style="color: var(--sidebar-accent); font-size: 1.5rem; margin-bottom: 10px; font-family: 'Libre Baskerville', serif;">ANCLORA PRESS</h4>
+        <p style="color: var(--main-text); opacity: 0.8; margin-bottom: 25px;">Publicación - "Escribe una vez. Publica perfecto en todas partes"</p>
+        <div class="simple-color-row">
+          <div class="simple-color-chip" style="background: #23436B;">#23436B</div>
+          <div class="simple-color-chip light-text" style="background: #FFC979;">#FFC979</div>
+          <div class="simple-color-chip light-text" style="background: #FFECB3;">#FFECB3</div>
+          <div class="simple-color-chip light-text" style="background: #F6F7F9;">#F6F7F9</div>
+          <div class="simple-color-chip" style="background: #162032;">#162032</div>
+        </div>
+      </div>
+      
+      <!-- ANCLORA KAIRON -->
+      <div class="palette-section">
+        <h4 style="color: var(--sidebar-accent); font-size: 1.5rem; margin-bottom: 10px; font-family: 'Libre Baskerville', serif;">ANCLORA KAIRON</h4>
+        <p style="color: var(--main-text); opacity: 0.8; margin-bottom: 25px;">Gestión de proyectos - "Domina tu momento. Controla tu presupuesto"</p>
+        <div class="simple-color-row">
+          <div class="simple-color-chip" style="background: #23436B;">#23436B</div>
+          <div class="simple-color-chip" style="background: #37B5A4;">#37B5A4</div>
+          <div class="simple-color-chip" style="background: #2EAFC4;">#2EAFC4</div>
+          <div class="simple-color-chip light-text" style="background: #F6F7F9;">#F6F7F9</div>
+          <div class="simple-color-chip" style="background: #162032;">#162032</div>
+        </div>
+      </div>
+      
+      <!-- ANCLORA RENDER -->
+      <div class="palette-section">
+        <h4 style="color: var(--sidebar-accent); font-size: 1.5rem; margin-bottom: 10px; font-family: 'Libre Baskerville', serif;">ANCLORA RENDER</h4>
+        <p style="color: var(--main-text); opacity: 0.8; margin-bottom: 25px;">Design systems - "La única fuente de la verdad para tu UI"</p>
+        <div class="simple-color-row">
+          <div class="simple-color-chip" style="background: #23436B;">#23436B</div>
+          <div class="simple-color-chip" style="background: #222C35;">#222C35</div>
+          <div class="simple-color-chip light-text" style="background: #F6F7F9;">#F6F7F9</div>
+          <div class="simple-color-chip light-text" style="background: #FFFFFF;">#FFFFFF</div>
+          <div class="simple-color-chip" style="background: #2EAFC4;">#2EAFC4</div>
+        </div>
+      </div>
+      
+      <!-- ANCLORA GUARDIAN -->
+      <div class="palette-section">
+        <h4 style="color: var(--sidebar-accent); font-size: 1.5rem; margin-bottom: 10px; font-family: 'Libre Baskerville', serif;">ANCLORA GUARDIAN</h4>
+        <p style="color: var(--main-text); opacity: 0.8; margin-bottom: 25px;">Bienestar - "Tu brújula para un rendimiento sostenible"</p>
+        <div class="simple-color-row">
+          <div class="simple-color-chip" style="background: #23436B;">#23436B</div>
+          <div class="simple-color-chip" style="background: #2EAFC4;">#2EAFC4</div>
+          <div class="simple-color-chip light-text" style="background: #D6F8E3;">#D6F8E3</div>
+          <div class="simple-color-chip light-text" style="background: #FFC979;">#FFC979</div>
+          <div class="simple-color-chip light-text" style="background: #F6F7F9;">#F6F7F9</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- DEGRADADOS PRINCIPALES -->
+    <div class="gradient-section">
+      <h3 class="gradient-title">Degradados Principales</h3>
+      <p class="gradient-subtitle">Transiciones suaves para fondos y elementos destacados</p>
+      
+      <div class="gradient-grid">
+        <!-- DEGRADADO HERO -->
+        <div class="gradient-card">
+          <div class="gradient-preview" style="background: linear-gradient(120deg, #23436B 0%, #2EAFC4 100%);">
+            Degradado Hero
+          </div>
+          <div class="gradient-info">
+            <div class="gradient-name">Degradado Hero Principal</div>
+            <div class="gradient-code">linear-gradient(120deg, #23436B 0%, #2EAFC4 100%)</div>
+            <div class="gradient-usage">Para secciones hero y fondos principales</div>
+          </div>
+        </div>
+        
+        <!-- DEGRADADO ACCIÓN -->
+        <div class="gradient-card">
+          <div class="gradient-preview" style="background: linear-gradient(90deg, #2EAFC4 0%, #FFC979 100%);">
+            Degradado Acción
+          </div>
+          <div class="gradient-info">
+            <div class="gradient-name">Degradado de Acción</div>
+            <div class="gradient-code">linear-gradient(90deg, #2EAFC4 0%, #FFC979 100%)</div>
+            <div class="gradient-usage">Para botones, CTAs y elementos interactivos</div>
+          </div>
+        </div>
+        
+        <!-- DEGRADADO SUTIL -->
+        <div class="gradient-card">
+          <div class="gradient-preview" style="background: linear-gradient(180deg, #F6F7F9 0%, #FFFFFF 100%); color: #162032;">
+            Degradado Sutil
+          </div>
+          <div class="gradient-info">
+            <div class="gradient-name">Degradado Sutil</div>
+            <div class="gradient-code">linear-gradient(180deg, #F6F7F9 0%, #FFFFFF 100%)</div>
+            <div class="gradient-usage">Para fondos de página y transiciones suaves</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- EFECTOS VISUALES CON DEGRADADOS -->
+    <div class="visual-effects-section">
+      <h3 class="visual-effects-title">Efectos Visuales con Degradados</h3>
+      <p class="visual-effects-subtitle">Componentes modernos y dinámicos para interfaces web</p>
+      
+      <div class="effects-grid">
+        <!-- BOTÓN CON DEGRADADO -->
+        <div class="effect-card">
+          <div class="effect-header">Botón con Degradado</div>
+          <div class="effect-demo">
+            <button class="button-demo">Acción Principal</button>
+          </div>
+          <div class="effect-description">
+            Botón interactivo con hover effect y degradado de acción
+          </div>
+        </div>
+        
+        <!-- TEXTO CON DEGRADADO -->
+        <div class="effect-card">
+          <div class="effect-header">Texto con Degradado</div>
+          <div class="effect-demo">
+            <div class="text-gradient-demo">Anclora Design System</div>
+            <div style="font-size: 0.9rem; opacity: 0.8;">Headlines llamativos con efecto degradado multicolor</div>
+          </div>
+        </div>
+        
+        <!-- BARRA DE PROGRESO -->
+        <div class="effect-card">
+          <div class="effect-header">Barra de Progreso</div>
+          <div class="effect-demo">
+            <div class="progress-demo">
+              <div class="progress-fill"></div>
+            </div>
+            <div style="font-size: 0.9rem; margin-top: 10px; opacity: 0.8;">
+              Progress bar colorido que indica avance de manera visual
+            </div>
+          </div>
+        </div>
+        
+        <!-- CARD GLASS EFFECT -->
+        <div class="effect-card">
+          <div class="effect-header">Card Glass Effect</div>
+          <div class="effect-demo">
+            <div class="glass-effect-demo">
+              <div class="glass-title">Tarjeta con efecto cristal</div>
+              <div class="glass-description">
+                Background translúcido con backdrop-filter blur para un look moderno y sofisticado.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- PRINCIPIOS DE APLICACIÓN -->
+    <div class="principles-section">
+      <h3 class="principles-title">Principios de Aplicación</h3>
+      <p class="principles-subtitle">Reglas para mantener consistencia en todo el ecosistema</p>
+      
+      <div class="principles-grid">
+        <!-- GRID 8PT -->
+        <div class="principle-card grid-card">
+          <div class="principle-icon">▤</div>
+          <div>
+            <div class="principle-name">Grid 8pt</div>
+            <div class="principle-description">
+              Todo spacing y dimensión múltiplo de 8px para consistencia matemática
+            </div>
+          </div>
+        </div>
+        
+        <!-- DEGRADADOS SUTILES -->
+        <div class="principle-card gradients-card">
+          <div class="principle-icon">⚭</div>
+          <div>
+            <div class="principle-name">Degradados sutiles</div>
+            <div class="principle-description">
+              Para profundidad visual, no decoración. Siempre con propósito funcional
+            </div>
+          </div>
+        </div>
+        
+        <!-- ACENTO ÚNICO -->
+        <div class="principle-card accent-card">
+          <div class="principle-icon">⚬</div>
+          <div>
+            <div class="principle-name">Acento único</div>
+            <div class="principle-description">
+              Un color de acento por producto, nunca dominante sobre la base
+            </div>
+          </div>
+        </div>
+        
+        <!-- ACCESIBILIDAD -->
+        <div class="principle-card accessibility-card">
+          <div class="principle-icon">♿</div>
+          <div>
+            <div class="principle-name">Accesibilidad</div>
+            <div class="principle-description">
+              Contraste WCAG AA mínimo, respeto por prefers-reduced-motion
+            </div>
+          </div>
+        </div>
+        
+        <!-- CLARIDAD -->
+        <div class="principle-card clarity-card">
+          <div class="principle-icon">💬</div>
+          <div>
+            <div class="principle-name">Claridad</div>
+            <div class="principle-description">
+              Lenguaje específico, sin jerga vacía. Pragmatismo empático
+            </div>
+          </div>
+        </div>
+        
+        <!-- EQUILIBRIO -->
+        <div class="principle-card equilibrium-card">
+          <div class="principle-icon">⚖</div>
+          <div>
+            <div class="principle-name">Equilibrio</div>
+            <div class="principle-description">
+              Lo esencial por encima del adorno. Calma competente
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SISTEMA TIPOGRÁFICO CORREGIDO -->
+  <section id="tipografia" class="main-section">
+    <div class="typography-intro">
+      <h2 class="hierarchy-title">Sistema Tipográfico</h2>
+      <p class="typography-subtitle">Tres familias tipográficas que definen nuestra personalidad de marca</p>
+    </div>
+    
+    <!-- FAMILIAS TIPOGRÁFICAS CORREGIDAS -->
+    <div class="font-families">
+      <!-- LIBRE BASKERVILLE - CORREGIDO -->
+      <div class="font-card">
+        <h3 class="font-title">Libre Baskerville</h3>
+        <div class="font-sample" style="font-family:'Libre Baskerville',serif;">AaBbCcDdEeFfGg</div>
+        <div class="font-numbers" style="font-family:'Libre Baskerville',serif;">1234567890</div>
+        <p class="font-description">Serif para títulos principales, headlines y elementos destacados</p>
+        <div class="font-weights">
+          <span class="weight-tag">Regular 400</span>
+          <span class="weight-tag">Bold 700</span>
+        </div>
+      </div>
+      
+      <!-- INTER -->
+      <div class="font-card">
+        <h3 class="font-title">Inter</h3>
+        <div class="font-sample" style="font-family:'Inter',sans-serif;">AaBbCcDdEeFfGg</div>
+        <div class="font-numbers" style="font-family:'Inter',sans-serif;">1234567890</div>
+        <p class="font-description">Sans-serif para interfaz, párrafos, subtítulos y elementos UI</p>
+        <div class="font-weights">
+          <span class="weight-tag">Light 300</span>
+          <span class="weight-tag">Regular 400</span>
+          <span class="weight-tag">Medium 500</span>
+          <span class="weight-tag">SemiBold 600</span>
+          <span class="weight-tag">Bold 700</span>
+        </div>
+      </div>
+      
+      <!-- JETBRAINS MONO -->
+      <div class="font-card">
+        <h3 class="font-title">JetBrains Mono</h3>
+        <div class="font-sample" style="font-family:'JetBrains Mono',monospace;">AaBbCcDdEeFfGg</div>
+        <div class="font-numbers" style="font-family:'JetBrains Mono',monospace;">1234567890</div>
+        <p class="font-description">Monospace para código, snippets técnicos y elementos de datos</p>
+        <div class="font-weights">
+          <span class="weight-tag">Regular 400</span>
+          <span class="weight-tag">Medium 500</span>
+          <span class="weight-tag">SemiBold 600</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- JERARQUÍA Y USOS ESPECÍFICOS -->
+    <div class="hierarchy-section">
+      <h3 class="hierarchy-title">Jerarquía y Usos Específicos</h3>
+      
+      <!-- DISPLAY / HERO PRINCIPAL -->
+      <div class="hierarchy-item">
+        <div class="hierarchy-label">DISPLAY / HERO PRINCIPAL</div>
+        <div class="hierarchy-demo">
+          <div style="font-family:'Libre Baskerville',serif;font-weight:700;font-size:3.75rem;line-height:1;letter-spacing:-0.05em;color:var(--main-text);">Anclora Design System</div>
+        </div>
+        <div class="hierarchy-specs">
+Font: Libre Baskerville Bold 700<br>
+Size: 60px (3.75rem)<br>
+Line Height: 1<br>
+Letter Spacing: -0.05em<br>
+Use: Hero sections, landing principales
+        </div>
+      </div>
+      
+      <!-- H1 / TÍTULO PRINCIPAL -->
+      <div class="hierarchy-item">
+        <div class="hierarchy-label">H1 / TÍTULO PRINCIPAL</div>
+        <div class="hierarchy-demo">
+          <div style="font-family:'Libre Baskerville',serif;font-weight:700;font-size:3rem;line-height:1.25;letter-spacing:-0.025em;color:var(--sidebar-accent);">Sistema de Identidad Visual</div>
+        </div>
+        <div class="hierarchy-specs">
+Font: Libre Baskerville Bold 700<br>
+Size: 48px (3rem)<br>
+Line Height: 1.25<br>
+Letter Spacing: -0.025em<br>
+Use: Títulos de página, secciones principales
+        </div>
+      </div>
+      
+      <!-- PÁRRAFO / BODY TEXT -->
+      <div class="hierarchy-item">
+        <div class="hierarchy-label">PÁRRAFO / BODY TEXT</div>
+        <div class="hierarchy-demo">
+          <p style="font-family:'Inter',sans-serif;font-size:1rem;line-height:1.625;color:var(--main-text);margin:0;">En un mar de ruido y herramientas desconectadas, Anclora ofrece el punto de anclaje. Diseñamos con calma competente y <em>pragmatismo empático</em>: lo esencial por encima del adorno. Nuestra filosofía se refleja en cada pixel, cada interacción y cada decisión de diseño.</p>
+        </div>
+        <div class="hierarchy-specs">
+Font: Inter Regular 400<br>
+Size: 16px (1rem)<br>
+Line Height: 1.625<br>
+Use: Texto principal, descripciones, contenido
+        </div>
+      </div>
+    </div>
+    
+    <!-- CÓDIGO -->
+    <div class="code-section">
+      <div class="code-label">CÓDIGO / CODE</div>
+      <div class="code-description">Para aplicar el degradado usa: <code style="background:var(--card-border);padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;">background: var(--gradient-hero)</code></div>
+      <div class="code-block">.hero-section {
+  background: linear-gradient(120deg, #23436B, #2EAFC4);
+  color: white;
+  padding: 4rem 0;
+}</div>
+      <div class="code-specs">
+Font: JetBrains Mono Regular 400<br>
+Inline Size: 14.4px (0.9em)<br>
+Block Size: 14px (0.875rem)<br>
+Use: Snippets de código, valores técnicos
+      </div>
+    </div>
+    
+    <!-- CITA / BLOCKQUOTE -->
+    <div class="quote-section">
+      <div class="quote-label">CITA / BLOCKQUOTE</div>
+      <div class="quote-demo">
+        <p class="quote-text">"No prometemos cambiar tu vida. Prometemos devolverte el control sobre tu trabajo."</p>
+      </div>
+      <div class="hierarchy-specs">
+Font: Libre Baskerville Italic 400<br>
+Size: 18px (1.125rem)<br>
+Line Height: 1.625<br>
+Border Left: 4px solid var(--azul-claro)<br>
+Use: Citas destacadas, testimonios, principios
+      </div>
+    </div>
+  </section>
+
+  <!-- PROGRESS BARS -->
+  <section id="progress-bars" class="main-section">
+    <h2>Progress Bars</h2>
+    <p>Barras de progreso visualmente atractivas, con transiciones y soporte para modo oscuro/claro:</p>
+    
+    <div style="margin:30px 0;background:var(--card-bg);padding:30px;border-radius:16px;border:1px solid var(--card-border);">
+      <div style="margin-bottom:20px;">
+        <span style="font-weight:600;display:block;margin-bottom:8px;">Optimización Kairon - 94%</span>
+        <div style="background:var(--card-border);height:20px;border-radius:10px;overflow:hidden;">
+          <div style="width:94%;background:linear-gradient(90deg,#2EAFC4 40%,#37B5A4 100%);height:20px;border-radius:10px;transition:width 1.5s ease;"></div>
+        </div>
+      </div>
+      
+      <div style="margin-bottom:20px;">
+        <span style="font-weight:600;display:block;margin-bottom:8px;">Sistema Render - 68%</span>
+        <div style="background:var(--card-border);height:20px;border-radius:10px;overflow:hidden;">
+          <div style="width:68%;background:linear-gradient(90deg,#222C35 40%,#2EAFC4 90%);height:20px;border-radius:10px;transition:width 1.5s ease;"></div>
+        </div>
+      </div>
+      
+      <div style="text-align:center;">
+        <span style="font-weight:600;display:block;margin-bottom:15px;">Progress Circular - 70%</span>
+        <svg viewBox="0 0 40 40" width="100" height="100">
+          <circle cx="20" cy="20" r="16" stroke="var(--card-border)" stroke-width="6" fill="none"/>
+          <circle cx="20" cy="20" r="16" stroke="#2EAFC4" stroke-width="6" fill="none" stroke-dasharray="100" stroke-dashoffset="30" transform="rotate(-90 20 20)"/>
+          <text x="50%" y="54%" text-anchor="middle" fill="var(--main-text)" font-size="14px" dy=".3em" font-weight="bold">70%</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- BOTONES -->
+  <section id="botones" class="main-section">
+    <h2>Sistema de Botones</h2>
+    <p>Botones accesibles, degradados y variantes:</p>
+    
+    <div style="display:flex; gap:20px; flex-wrap:wrap; margin: 30px 0; background:var(--card-bg); padding:30px; border-radius:16px; border:1px solid var(--card-border);">
+      <button style="padding:12px 28px; border-radius:12px; background:#2EAFC4;color:#fff;font-weight:700;border:none;cursor:pointer;">Primario</button>
+      <button style="padding:12px 28px; border-radius:12px; background:linear-gradient(90deg,#2EAFC4 40%,#FFC979 100%); color:#161d28;font-weight:700;border:none;cursor:pointer;">Con Degradado</button>
+      <button style="padding:12px 28px; border-radius:12px; background:transparent;color:#2EAFC4;font-weight:700;border:2px solid #2EAFC4;cursor:pointer;">Outline</button>
+      <button style="padding:12px 28px; border-radius:12px; background:#ffc979;color:#29324a;font-weight:700;border:none;cursor:pointer;">Secundario</button>
+    </div>
+  </section>
+
+  <!-- CHATBOT -->
+  <section id="chatbot" class="main-section">
+    <h2>Chatbot</h2>
+    <p>IA conversacional integrada y adaptable:</p>
+    
+    <div style="margin: 30px 0; max-width: 420px; border-radius:20px; background:linear-gradient(135deg,#2EAFC4 77%,#ffc979 99%); box-shadow:0 8px 40px rgba(0,0,0,0.15);">
+      <div style="display:flex;align-items:center;gap:15px;background:rgba(20,24,30,0.3);padding:20px 18px;border-radius:20px 20px 0 0;">
+        <span style="font-size:1.6rem;">🤖</span>
+        <strong style="color:#fff;font-size:1.2rem;">Anclora Chatbot</strong>
+      </div>
+      <div style="padding:20px 18px;">
+        <div style="font-size:1.05rem;color:#172c44;background:#ffffffe8;padding:12px 16px;border-radius:12px;margin-bottom:10px;display:inline-block;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+          ¡Hola! Soy el asistente virtual de Anclora. Pregúntame cualquier cosa sobre el sistema de diseño.
+        </div>
+        <div style="font-size:1rem;color:#fff;opacity:0.9;"><em>Incluye integración real con IA generativa para soporte completo.</em></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TARJETAS -->
+  <section id="tarjetas" class="main-section">
+    <h2>Tarjetas Interactivas</h2>
+    <p>Cards con hover, progresivo y glass effect:</p>
+    
+    <div style="display:flex;gap:25px;flex-wrap:wrap;margin-top:30px;">
+      <div style="background:var(--card-bg);padding:25px 20px;border-radius:18px;min-width:220px;box-shadow:0 4px 20px rgba(46,175,196,0.15);border:1px solid var(--card-border);">
+        <strong style="color:var(--sidebar-accent);font-size:1.1rem;">🌈 Sistema Visual</strong><br>
+        <span style="opacity:0.8;line-height:1.5;">Paletas, degradados y modo tema adaptable automático.</span>
+      </div>
+      
+      <div style="background:var(--card-bg);padding:25px 20px;border-radius:18px;min-width:220px;box-shadow:0 4px 20px rgba(46,175,196,0.15);border:1px solid var(--card-border);">
+        <strong style="color:var(--sidebar-accent);font-size:1.1rem;">🔄 Animaciones</strong><br>
+        <span style="opacity:0.8;line-height:1.5;">Efectos shimmer y transiciones suaves.</span>
+      </div>
+      
+      <div style="background:var(--card-bg);padding:25px 20px;border-radius:18px;min-width:220px;box-shadow:0 4px 20px rgba(46,175,196,0.15);border:1px solid var(--card-border);">
+        <strong style="color:var(--sidebar-accent);font-size:1.1rem;">🦾 Chatbot IA</strong><br>
+        <span style="opacity:0.8;line-height:1.5;">Asistente moderno con interfaz adaptable.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRODUCTOS -->
+  
+  <!-- NEXUS -->
+  <section id="nexus" class="main-section">
+    <div class="product-card" style="background:linear-gradient(120deg,#23436B 70%,#38BDF8 100%);color:#fff;">
+      <div style="display:flex;align-items:center;gap:18px;margin-bottom:20px;">
+        <span style="font-size:2.5rem;">📄</span>
+        <div>
+          <h2 style="margin-bottom:0;font-size:1.6rem;">Nexus</h2>
+          <small style="font-size:1.1rem;opacity:0.85;">Gestión documental</small>
+        </div>
+      </div>
+      <div style="margin-bottom:15px;"><em style="font-size:1.15rem;color:#FFC979;">"La inteligencia que conecta tus documentos"</em></div>
+      <div class="paleta-mini" style="margin-bottom:18px;">
+        <span style="background:#23436B"></span>
+        <span style="background:#38BDF8"></span>
+        <span style="background:#F6F7F9"></span>
+        <span style="background:#162032"></span>
+        <span style="background:#fff"></span>
+      </div>
+      <ul style="margin:0;padding-left:22px;font-size:1.05rem;line-height:1.6;">
+        <li>OCR avanzado con IA</li>
+        <li>Conversión automática de formatos</li>
+        <li>Búsqueda semántica</li>
+        <li>Colaboración en tiempo real</li>
+        <li>Integración con cloud</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- PRESS -->
+  <section id="press" class="main-section">
+    <div class="product-card" style="background:linear-gradient(120deg,#FFC979 70%,#FFECB3 100%);color:#222;">
+      <div style="display:flex;align-items:center;gap:18px;margin-bottom:20px;">
+        <span style="font-size:2.5rem;">📝</span>
+        <div>
+          <h2 style="margin-bottom:0;font-size:1.6rem;">Press</h2>
+          <small style="font-size:1.1rem;opacity:0.9;">Publicación multicanal</small>
+        </div>
+      </div>
+      <div style="margin-bottom:15px;"><em style="font-size:1.15rem;color:#23436B;">"Escribe una vez. Publica perfecto en todas partes"</em></div>
+      <div class="paleta-mini" style="margin-bottom:18px;">
+        <span style="background:#23436B"></span>
+        <span style="background:#FFC979"></span>
+        <span style="background:#FFECB3"></span>
+        <span style="background:#F6F7F9"></span>
+        <span style="background:#162032"></span>
+      </div>
+      <ul style="margin:0;padding-left:22px;font-size:1.05rem;line-height:1.6;">
+        <li>Editor visual avanzado</li>
+        <li>Plantillas responsive</li>
+        <li>SEO optimizado</li>
+        <li>Analytics integrado</li>
+        <li>Publicación automática</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- KAIRON -->
+  <section id="kairon" class="main-section">
+    <div class="product-card" style="background:linear-gradient(120deg,#37B5A4 70%,#2EAFC4 100%);color:#fff;">
+      <div style="display:flex;align-items:center;gap:18px;margin-bottom:20px;">
+        <span style="font-size:2.5rem;">⏰</span>
+        <div>
+          <h2 style="margin-bottom:0;font-size:1.6rem;">Kairon</h2>
+          <small style="font-size:1.1rem;opacity:0.85;">Gestión de proyectos</small>
+        </div>
+      </div>
+      <div style="margin-bottom:15px;"><em style="font-size:1.15rem;color:#FFC979;">"Domina tu momento. Controla tu presupuesto"</em></div>
+      <div class="paleta-mini" style="margin-bottom:18px;">
+        <span style="background:#23436B"></span>
+        <span style="background:#37B5A4"></span>
+        <span style="background:#2EAFC4"></span>
+        <span style="background:#F6F7F9"></span>
+        <span style="background:#162032"></span>
+      </div>
+      <ul style="margin:0;padding-left:22px;font-size:1.05rem;line-height:1.6;">
+        <li>Planificación automática</li>
+        <li>Análisis de productividad</li>
+        <li>Presupuestos dinámicos</li>
+        <li>Reportes en tiempo real</li>
+        <li>Predicciones con IA</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- RENDER -->
+  <section id="render" class="main-section">
+    <div class="product-card" style="background:linear-gradient(120deg,#37475A 88%,#2EAFC4 100%);color:#FFFFFF;">
+      <div style="display:flex;align-items:center;gap:18px;margin-bottom:20px;">
+        <span style="font-size:2.5rem;">🛠️</span>
+        <div>
+          <h2 style="margin-bottom:0;font-size:1.6rem;color:#FFFFFF;text-shadow:0 1px 2px rgba(0,0,0,0.3);">Render</h2>
+          <small style="font-size:1.1rem;opacity:0.95;color:#E0F7FA;">Design systems</small>
+        </div>
+      </div>
+      <div style="margin-bottom:15px;"><em style="font-size:1.15rem;color:#FFC979;text-shadow:0 1px 2px rgba(0,0,0,0.2);">"La única fuente de la verdad para tu UI"</em></div>
+      <div class="paleta-mini" style="margin-bottom:18px;">
+        <span style="background:#23436B"></span>
+        <span style="background:#37475A"></span>
+        <span style="background:#F6F7F9"></span>
+        <span style="background:#fff"></span>
+        <span style="background:#2EAFC4"></span>
+      </div>
+      <ul style="margin:0;padding-left:22px;font-size:1.05rem;line-height:1.6;color:#FFFFFF;">
+        <li>Componentes auto-generados</li>
+        <li>Tokens de diseño sincronizados</li>
+        <li>Testing visual automático</li>
+        <li>Documentación en vivo</li>
+        <li>Múltiples frameworks</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- GUARDIAN -->
+  <section id="guardian" class="main-section">
+    <div class="product-card" style="background:linear-gradient(120deg,#2EAFC4 75%,#D6F8E3 100%);color:#18363a;">
+      <div style="display:flex;align-items:center;gap:18px;margin-bottom:20px;">
+        <span style="font-size:2.5rem;">🛡️</span>
+        <div>
+          <h2 style="margin-bottom:0;font-size:1.6rem;">Guardian</h2>
+          <small style="font-size:1.1rem;opacity:0.9;">Bienestar digital</small>
+        </div>
+      </div>
+      <div style="margin-bottom:15px;"><em style="font-size:1.15rem;color:#10B981;">"Tu brújula para un rendimiento sostenible"</em></div>
+      <div class="paleta-mini" style="margin-bottom:18px;">
+        <span style="background:#23436B"></span>
+        <span style="background:#2EAFC4"></span>
+        <span style="background:#D6F8E3"></span>
+        <span style="background:#FFC979"></span>
+        <span style="background:#F6F7F9"></span>
+      </div>
+      <ul style="margin:0;padding-left:22px;font-size:1.05rem;line-height:1.6;">
+        <li>Monitoreo de bienestar</li>
+        <li>Breaks inteligentes</li>
+        <li>Métricas de rendimiento</li>
+        <li>Coaching personalizado</li>
+        <li>Objetivos adaptativos</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<!-- MODAL USUARIO SIMPLIFICADO - SOLO 2 PESTAÑAS -->
+<div id="userModal" class="modal-user" style="display:none;">
+  <div class="modal-user-main">
+    <button class="modal-user-close" onclick="closeUserModal()">×</button>
+    
+    <!-- SOLO DOS PESTAÑAS -->
+    <div class="modal-user-tabs">
+      <button onclick="showUserTab('login')" id="tabBtnLogin" class="active">Iniciar sesión</button>
+      <button onclick="showUserTab('register')" id="tabBtnRegister">Registrar</button>
+    </div>
+    
+    <!-- LOGIN CON ENLACE Y LOGIN SOCIAL -->
+    <div class="modal-user-content" id="tabLogin">
+      <form onsubmit="return false;">
+        <input type="email" placeholder="Correo electrónico" required>
+        <input type="password" placeholder="Contraseña" required>
+        
+        <!-- ENLACE DE RECUPERACIÓN -->
+        <div class="forgot-password-link">
+          <a href="#" onclick="alert('Funcionalidad de recuperación de contraseña')">¿Olvidaste tu contraseña?</a>
+        </div>
+        
+        <button type="submit" class="btn-user-main">Entrar</button>
+      </form>
+      
+      <!-- LOGIN SOCIAL -->
+      <div class="social-divider">
+        <span>o entra con</span>
+      </div>
+      
+      <div class="social-buttons">
+        <button type="button" class="btn-social google">Google</button>
+        <button type="button" class="btn-social github">GitHub</button>
+        <button type="button" class="btn-social apple">Apple</button>
+      </div>
+    </div>
+    
+    <!-- REGISTRO -->
+    <div class="modal-user-content" id="tabRegister" style="display:none;">
+      <form onsubmit="return false;">
+        <input type="text" placeholder="Nombre completo" required>
+        <input type="email" placeholder="Email" required>
+        <input type="password" placeholder="Contraseña" required>
+        <input type="password" placeholder="Repetir contraseña" required>
+        <button type="submit" class="btn-user-main">Registrarme</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- CHATBOX FLOTANTE -->
+<div id="chatbox" class="chatbox-bubble" style="display:none;">
+  <div class="chatbox-main">
+    <div class="chatbox-header">
+      <span class="chatbot-avatar">🤖</span>
+      <span class="chatbot-title">Anclora Chatbot</span>
+      <button class="chatbox-close" onclick="toggleChatbox(false)">×</button>
+    </div>
+    
+    <div class="chatbox-messages" id="chatMessages">
+      <div class="chat-msg chat-in">
+        <span class="chatbot-avatar" style="font-size:1.4rem;">🤖</span>
+        <div class="chat-msg-inner">¡Hola! ¿En qué puedo ayudarte hoy?</div>
+      </div>
+    </div>
+    
+    <form class="chatbox-input-row" onsubmit="return sendChatMsg();">
+      <input type="text" id="chatInput" placeholder="Escribe tu mensaje..." autocomplete="off"/>
+      <button type="submit">Enviar</button>
+    </form>
+  </div>
+</div>
+
+<button class="chatbox-fab" id="chatboxFab" onclick="toggleChatbox(true)">🤖</button>
+
+<!-- JAVASCRIPT SIMPLIFICADO -->
+<script>
+// Variables globales
+let currentSection = 'inicio';
+
+// Función para mostrar sidebar en móvil
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  sidebar.classList.toggle('show');
+}
+
+// Sistema de navegación principal
+function showSection(sectionId) {
+  console.log('Mostrando sección:', sectionId);
+  
+  // Ocultar todas las secciones
+  const sections = document.querySelectorAll('.main-section');
+  sections.forEach(section => {
+    section.style.display = 'none';
+    section.classList.remove('active');
+  });
+  
+  // Mostrar la sección seleccionada
+  const targetSection = document.getElementById(sectionId);
+  if (targetSection) {
+    targetSection.style.display = 'block';
+    targetSection.classList.add('active');
+    currentSection = sectionId;
+    
+    // Scroll suave al inicio
+    setTimeout(() => {
+      targetSection.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }, 100);
+  }
+  
+  // Cerrar sidebar en móvil
+  const sidebar = document.getElementById('sidebar');
+  sidebar.classList.remove('show');
+}
+
+// Eventos de los botones del menú
+function initializeMenuItems() {
+  const menuItems = document.querySelectorAll('.menu-item[data-section]');
+  console.log('Elementos de menú encontrados:', menuItems.length);
+  
+  menuItems.forEach(item => {
+    item.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      // Quitar clase active de todos los elementos
+      menuItems.forEach(menuItem => {
+        menuItem.classList.remove('active');
+      });
+      
+      // Añadir clase active al elemento clickeado
+      this.classList.add('active');
+      
+      // Obtener la sección a mostrar
+      const sectionId = this.getAttribute('data-section');
+      console.log('Botón clickeado:', sectionId);
+      
+      if (sectionId) {
+        showSection(sectionId);
+      }
+    });
+  });
+}
+
+// Sistema de temas
+function toggleTheme() {
+  const currentTheme = document.documentElement.getAttribute('data-theme');
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  
+  document.documentElement.setAttribute('data-theme', newTheme);
+  localStorage.setItem('ancloraTheme', newTheme);
+  updateModeBtn();
+}
+
+function updateModeBtn() {
+  const theme = document.documentElement.getAttribute('data-theme') || 'light';
+  const themeIcon = document.getElementById('themeIcon');
+  const modeText = document.getElementById('modeText');
+  
+  if (themeIcon && modeText) {
+    themeIcon.textContent = theme === 'dark' ? '🌙' : '🌞';
+    modeText.textContent = theme === 'dark' ? 'Modo Oscuro' : 'Modo Claro';
+  }
+}
+
+// Inicializar tema
+function initTheme() {
+  let userTheme = localStorage.getItem('ancloraTheme');
+  
+  if (!userTheme) {
+    userTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  
+  document.documentElement.setAttribute('data-theme', userTheme);
+  
+  // Listener para cambios del sistema
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    if (!localStorage.getItem('ancloraTheme')) {
+      const newTheme = e.matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      updateModeBtn();
+    }
+  });
+  
+  updateModeBtn();
+}
+
+// Modal de usuario - SIMPLIFICADO PARA 2 PESTAÑAS
+function showUserModal() {
+  const modal = document.getElementById('userModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    showUserTab('login');
+  }
+}
+
+function closeUserModal() {
+  const modal = document.getElementById('userModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
+function showUserTab(tab) {
+  const tabs = ['Login', 'Register']; // SOLO 2 PESTAÑAS
+  
+  tabs.forEach(t => {
+    const content = document.getElementById('tab' + t);
+    const button = document.getElementById('tabBtn' + t);
+    
+    if (content && button) {
+      content.style.display = (t.toLowerCase() === tab) ? 'block' : 'none';
+      button.classList.toggle('active', t.toLowerCase() === tab);
+    }
+  });
+}
+
+// Chatbox flotante
+function toggleChatbox(open) {
+  const chatbox = document.getElementById('chatbox');
+  const fab = document.getElementById('chatboxFab');
+  
+  if (chatbox && fab) {
+    chatbox.style.display = open ? 'block' : 'none';
+    fab.style.display = open ? 'none' : 'block';
+    
+    if (open) {
+      setTimeout(() => {
+        const input = document.getElementById('chatInput');
+        if (input) input.focus();
+      }, 150);
+    }
+  }
+}
+
+function sendChatMsg() {
+  const input = document.getElementById('chatInput');
+  const messages = document.getElementById('chatMessages');
+  
+  if (!input || !messages) return false;
+  
+  const msg = input.value.trim();
+  if (!msg) return false;
+  
+  // Añadir mensaje del usuario
+  const userMsg = document.createElement('div');
+  userMsg.className = 'chat-msg chat-out';
+  userMsg.innerHTML = `<div class="chat-msg-inner">${msg}</div>`;
+  messages.appendChild(userMsg);
+  
+  // Limpiar input
+  input.value = '';
+  
+  // Respuesta automática del bot
+  setTimeout(() => {
+    const botMsg = document.createElement('div');
+    botMsg.className = 'chat-msg chat-in';
+    botMsg.innerHTML = `
+      <span class="chatbot-avatar" style="font-size:1.4rem;">🤖</span>
+      <div class="chat-msg-inner">Estoy aquí para ayudarte con cualquier consulta sobre el sistema de diseño Anclora. ¿En qué puedo asistirte?</div>
+    `;
+    messages.appendChild(botMsg);
+    
+    // Scroll al final
+    messages.scrollTop = messages.scrollHeight;
+  }, 800);
+  
+  // Scroll al final
+  messages.scrollTop = messages.scrollHeight;
+  return false;
+}
+
+// Inicialización cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM cargado, inicializando...');
+  
+  // Inicializar tema
+  initTheme();
+  
+  // Inicializar eventos de menú
+  initializeMenuItems();
+  
+  // Mostrar página de INICIO por defecto y marcar como activo
+  const inicioMenuItem = document.querySelector('.menu-item[data-section="inicio"]');
+  if (inicioMenuItem) {
+    inicioMenuItem.classList.add('active');
+    showSection('inicio');
+  }
+});
+
+// Fallback por si DOMContentLoaded ya pasó
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('Fallback: inicializando después de DOMContentLoaded');
+    initTheme();
+    initializeMenuItems();
+    
+    const inicioMenuItem = document.querySelector('.menu-item[data-section="inicio"]');
+    if (inicioMenuItem) {
+      inicioMenuItem.classList.add('active');
+      showSection('inicio');
+    }
+  });
+} else {
+  console.log('DOM ya estaba cargado, inicializando inmediatamente');
+  initTheme();
+  initializeMenuItems();
+  
+  const inicioMenuItem = document.querySelector('.menu-item[data-section="inicio"]');
+  if (inicioMenuItem) {
+    inicioMenuItem.classList.add('active');
+    showSection('inicio');
+  }
+}
+</script>
+
+</body>
+</html>
