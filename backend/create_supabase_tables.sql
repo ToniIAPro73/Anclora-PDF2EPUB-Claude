@@ -1,90 +1,96 @@
--- SQL script to create tables in Supabase
--- Run this in the Supabase SQL Editor
+-- Crear esquema privado si no existe (para objetos que no deben exponerse en la API)
+CREATE SCHEMA IF NOT EXISTS private;
 
--- Create a public users table (optional - Supabase auth.users is created automatically)
-CREATE TABLE IF NOT EXISTS users (
-    id UUID REFERENCES auth.users(id) PRIMARY KEY,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    full_name VARCHAR(255),
-    avatar_url VARCHAR(500),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+-- Tabla de profiles en public
+CREATE TABLE IF NOT EXISTS public.profiles ( id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY, user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE, username text NOT NULL, full_name text, email text, avatar_url text, metadata jsonb, created_at timestamp with time zone DEFAULT now(), updated_at timestamp with time zone DEFAULT now() );
+
+-- Índice para la columna foreign key user_id
+CREATE INDEX IF NOT EXISTS idx_profiles_user_id ON public.profiles(user_id);
+
+-- Trigger function para mantener updated_at
+CREATE OR REPLACE FUNCTION public.set_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at = now(); RETURN NEW; END; $$;
+
+-- Trigger que usa la función
+DROP TRIGGER IF EXISTS trg_set_updated_at_profiles ON public.profiles; CREATE TRIGGER trg_set_updated_at_profiles BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+-- Habilitar Row Level Security y crear políticas
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+-- Policy:
+SELECT (solo el propio usuario) CREATE POLICY "Profiles select: owner only" ON public.profiles FOR SELECT TO authenticated USING ((SELECT auth.uid())::uuid = user_id);
+
+-- Policy:
+INSERT (solo insertar usando su propio user_id) CREATE POLICY "Profiles insert: owner only" ON public.profiles FOR INSERT TO authenticated WITH CHECK ((SELECT auth.uid())::uuid = user_id);
+
+-- Policy:
+UPDATE (solo modificar sus propias filas) CREATE POLICY "Profiles update: owner only" ON public.profiles FOR UPDATE TO authenticated USING ((SELECT auth.uid())::uuid = user_id) WITH CHECK ((SELECT auth.uid())::uuid = user_id);
+
+-- Policy:
+DELETE (solo eliminar sus propias filas) CREATE POLICY "Profiles delete: owner only" ON public.profiles FOR DELETE TO authenticated USING ((SELECT auth.uid())::uuid = user_id);
+
+-- Tabla de auditoría en esquema private
+CREATE TABLE IF NOT EXISTS private.profile_audit ( audit_id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY, profile_id bigint NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE, action text NOT NULL, -- e.g., INSERT, UPDATE, DELETE performed_by uuid, -- auth user id (if available) changes jsonb, created_at timestamp with time zone DEFAULT now() );
+
+-- Índice para auditoría por profile_id
+CREATE INDEX IF NOT EXISTS idx_profile_audit_profile_id ON private.profile_audit(profile_id);
+
+-- Trigger function para insertar en profile_audit al insertar/actualizar/eliminar en profiles
+CREATE OR REPLACE FUNCTION private.log_profile_changes()
+  RETURNS trigger LANGUAGE plpgsql AS $$ DECLARE actor uuid := NULL;
+BEGIN -- intentar capturar auth.uid() si existe en contexto; puede ser NULL en acciones internas BEGIN actor := (SELECT auth.uid()); EXCEPTION WHEN OTHERS THEN actor := NULL; END;
+IF TG_OP = 'INSERT' THEN
+  INSERT INTO private.profile_audit(profile_id, action, performed_by, changes) VALUES (NEW.id, 'INSERT', actor, to_jsonb(NEW));
+  RETURN NEW;
+ELSIF TG_OP = 'UPDATE' THEN
+  INSERT INTO private.profile_audit(profile_id, action, performed_by, changes) VALUES (NEW.id, 'UPDATE', actor, jsonb_build_object('old', to_jsonb(OLD), 'new', to_jsonb(NEW)));
+  RETURN NEW;
+ELSIF TG_OP = 'DELETE' THEN
+  INSERT INTO private.profile_audit(profile_id, action, performed_by, changes) VALUES (OLD.id, 'DELETE', actor, to_jsonb(OLD));
+  RETURN OLD;
+END IF;
+RETURN NULL;
+END;
+$$;
+
+-- Asociar trigger de auditoría
+DROP TRIGGER IF EXISTS trg_profile_audit ON public.profiles;
+CREATE TRIGGER trg_profile_audit AFTER INSERT OR UPDATE OR DELETE ON public.profiles FOR EACH ROW EXECUTE FUNCTION private.log_profile_changes();
+
+-- Nota de seguridad (texto en SQL como comentario)
+-- IMPORTANTE: La tabla private.profile_audit está en el esquema private para reducir su exposición desde la API.
+-- Las materialized views y tablas privadas deben mantenerse fuera de public porque RLS no se aplica automáticamente a objetos que permitan bypass.
+-- Para más detalles sobre riesgos ver: https://supabase.com/docs/guides/database/database-advisors?queryGroups=lint&lint=0016_materialized_view_in_api
+-- (El link anterior es para referencia de riesgo y auditoría de seguridad.)
+
+-- Tabla de conversions
+CREATE TABLE IF NOT EXISTS public.conversions (
+    id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    task_id text UNIQUE NOT NULL,
+    user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    status text NOT NULL DEFAULT 'PENDING',
+    input_filename text,
+    output_path text,
+    thumbnail_path text,
+    metrics jsonb,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now()
 );
 
--- Enable RLS on users table
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+-- Índice para task_id y user_id
+CREATE INDEX IF NOT EXISTS idx_conversions_task_id ON public.conversions(task_id);
+CREATE INDEX IF NOT EXISTS idx_conversions_user_id ON public.conversions(user_id);
+CREATE INDEX IF NOT EXISTS idx_conversions_status ON public.conversions(status);
+CREATE INDEX IF NOT EXISTS idx_conversions_created_at ON public.conversions(created_at);
 
--- Users can read their own data
-CREATE POLICY "Users can view own data" ON users
-    FOR SELECT USING (auth.uid() = id);
+-- Trigger para updated_at en conversions
+DROP TRIGGER IF EXISTS trg_set_updated_at_conversions ON public.conversions;
+CREATE TRIGGER trg_set_updated_at_conversions BEFORE UPDATE ON public.conversions FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
--- Users can update their own data
-CREATE POLICY "Users can update own data" ON users
-    FOR UPDATE USING (auth.uid() = id);
+-- Habilitar RLS en conversions
+ALTER TABLE public.conversions ENABLE ROW LEVEL SECURITY;
 
--- Function to handle new user creation
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-    INSERT INTO public.users (id, email, full_name, avatar_url)
-    VALUES (NEW.id, NEW.email, NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'avatar_url');
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Trigger to create user profile on signup
-CREATE TRIGGER on_auth_user_created
-    AFTER INSERT ON auth.users
-    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-
--- Create the conversions table
-CREATE TABLE IF NOT EXISTS conversions (
-    id SERIAL PRIMARY KEY,
-    task_id VARCHAR(36) UNIQUE NOT NULL,
-    user_id UUID REFERENCES auth.users(id),
-    status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
-    input_filename VARCHAR(255),
-    output_path VARCHAR(255),
-    thumbnail_path VARCHAR(255),
-    metrics JSONB,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_conversions_task_id ON conversions(task_id);
-CREATE INDEX IF NOT EXISTS idx_conversions_user_id ON conversions(user_id);
-CREATE INDEX IF NOT EXISTS idx_conversions_status ON conversions(status);
-CREATE INDEX IF NOT EXISTS idx_conversions_created_at ON conversions(created_at);
-
--- Enable Row Level Security (RLS)
-ALTER TABLE conversions ENABLE ROW LEVEL SECURITY;
-
--- Create policy to allow users to see only their own conversions
-CREATE POLICY "Users can view their own conversions" ON conversions
-    FOR SELECT USING (auth.uid() = user_id);
-
--- Create policy to allow users to insert their own conversions
-CREATE POLICY "Users can insert their own conversions" ON conversions
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
-
--- Create policy to allow users to update their own conversions
-CREATE POLICY "Users can update their own conversions" ON conversions
-    FOR UPDATE USING (auth.uid() = user_id);
-
--- Grant necessary permissions
-GRANT ALL ON conversions TO authenticated;
-GRANT USAGE ON SEQUENCE conversions_id_seq TO authenticated;
-
--- Function to automatically update updated_at timestamp
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = NOW();
-    RETURN NEW;
-END;
-$$ language 'plpgsql';
-
-CREATE TRIGGER update_conversions_updated_at
-    BEFORE UPDATE ON conversions
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- Políticas RLS para conversions
+CREATE POLICY "Conversions select: owner only" ON public.conversions FOR SELECT TO authenticated USING ((SELECT auth.uid())::uuid = user_id);
+CREATE POLICY "Conversions insert: owner only" ON public.conversions FOR INSERT TO authenticated WITH CHECK ((SELECT auth.uid())::uuid = user_id);
+CREATE POLICY "Conversions update: owner only" ON public.conversions FOR UPDATE TO authenticated USING ((SELECT auth.uid())::uuid = user_id) WITH CHECK ((SELECT auth.uid())::uuid = user_id);
+CREATE POLICY "Conversions delete: owner only" ON public.conversions FOR DELETE TO authenticated USING ((SELECT auth.uid())::uuid = user_id);
