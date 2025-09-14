@@ -17,7 +17,6 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
 
   const navigationItems = [
     { id: 'inicio', label: 'Inicio', icon: '🏠' },
-    { id: 'conversion', label: 'Convertir', icon: '🔄' },
     { id: 'history', label: 'Historial', icon: '📋' },
   ];
 
@@ -53,11 +52,11 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
                 onClick={() => setCurrentSection(item.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                   currentSection === item.id
-                    ? 'text-white shadow-md'
+                    ? 'shadow-md'
                     : 'hover:bg-gray-100'
                 }`}
                 style={currentSection === item.id
-                  ? { background: 'var(--gradient-action)' }
+                  ? { background: 'var(--gradient-action)', color: 'var(--text-nav-active)' }
                   : { color: 'var(--text-nav)' }
                 }
               >
@@ -121,11 +120,11 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
                 onClick={() => setCurrentSection(item.id)}
                 className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
                   currentSection === item.id
-                    ? 'text-white'
+                    ? ''
                     : ''
                 }`}
                 style={currentSection === item.id
-                  ? { background: 'var(--gradient-action)' }
+                  ? { background: 'var(--gradient-action)', color: 'var(--text-nav-active)' }
                   : { color: 'var(--text-nav)' }
                 }
               >

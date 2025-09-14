@@ -40,6 +40,7 @@
   --text-header: var(--anclora-blue-dark);
   --text-nav: var(--anclora-dark);
   --text-nav-hover: var(--anclora-dark);
+  --text-nav-active: var(--anclora-dark);
   --border-color: var(--anclora-border);
   --shadow-color: rgba(0, 0, 0, 0.1);
   --accent-primary: var(--anclora-teal);
@@ -84,6 +85,7 @@
   --text-header: var(--anclora-blue-sky);
   --text-nav: var(--anclora-white);
   --text-nav-hover: var(--anclora-white);
+  --text-nav-active: var(--anclora-white);
   --border-color: var(--anclora-border-dark);
   --shadow-color: rgba(0, 0, 0, 0.3);
   --gradient-subtle: linear-gradient(180deg, #202837 0%, #263043 100%);

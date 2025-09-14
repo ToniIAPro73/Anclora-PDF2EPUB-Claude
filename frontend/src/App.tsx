@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
-import ConversionPanel from './components/ConversionPanel';
 import ConversionHistory from './components/ConversionHistory';
 import FileUploader from './components/FileUploader';
-import MetricsDisplay from './components/MetricsDisplay';
 import LoginForm from './LoginForm';
 import RegisterForm from './RegisterForm';
 import ProtectedRoute from './ProtectedRoute';
@@ -120,19 +118,7 @@ const MainApp: React.FC = () => {
           </div>
         )}
 
-        {currentSection === 'conversion' && (
-          <div className="max-w-4xl mx-auto p-6 space-y-6 animate-fade-in">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold mb-4 gradient-text">Convertir PDF a EPUB</h2>
-              <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>
-                Sube tu archivo y configura las opciones de conversión
-              </p>
-            </div>
-            <FileUploader onFileSelected={setSelectedFile} />
-            <ConversionPanel file={selectedFile} />
-            <MetricsDisplay />
-          </div>
-        )}
+
 
         {currentSection === 'history' && (
           <div className="max-w-6xl mx-auto p-6 space-y-6 animate-fade-in">
