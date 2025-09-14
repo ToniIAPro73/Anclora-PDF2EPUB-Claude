@@ -43,25 +43,14 @@ const MainApp: React.FC = () => {
         {currentSection === 'inicio' && (
           <div className="animate-fade-in">
             {/* Hero Section */}
-            <section className="relative overflow-hidden py-20 px-4" style={{ background: 'var(--gradient-hero)' }}>
+            <section className="relative overflow-hidden py-16 px-4" style={{ background: 'var(--gradient-hero)' }}>
               <div className="max-w-4xl mx-auto text-center text-white">
                 <div className="mb-8">
-                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-6 p-3"
-                       style={{ background: 'rgba(255, 255, 255, 0.2)' }}>
-                    <img
-                      src="/images/iconos/Anclora PDF2EPUB fodo transparente.png"
-                      alt="Anclora PDF2EPUB"
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                  <h1 className="text-5xl md:text-6xl font-bold mb-6" style={{ fontFamily: 'var(--font-heading)' }}>
+                  <h1 className="text-5xl md:text-6xl font-bold mb-6 gradient-text-hero" style={{ fontFamily: 'var(--font-heading)' }}>
                     Anclora PDF2EPUB
                   </h1>
                   <p className="text-xl md:text-2xl mb-8 opacity-90">
                     Conversión inteligente de PDF a EPUB3
-                  </p>
-                  <p className="text-lg opacity-80 max-w-2xl mx-auto">
-                    Arrastra tu PDF aquí o haz clic para seleccionarlo
                   </p>
                 </div>
 
@@ -118,7 +107,7 @@ const MainApp: React.FC = () => {
                   <div className="card text-center animate-slide-in" style={{ animationDelay: '0.2s' }}>
                     <div className="w-16 h-16 rounded-xl mx-auto mb-4 flex items-center justify-center text-2xl"
                          style={{ background: 'var(--gradient-press)' }}>
-                      <span style={{ color: 'var(--anclora-dark)' }}>✨</span>
+                      <span style={{ color: 'var(--anclora-dark)', fontWeight: 'bold' }}>💎</span>
                     </div>
                     <h3 className="text-xl font-semibold mb-3">Calidad Premium</h3>
                     <p style={{ color: 'var(--text-secondary)' }}>

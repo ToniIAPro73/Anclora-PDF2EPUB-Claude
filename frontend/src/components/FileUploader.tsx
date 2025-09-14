@@ -119,13 +119,13 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected }) => {
                 className="w-full h-full object-contain"
               />
             </div>
-            <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
+            <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-uploader)' }}>
               {isDragActive ? '¡Suelta tu PDF aquí!' : 'Sube tu archivo PDF'}
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="mb-4 font-medium" style={{ color: 'var(--text-uploader)', opacity: '0.9' }}>
               Arrastra y suelta tu archivo o haz clic para seleccionarlo
             </p>
-            <div className="flex items-center gap-4 text-sm text-gray-500">
+            <div className="flex items-center gap-4 text-sm font-medium" style={{ color: 'var(--text-uploader)', opacity: '0.8' }}>
               <span>📋 Solo PDF</span>
               <span>📏 Máx. 50MB</span>
               <span>⚡ Conversión rápida</span>

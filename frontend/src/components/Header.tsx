@@ -40,8 +40,8 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
                 className="w-full h-full object-contain"
               />
             </div>
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold gradient-text">Anclora PDF2EPUB</h1>
+            <div className="flex items-center h-16">
+              <h1 className="text-xl font-bold" style={{ lineHeight: '1', margin: '0', padding: '0', color: 'var(--text-header)' }}>Anclora PDF2EPUB</h1>
             </div>
           </div>
 
@@ -54,9 +54,12 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                   currentSection === item.id
                     ? 'text-white shadow-md'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    : 'hover:bg-gray-100'
                 }`}
-                style={currentSection === item.id ? { background: 'var(--gradient-action)' } : {}}
+                style={currentSection === item.id
+                  ? { background: 'var(--gradient-action)' }
+                  : { color: 'var(--text-nav)' }
+                }
               >
                 <span>{item.icon}</span>
                 <span>{item.label}</span>
@@ -119,9 +122,12 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
                 className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
                   currentSection === item.id
                     ? 'text-white'
-                    : 'text-gray-600'
+                    : ''
                 }`}
-                style={currentSection === item.id ? { background: 'var(--gradient-action)' } : {}}
+                style={currentSection === item.id
+                  ? { background: 'var(--gradient-action)' }
+                  : { color: 'var(--text-nav)' }
+                }
               >
                 <span className="text-lg">{item.icon}</span>
                 <span>{item.label}</span>

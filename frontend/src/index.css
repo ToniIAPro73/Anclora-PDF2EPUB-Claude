@@ -36,6 +36,10 @@
   --text-primary: var(--anclora-dark);
   --text-secondary: #64748b;
   --text-muted: #94a3b8;
+  --text-uploader: var(--anclora-dark);
+  --text-header: var(--anclora-blue-dark);
+  --text-nav: var(--anclora-dark);
+  --text-nav-hover: var(--anclora-dark);
   --border-color: var(--anclora-border);
   --shadow-color: rgba(0, 0, 0, 0.1);
   --accent-primary: var(--anclora-teal);
@@ -76,6 +80,10 @@
   --text-primary: var(--anclora-light);
   --text-secondary: #cbd5e1;
   --text-muted: #94a3b8;
+  --text-uploader: var(--anclora-white);
+  --text-header: var(--anclora-blue-sky);
+  --text-nav: var(--anclora-white);
+  --text-nav-hover: var(--anclora-white);
   --border-color: var(--anclora-border-dark);
   --shadow-color: rgba(0, 0, 0, 0.3);
   --gradient-subtle: linear-gradient(180deg, #202837 0%, #263043 100%);
@@ -121,6 +129,14 @@ p {
 
 /* === UTILIDADES === */
 .gradient-text {
+  background: var(--gradient-action);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+}
+
+.gradient-text-hero {
   background: var(--gradient-action);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
