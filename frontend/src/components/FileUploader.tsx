@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
+import { useTranslation } from 'react-i18next';
 
 interface FileUploaderProps {
   onFileSelected?: (file: File) => void;
@@ -9,6 +10,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected }) => {
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const { t } = useTranslation();
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     setError(null);
@@ -24,14 +26,14 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected }) => {
 
     // Verificar que sea un PDF
     if (selectedFile.type !== 'application/pdf') {
-      setError('Solo se permiten archivos PDF');
+      setError(t('fileUploader.supportedFormats'));
       setIsUploading(false);
       return;
     }
 
     // Verificar tamaño (máximo 50MB)
     if (selectedFile.size > 50 * 1024 * 1024) {
-      setError('El archivo es demasiado grande (máximo 50MB)');
+      setError(t('fileUploader.maxSize'));
       setIsUploading(false);
       return;
     }

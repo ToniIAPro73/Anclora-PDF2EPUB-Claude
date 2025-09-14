@@ -6,6 +6,7 @@ import FileUploader from './components/FileUploader';
 import LoginForm from './LoginForm';
 import RegisterForm from './RegisterForm';
 import ProtectedRoute from './ProtectedRoute';
+import { useTranslation } from 'react-i18next';
 
 const getInitialTheme = (): 'light' | 'dark' => {
   const stored = localStorage.getItem('theme') as 'light' | 'dark' | null;
@@ -17,6 +18,7 @@ const MainApp: React.FC = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>(getInitialTheme);
   const [currentSection, setCurrentSection] = useState<string>('inicio');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -45,10 +47,10 @@ const MainApp: React.FC = () => {
               <div className="max-w-4xl mx-auto text-center text-white">
                 <div className="mb-8">
                   <h1 className="text-5xl md:text-6xl font-bold mb-6 gradient-text-hero" style={{ fontFamily: 'var(--font-heading)' }}>
-                    Anclora PDF2EPUB
+                    {t('home.hero.title')}
                   </h1>
                   <p className="text-xl md:text-2xl mb-8 opacity-90">
-                    Conversión inteligente de PDF a EPUB3
+                    {t('home.hero.subtitle')}
                   </p>
                 </div>
 
@@ -72,10 +74,10 @@ const MainApp: React.FC = () => {
               <div className="max-w-6xl mx-auto">
                 <div className="text-center mb-12">
                   <h2 className="text-3xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
-                    ¿Por qué elegir Anclora PDF2EPUB?
+                    {t('home.features.title')}
                   </h2>
                   <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>
-                    Tecnología avanzada para conversiones perfectas
+                    {t('home.features.subtitle')}
                   </p>
                 </div>
 
@@ -85,9 +87,9 @@ const MainApp: React.FC = () => {
                          style={{ background: 'var(--gradient-nexus)' }}>
                       <span className="text-white">🤖</span>
                     </div>
-                    <h3 className="text-xl font-semibold mb-3">IA Inteligente</h3>
+                    <h3 className="text-xl font-semibold mb-3">{t('home.features.ai.title')}</h3>
                     <p style={{ color: 'var(--text-secondary)' }}>
-                      Detección automática de estructura, tablas y fórmulas matemáticas
+                      {t('home.features.ai.description')}
                     </p>
                   </div>
 
@@ -96,9 +98,9 @@ const MainApp: React.FC = () => {
                          style={{ background: 'var(--gradient-action)' }}>
                       <span style={{ color: 'var(--anclora-dark)' }}>⚡</span>
                     </div>
-                    <h3 className="text-xl font-semibold mb-3">Súper Rápido</h3>
+                    <h3 className="text-xl font-semibold mb-3">{t('home.features.speed.title')}</h3>
                     <p style={{ color: 'var(--text-secondary)' }}>
-                      Procesamiento optimizado para conversiones en segundos
+                      {t('home.features.speed.description')}
                     </p>
                   </div>
 
@@ -107,9 +109,9 @@ const MainApp: React.FC = () => {
                          style={{ background: 'var(--gradient-press)' }}>
                       <span style={{ color: 'var(--anclora-dark)', fontWeight: 'bold' }}>💎</span>
                     </div>
-                    <h3 className="text-xl font-semibold mb-3">Calidad Premium</h3>
+                    <h3 className="text-xl font-semibold mb-3">{t('home.features.quality.title')}</h3>
                     <p style={{ color: 'var(--text-secondary)' }}>
-                      EPUBs perfectos compatibles con todos los lectores
+                      {t('home.features.quality.description')}
                     </p>
                   </div>
                 </div>

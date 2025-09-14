@@ -1,0 +1,118 @@
+{
+  "app": {
+    "title": "Anclora PDF2EPUB",
+    "subtitle": "Conversión inteligente de PDF a EPUB3"
+  },
+  "navigation": {
+    "home": "Inicio",
+    "history": "Historial",
+    "profile": "Perfil",
+    "logout": "Cerrar Sesión"
+  },
+  "auth": {
+    "login": "Iniciar Sesión",
+    "register": "Registrarse",
+    "email": "Correo Electrónico",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar Contraseña",
+    "loginButton": "Entrar",
+    "registerButton": "Crear Cuenta",
+    "noAccount": "¿No tienes cuenta?",
+    "hasAccount": "¿Ya tienes cuenta?",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "loginError": "Error al iniciar sesión",
+    "registerError": "Error al registrarse",
+    "invalidCredentials": "Credenciales inválidas",
+    "emailRequired": "El correo electrónico es requerido",
+    "passwordRequired": "La contraseña es requerida",
+    "passwordMismatch": "Las contraseñas no coinciden"
+  },
+  "home": {
+    "hero": {
+      "title": "Anclora PDF2EPUB",
+      "subtitle": "Conversión inteligente de PDF a EPUB3"
+    },
+    "features": {
+      "title": "¿Por qué elegir Anclora PDF2EPUB?",
+      "subtitle": "Tecnología avanzada para conversiones perfectas",
+      "ai": {
+        "title": "IA Inteligente",
+        "description": "Detección automática de estructura, tablas y fórmulas matemáticas"
+      },
+      "speed": {
+        "title": "Súper Rápido",
+        "description": "Procesamiento optimizado para conversiones en segundos"
+      },
+      "quality": {
+        "title": "Calidad Premium",
+        "description": "EPUBs perfectos compatibles con todos los lectores"
+      }
+    }
+  },
+  "fileUploader": {
+    "title": "Subir Archivo PDF",
+    "dragDrop": "Arrastra y suelta tu archivo PDF aquí",
+    "or": "o",
+    "browse": "Examinar archivos",
+    "selectedFile": "Archivo seleccionado:",
+    "upload": "Subir y Convertir",
+    "uploading": "Subiendo...",
+    "processing": "Procesando...",
+    "success": "¡Conversión completada!",
+    "error": "Error en la conversión",
+    "download": "Descargar EPUB",
+    "supportedFormats": "Formatos soportados: PDF",
+    "maxSize": "Tamaño máximo: 50MB"
+  },
+  "history": {
+    "title": "Historial de Conversiones",
+    "subtitle": "Revisa y descarga tus conversiones anteriores",
+    "empty": "No hay conversiones aún",
+    "emptyDescription": "Sube tu primer archivo PDF para comenzar",
+    "status": {
+      "pending": "Pendiente",
+      "processing": "Procesando",
+      "completed": "Completado",
+      "failed": "Fallido"
+    },
+    "actions": {
+      "download": "Descargar",
+      "delete": "Eliminar",
+      "retry": "Reintentar"
+    },
+    "columns": {
+      "file": "Archivo",
+      "status": "Estado",
+      "date": "Fecha",
+      "actions": "Acciones"
+    }
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "close": "Cerrar",
+    "back": "Volver",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "refresh": "Actualizar"
+  },
+  "language": {
+    "spanish": "Español",
+    "english": "English",
+    "selectLanguage": "Seleccionar idioma"
+  },
+  "theme": {
+    "light": "Claro",
+    "dark": "Oscuro",
+    "toggle": "Cambiar tema"
+  }
+}

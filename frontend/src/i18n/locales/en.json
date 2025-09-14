@@ -1,0 +1,118 @@
+{
+  "app": {
+    "title": "Anclora PDF2EPUB",
+    "subtitle": "Intelligent PDF to EPUB3 conversion"
+  },
+  "navigation": {
+    "home": "Home",
+    "history": "History",
+    "profile": "Profile",
+    "logout": "Logout"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "loginButton": "Sign In",
+    "registerButton": "Create Account",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "forgotPassword": "Forgot your password?",
+    "loginError": "Login error",
+    "registerError": "Registration error",
+    "invalidCredentials": "Invalid credentials",
+    "emailRequired": "Email is required",
+    "passwordRequired": "Password is required",
+    "passwordMismatch": "Passwords don't match"
+  },
+  "home": {
+    "hero": {
+      "title": "Anclora PDF2EPUB",
+      "subtitle": "Intelligent PDF to EPUB3 conversion"
+    },
+    "features": {
+      "title": "Why choose Anclora PDF2EPUB?",
+      "subtitle": "Advanced technology for perfect conversions",
+      "ai": {
+        "title": "Smart AI",
+        "description": "Automatic detection of structure, tables and mathematical formulas"
+      },
+      "speed": {
+        "title": "Super Fast",
+        "description": "Optimized processing for conversions in seconds"
+      },
+      "quality": {
+        "title": "Premium Quality",
+        "description": "Perfect EPUBs compatible with all readers"
+      }
+    }
+  },
+  "fileUploader": {
+    "title": "Upload PDF File",
+    "dragDrop": "Drag and drop your PDF file here",
+    "or": "or",
+    "browse": "Browse files",
+    "selectedFile": "Selected file:",
+    "upload": "Upload and Convert",
+    "uploading": "Uploading...",
+    "processing": "Processing...",
+    "success": "Conversion completed!",
+    "error": "Conversion error",
+    "download": "Download EPUB",
+    "supportedFormats": "Supported formats: PDF",
+    "maxSize": "Max size: 50MB"
+  },
+  "history": {
+    "title": "Conversion History",
+    "subtitle": "Review and download your previous conversions",
+    "empty": "No conversions yet",
+    "emptyDescription": "Upload your first PDF file to get started",
+    "status": {
+      "pending": "Pending",
+      "processing": "Processing",
+      "completed": "Completed",
+      "failed": "Failed"
+    },
+    "actions": {
+      "download": "Download",
+      "delete": "Delete",
+      "retry": "Retry"
+    },
+    "columns": {
+      "file": "File",
+      "status": "Status",
+      "date": "Date",
+      "actions": "Actions"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "refresh": "Refresh"
+  },
+  "language": {
+    "spanish": "Español",
+    "english": "English",
+    "selectLanguage": "Select language"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "toggle": "Toggle theme"
+  }
+}

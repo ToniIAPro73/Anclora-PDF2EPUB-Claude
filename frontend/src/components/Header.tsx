@@ -1,5 +1,7 @@
 import React from 'react';
 import { useAuth } from '../AuthContext';
+import { useTranslation } from 'react-i18next';
+import LanguageSelector from './LanguageSelector';
 
 interface HeaderProps {
   theme: 'light' | 'dark';
@@ -10,6 +12,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, setCurrentSection }) => {
   const { logout, user } = useAuth();
+  const { t } = useTranslation();
 
   // User object is available for debugging if needed
 
@@ -63,8 +66,8 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
   };
 
   const navigationItems = [
-    { id: 'inicio', label: 'Inicio', icon: '🏠' },
-    { id: 'history', label: 'Historial', icon: '📋' },
+    { id: 'inicio', label: t('navigation.home'), icon: '🏠' },
+    { id: 'history', label: t('navigation.history'), icon: '📋' },
   ];
 
   return (
@@ -87,7 +90,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
               />
             </div>
             <div className="flex items-center h-16">
-              <h1 className="text-xl font-bold" style={{ lineHeight: '1', margin: '0', padding: '0', color: 'var(--text-header)' }}>Anclora PDF2EPUB</h1>
+              <h1 className="text-xl font-bold" style={{ lineHeight: '1', margin: '0', padding: '0', color: 'var(--text-header)' }}>{t('app.title')}</h1>
             </div>
           </div>
 
@@ -115,10 +118,13 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
 
           {/* Controles de Usuario */}
           <div className="flex items-center gap-3">
+            {/* Selector de Idioma */}
+            <LanguageSelector />
+
             {/* Toggle de Tema */}
             <button
               onClick={toggleTheme}
-              aria-label="Cambiar tema"
+              aria-label={t('theme.toggle')}
               className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
               style={{
                 background: theme === 'dark'
@@ -129,7 +135,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
             >
               <span>{theme === 'dark' ? '☀️' : '🌙'}</span>
               <span className="hidden sm:inline" translate="no">
-                {theme === 'dark' ? 'Claro' : 'Oscuro'}
+                {theme === 'dark' ? t('theme.light') : t('theme.dark')}
               </span>
             </button>
 
@@ -165,7 +171,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
               style={{ color: 'var(--text-secondary)' }}
             >
               <span>🚪</span>
-              <span className="hidden sm:inline">Salir</span>
+              <span className="hidden sm:inline">{t('navigation.logout')}</span>
             </button>
           </div>
         </div>

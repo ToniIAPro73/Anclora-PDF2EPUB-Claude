@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../AuthContext';
+import { useTranslation } from 'react-i18next';
 
 interface HistoryItem {
   task_id: string;
@@ -14,6 +15,7 @@ const ConversionHistory: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -45,7 +47,7 @@ const ConversionHistory: React.FC = () => {
   }, [user]);
 
   if (loading) {
-    return <div className="text-center py-8">Cargando historial...</div>;
+    return <div className="text-center py-8">{t('common.loading')}</div>;
   }
 
   return (

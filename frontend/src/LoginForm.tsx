@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from './AuthContext';
+import { useTranslation } from 'react-i18next';
+import LanguageSelector from './components/LanguageSelector';
 
 const LoginForm: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -19,7 +22,7 @@ const LoginForm: React.FC = () => {
       await login(email, password);
       navigate('/');
     } catch (err: any) {
-      setError(err.message || 'Credenciales inválidas');
+      setError(err.message || t('auth.invalidCredentials'));
     } finally {
       setIsLoading(false);
     }
@@ -27,6 +30,11 @@ const LoginForm: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--gradient-subtle)' }}>
+      {/* Selector de idioma en la esquina superior derecha */}
+      <div className="absolute top-4 right-4">
+        <LanguageSelector />
+      </div>
+
       <div className="w-full max-w-md">
         {/* Logo y Header */}
         <div className="text-center mb-8 animate-fade-in">
@@ -37,14 +45,14 @@ const LoginForm: React.FC = () => {
               className="w-full h-full object-contain"
             />
           </div>
-          <h1 className="text-3xl font-bold gradient-text mb-2">Anclora PDF2EPUB</h1>
-          <p className="text-gray-600">Conversión inteligente de PDF a EPUB</p>
+          <h1 className="text-3xl font-bold gradient-text mb-2">{t('app.title')}</h1>
+          <p className="text-gray-600">{t('app.subtitle')}</p>
         </div>
 
         {/* Formulario */}
         <div className="card animate-slide-in">
           <div className="mb-6">
-            <h2 className="text-2xl font-semibold text-center mb-2">Iniciar sesión</h2>
+            <h2 className="text-2xl font-semibold text-center mb-2">{t('auth.login')}</h2>
             <p className="text-center text-gray-600">Accede a tu cuenta para continuar</p>
           </div>
 
@@ -57,12 +65,12 @@ const LoginForm: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium mb-2">
-                Email
+                {t('auth.email')}
               </label>
               <input
                 id="email"
                 type="email"
-                placeholder="Ingresa tu email"
+                placeholder={t('auth.email')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="input"
@@ -73,12 +81,12 @@ const LoginForm: React.FC = () => {
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium mb-2">
-                Contraseña
+                {t('auth.password')}
               </label>
               <input
                 id="password"
                 type="password"
-                placeholder="Ingresa tu contraseña"
+                placeholder={t('auth.password')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="input"
@@ -95,23 +103,23 @@ const LoginForm: React.FC = () => {
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                  Iniciando sesión...
+                  {t('common.loading')}
                 </div>
               ) : (
-                'Iniciar sesión'
+                t('auth.loginButton')
               )}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-gray-600">
-              ¿No tienes cuenta?{' '}
+              {t('auth.noAccount')}{' '}
               <Link
                 to="/register"
                 className="font-medium hover:underline"
                 style={{ color: 'var(--accent-primary)' }}
               >
-                Regístrate aquí
+                {t('auth.register')}
               </Link>
             </p>
           </div>

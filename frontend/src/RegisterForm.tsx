@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from './AuthContext';
+import { useTranslation } from 'react-i18next';
+import LanguageSelector from './components/LanguageSelector';
 
 const RegisterForm: React.FC = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -18,7 +21,7 @@ const RegisterForm: React.FC = () => {
 
     // Validaciones
     if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden');
+      setError(t('auth.passwordMismatch'));
       setIsLoading(false);
       return;
     }
@@ -33,7 +36,7 @@ const RegisterForm: React.FC = () => {
       await register(email, password);
       navigate('/');
     } catch (err: any) {
-      setError(err.message || 'Error al crear la cuenta. El email podría ya existir.');
+      setError(err.message || t('auth.registerError'));
     } finally {
       setIsLoading(false);
     }
@@ -41,6 +44,11 @@ const RegisterForm: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--gradient-subtle)' }}>
+      {/* Selector de idioma en la esquina superior derecha */}
+      <div className="absolute top-4 right-4">
+        <LanguageSelector />
+      </div>
+
       <div className="w-full max-w-md">
         {/* Logo y Header */}
         <div className="text-center mb-8 animate-fade-in">
@@ -51,14 +59,14 @@ const RegisterForm: React.FC = () => {
               className="w-full h-full object-contain"
             />
           </div>
-          <h1 className="text-3xl font-bold gradient-text mb-2">Únete a Anclora</h1>
-          <p className="text-gray-600">Crea tu cuenta y comienza a convertir PDFs</p>
+          <h1 className="text-3xl font-bold gradient-text mb-2">{t('app.title')}</h1>
+          <p className="text-gray-600">{t('app.subtitle')}</p>
         </div>
 
         {/* Formulario */}
         <div className="card animate-slide-in">
           <div className="mb-6">
-            <h2 className="text-2xl font-semibold text-center mb-2">Crear cuenta</h2>
+            <h2 className="text-2xl font-semibold text-center mb-2">{t('auth.register')}</h2>
             <p className="text-center text-gray-600">Completa los datos para registrarte</p>
           </div>
 
