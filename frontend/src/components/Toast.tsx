@@ -20,11 +20,14 @@ const Toast: React.FC<ToastProps> = ({ message, variant = 'info', onClose }) => 
     }
   };
 
+  const baseClasses =
+    'fixed bottom-4 right-4 px-4 py-2 rounded shadow-md transition animate-fade-in';
+
   return (
     <div
       role="alert"
       aria-live="assertive"
-      className={`fixed bottom-4 right-4 px-4 py-2 rounded shadow-md transition animate-fade-in ${getToastStyles()}`}
+      className={`${baseClasses} ${getToastStyles()}`}
     >
       <span>{message}</span>
       <button
