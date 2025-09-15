@@ -43,7 +43,11 @@ const LanguageSelector: React.FC = () => {
           {/* Overlay para cerrar el dropdown */}
           <div
             className="fixed inset-0 z-10"
+            role="button"
+            tabIndex={0}
+            aria-label="Close language menu"
             onClick={() => setIsOpen(false)}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setIsOpen(false)}
           />
 
           {/* Dropdown menu */}

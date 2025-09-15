@@ -56,7 +56,7 @@
   --bg-card: var(--anclora-white);
   --text-primary: var(--anclora-dark);
   --text-secondary: #64748b;
-  --text-muted: #94a3b8;
+  --text-muted: #6b7280;
   --text-uploader: #1f2937;
   --text-header: var(--anclora-blue-dark);
   --text-nav: var(--anclora-dark);
@@ -143,7 +143,7 @@ body {
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   font-weight: 600;
-  line-height: 1.3;
+  line-height: 1.5;
   margin: 0 0 var(--spacing-md) 0;
 }
 
@@ -344,4 +344,18 @@ p {
 /* === MATHML === */
 .MathJax {
   color: inherit;
+}
+
+/* === ACCESIBILIDAD === */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+  .bg-uploader-pattern::before {
+    animation: none !important;
+  }
 }

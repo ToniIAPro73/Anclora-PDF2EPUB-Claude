@@ -2,6 +2,7 @@ import React from 'react';
 import { useAuth } from '../AuthContext';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from './LanguageSelector';
+import Container from './Container';
 
 interface HeaderProps {
   theme: 'light' | 'dark';
@@ -77,7 +78,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
               borderColor: 'var(--border-color)',
               boxShadow: 'var(--shadow-sm)'
             }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <Container>
         <div className="flex items-center justify-between h-16">
           {/* Logo y Marca */}
           <div className="flex items-center gap-4">
@@ -90,7 +91,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
               />
             </div>
             <div className="flex items-center h-16">
-              <h1 className="text-xl font-bold" style={{ lineHeight: '1', margin: '0', padding: '0', color: 'var(--text-header)' }}>{t('app.title')}</h1>
+              <h1 className="text-xl font-bold" style={{ lineHeight: '1.5', margin: '0', padding: '0', color: 'var(--text-header)' }}>{t('app.title')}</h1>
             </div>
           </div>
 
@@ -100,7 +101,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
               <button
                 key={item.id}
                 onClick={() => setCurrentSection(item.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 ${
                   currentSection === item.id
                     ? 'shadow-md'
                     : 'hover:bg-gray-100'
@@ -125,7 +126,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
             <button
               onClick={toggleTheme}
               aria-label={t('theme.toggle')}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
               style={{
                 background: theme === 'dark'
                   ? 'linear-gradient(90deg, #FFC979 70%, #2EAFC4 100%)'
@@ -165,7 +166,8 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
             {/* Botón de Logout */}
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-red-50 hover:text-red-600"
+              aria-label={t('navigation.logout')}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-red-50 hover:text-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
               style={{ color: 'var(--text-secondary)' }}
             >
               <span>🚪</span>
@@ -181,7 +183,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
               <button
                 key={item.id}
                 onClick={() => setCurrentSection(item.id)}
-                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 ${
                   currentSection === item.id
                     ? ''
                     : ''
@@ -197,7 +199,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
             ))}
           </nav>
         </div>
-      </div>
+      </Container>
     </header>
   );
 };
