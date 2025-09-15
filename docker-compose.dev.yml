@@ -15,7 +15,7 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: ../docker/Dockerfile.frontend.prod
+      dockerfile: ../docker/Dockerfile.frontend
     ports:
       - "${FRONTEND_PORT}:${FRONTEND_PORT}"
     environment:

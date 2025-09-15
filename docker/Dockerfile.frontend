@@ -7,8 +7,10 @@ RUN npm install
 
 COPY . .
 
-RUN npm run build
+# Para desarrollo, no construir y usar modo dev
+# RUN npm run build
 
-EXPOSE 3003
+EXPOSE 5178
 
-CMD ["npm", "run", "serve", "--", "--host", "0.0.0.0", "--port", "3003"]
+# Usar modo desarrollo en lugar de preview para mejor compatibilidad con cambios dinámicos
+CMD ["npm", "run", "start", "--", "--host", "0.0.0.0", "--port", "5178"]

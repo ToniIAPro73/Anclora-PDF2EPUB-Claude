@@ -32,7 +32,12 @@ i18n
       order: ['localStorage', 'navigator', 'htmlTag'],
       caches: ['localStorage'],
       lookupLocalStorage: 'i18nextLng',
-    }
+    },
+
+    // Configuración adicional para mejor rendimiento en producción
+    load: 'languageOnly',
+    cleanCode: true,
+    nonExplicitSupportedLngs: true,
   });
 
 // Debug logging

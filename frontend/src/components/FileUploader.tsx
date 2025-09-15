@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useTranslation } from 'react-i18next';
 
@@ -10,11 +10,25 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected }) => {
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [forceUpdate, setForceUpdate] = useState(0); // eslint-disable-line @typescript-eslint/no-unused-vars
   const { t, i18n } = useTranslation();
 
   // Debug logging
   console.log('FileUploader - Current language:', i18n.language);
   console.log('FileUploader - uploadTitle translation:', t('fileUploader.uploadTitle'));
+
+  // Forzar re-render cuando cambie el idioma
+  useEffect(() => {
+    const handleLanguageChange = () => {
+      console.log('FileUploader - Language changed, forcing update');
+      setForceUpdate(prev => prev + 1);
+    };
+
+    i18n.on('languageChanged', handleLanguageChange);
+    return () => {
+      i18n.off('languageChanged', handleLanguageChange);
+    };
+  }, [i18n]);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     setError(null);
