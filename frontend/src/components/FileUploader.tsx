@@ -1,7 +1,6 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 interface FileUploaderProps {
@@ -16,7 +15,6 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
   const [isConverting, setIsConverting] = useState(false);
   const [forceUpdate, setForceUpdate] = useState(0); // eslint-disable-line @typescript-eslint/no-unused-vars
   const { t, i18n } = useTranslation();
-  const { session, logout } = useAuth();
   const navigate = useNavigate();
 
   // Debug logging
@@ -36,7 +34,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
     };
   }, [i18n]);
 
-  // Función para iniciar conversión automática con engine recomendado
+  // Función para análisis rápido y mostrar recomendación
   const startQuickConversion = async () => {
     if (!file || isConverting) return;
 
@@ -44,69 +42,45 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
     setIsConverting(true);
 
     try {
-      // 1. Analizar el archivo para obtener el engine recomendado
+      // 1. Analizar el archivo para obtener recomendaciones
       const formData = new FormData();
       formData.append('file', file);
 
       const analyzeRes = await fetch('/api/analyze', {
         method: 'POST',
         body: formData,
-        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
       });
-
-      if (analyzeRes.status === 401) {
-        logout();
-        navigate('/login');
-        setIsConverting(false);
-        return;
-      }
 
       const analyzeData = await analyzeRes.json();
       if (!analyzeRes.ok) {
         throw new Error(analyzeData.error || 'Error al analizar el archivo');
       }
 
-      // 2. Usar el pipeline recomendado o el primero disponible
-      const recommendedPipeline = analyzeData.pipelines?.[0]?.id || 'balanced';
+      // 2. Mostrar análisis y recomendación
+      const engineName = analyzeData.recommended || analyzeData.pipeline_id || 'balanced';
+      const engineNames: Record<string, string> = {
+        'rapid': t('engines.rapid'),
+        'balanced': t('engines.balanced'),
+        'quality': t('engines.quality')
+      };
 
-      // 3. Iniciar la conversión
-      const convertFormData = new FormData();
-      convertFormData.append('file', file);
-      convertFormData.append('pipeline_id', recommendedPipeline);
+      const recommendedName = engineNames[engineName] || engineName;
 
-      const convertRes = await fetch('/api/convert', {
-        method: 'POST',
-        body: convertFormData,
-        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
-      });
+      // 3. Mostrar mensaje informativo con recomendación
+      const analysisMessage = `📊 ${t('fileUploader.analysisComplete')}\n\n` +
+        `🎯 ${t('fileUploader.recommendedEngine')}: ${recommendedName}\n\n` +
+        `💡 ${t('fileUploader.loginToConvert')}`;
 
-      if (convertRes.status === 401) {
-        logout();
+      alert(analysisMessage);
+
+      // 4. Redirigir al login después de mostrar la información
+      setTimeout(() => {
         navigate('/login');
-        setIsConverting(false);
-        return;
-      }
-
-      const convertData = await convertRes.json();
-      if (!convertRes.ok) {
-        throw new Error(convertData.error || 'Error en la conversión');
-      }
-
-      // 4. Notificar éxito y llamar callback
-      console.log('Conversión iniciada con task_id:', convertData.task_id);
-
-      // Mostrar mensaje de éxito más informativo
-      const successMessage = `${t('fileUploader.success')}\n\nTask ID: ${convertData.task_id}\n\n${t('history.subtitle')}`;
-      alert(successMessage);
-
-      // Notificar al componente padre si hay callback
-      if (onConversionStarted) {
-        onConversionStarted(convertData.task_id);
-      }
+      }, 1000);
 
     } catch (err: any) {
       setError(err.message);
-      console.error('Error en conversión rápida:', err);
+      console.error('Error en análisis rápido:', err);
     } finally {
       setIsConverting(false);
     }
@@ -268,22 +242,29 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
         {/* Error State */}
         {error && !isUploading && (
           <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-            <div className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center bg-red-100 p-3 relative">
+            <div className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center p-3 relative"
+                 style={{ background: 'var(--bg-secondary)' }}>
               <img
                 src="/images/iconos/Icono PDF.png"
                 alt="Icono PDF"
                 className="w-full h-full object-contain opacity-60"
               />
-              <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+              <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center"
+                   style={{ background: 'var(--accent-primary)' }}>
                 <span className="text-white text-xs font-bold">!</span>
               </div>
             </div>
-            <h3 className="text-lg font-semibold mb-2 text-red-600">
+            <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
               {t('fileUploader.uploadError')}
             </h3>
-            <p className="text-red-500 mb-4">
-              {error}
-            </p>
+            <div className="mb-4 p-3 rounded-lg" style={{
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-color)'
+            }}>
+              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                {error}
+              </p>
+            </div>
             <button
               onClick={resetUpload}
               className="btn btn-secondary"
@@ -315,7 +296,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
                 {t('fileUploader.processing')}
               </>
             ) : (
-              <>⚡ {t('fileUploader.convertNow')}</>
+              <>🔍 {t('fileUploader.convertNow')}</>
             )}
           </button>
         </div>

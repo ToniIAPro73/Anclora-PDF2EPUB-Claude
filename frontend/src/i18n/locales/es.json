@@ -71,8 +71,11 @@
     "uploadError": "Error al subir archivo",
     "tryAgain": "Intentar de nuevo",
     "changeFile": "Cambiar archivo",
-    "convertNow": "Convertir ahora",
-    "advancedOptionsBelow": "Para opciones avanzadas, usa el panel de conversión que aparece abajo"
+    "convertNow": "Analizar y convertir",
+    "advancedOptionsBelow": "Para opciones avanzadas, usa el panel de conversión que aparece abajo",
+    "analysisComplete": "Análisis completado",
+    "recommendedEngine": "Motor recomendado",
+    "loginToConvert": "Inicia sesión para comenzar la conversión"
   },
   "history": {
     "title": "Historial de Conversiones",
@@ -96,6 +99,11 @@
       "date": "Fecha",
       "actions": "Acciones"
     }
+  },
+  "engines": {
+    "rapid": "Rápido",
+    "balanced": "Equilibrado",
+    "quality": "Alta Calidad"
   },
   "common": {
     "loading": "Cargando...",

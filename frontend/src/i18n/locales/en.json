@@ -71,8 +71,11 @@
     "uploadError": "File upload error",
     "tryAgain": "Try again",
     "changeFile": "Change file",
-    "convertNow": "Convert now",
-    "advancedOptionsBelow": "For advanced options, use the conversion panel below"
+    "convertNow": "Analyze & convert",
+    "advancedOptionsBelow": "For advanced options, use the conversion panel below",
+    "analysisComplete": "Analysis complete",
+    "recommendedEngine": "Recommended engine",
+    "loginToConvert": "Please log in to start the conversion"
   },
   "history": {
     "title": "Conversion History",
@@ -96,6 +99,11 @@
       "date": "Date",
       "actions": "Actions"
     }
+  },
+  "engines": {
+    "rapid": "Rapid",
+    "balanced": "Balanced",
+    "quality": "High Quality"
   },
   "common": {
     "loading": "Loading...",

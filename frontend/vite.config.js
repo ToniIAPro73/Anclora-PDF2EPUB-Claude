@@ -10,6 +10,13 @@ export default ({ mode }) => {
     server: {
       port: 5178,
       host: '0.0.0.0',
+      proxy: {
+        '/api': {
+          target: 'http://localhost:5175',
+          changeOrigin: true,
+          secure: false,
+        }
+      }
     },
     preview: {
       port: 5178,
