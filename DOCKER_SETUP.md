@@ -47,8 +47,13 @@ docker-compose up --build
 ```bash
 cd frontend
 npm start
-# Se ejecutará en puerto 5178
+# Se ejecutará en puerto 5178 (o 5179 si 5178 está ocupado por Docker)
 ```
+
+### Ejecución Simultánea
+Puedes ejecutar tanto Docker como desarrollo local al mismo tiempo:
+- **Docker**: http://localhost (nginx) o http://localhost:5178 (directo)
+- **Local**: http://localhost:5179 (Vite auto-incrementa el puerto si 5178 está ocupado)
 
 ## Puertos Configurados
 
