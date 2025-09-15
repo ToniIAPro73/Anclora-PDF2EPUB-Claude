@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../AuthContext';
 import { useTranslation } from 'react-i18next';
+import Container from './Container';
 
 interface HistoryItem {
   task_id: string;
@@ -70,7 +71,7 @@ const ConversionHistory: React.FC = () => {
   }
 
   return (
-    <div className="conversion-history">
+    <Container className="conversion-history">
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
           <p className="text-red-700 text-sm font-medium">{t('common.error')}: {error}</p>
@@ -160,7 +161,7 @@ const ConversionHistory: React.FC = () => {
         </table>
         </div>
       )}
-    </div>
+    </Container>
   );
 };
 

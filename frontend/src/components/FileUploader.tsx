@@ -3,6 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
+import Container from './Container';
 
 interface FileUploaderProps {
   onFileSelected?: (file: File) => void;
@@ -287,7 +288,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
+    <Container>
       <div
         {...getRootProps()}
         className={`
@@ -452,7 +453,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
           </p>
         </div>
       )}
-    </div>
+    </Container>
   );
 };
 

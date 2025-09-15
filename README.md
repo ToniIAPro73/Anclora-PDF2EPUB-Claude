@@ -101,6 +101,40 @@ open http://localhost
 
 </div>
 
+## 📱 Diseño Mobile-First / Mobile-First Design
+
+### 🇪🇸 Español
+- La interfaz se construye con una filosofía **mobile-first**, aprovechando las utilidades responsivas de Tailwind CSS.
+- Para mantener un ancho máximo coherente en las vistas, envuelve el contenido con el componente `Container`.
+
+```tsx
+import Container from './components/Container';
+
+function Ejemplo() {
+  return (
+    <Container>
+      {/* contenido */}
+    </Container>
+  );
+}
+```
+
+### 🇺🇸 English
+- The UI follows a **mobile-first** approach using Tailwind CSS responsive utilities.
+- Wrap page content with the `Container` component to keep a consistent maximum width across views.
+
+```tsx
+import Container from './components/Container';
+
+function Example() {
+  return (
+    <Container>
+      {/* content */}
+    </Container>
+  );
+}
+```
+
 ## 📞 Contacto / Contact
 
 <div align="center">

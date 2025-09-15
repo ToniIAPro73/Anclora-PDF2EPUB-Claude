@@ -2,6 +2,7 @@ import React from 'react';
 import { useAuth } from '../AuthContext';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from './LanguageSelector';
+import Container from './Container';
 
 interface HeaderProps {
   theme: 'light' | 'dark';
@@ -77,7 +78,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
               borderColor: 'var(--border-color)',
               boxShadow: 'var(--shadow-sm)'
             }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <Container>
         <div className="flex items-center justify-between h-16">
           {/* Logo y Marca */}
           <div className="flex items-center gap-4">
@@ -197,7 +198,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
             ))}
           </nav>
         </div>
-      </div>
+      </Container>
     </header>
   );
 };
