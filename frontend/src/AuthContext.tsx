@@ -138,8 +138,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const token = session?.access_token ?? null;
-
   return (
     <AuthContext.Provider value={{ user, session, token, loading, login, register, logout, language, setLanguage }}>
       {children}
