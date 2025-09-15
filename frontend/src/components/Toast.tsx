@@ -1,26 +1,25 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 
 interface ToastProps {
   message: string;
-  type?: 'info' | 'success' | 'error';
   onClose: () => void;
 }
 
-const bgColors = {
-  info: 'bg-blue-500',
-  success: 'bg-green-500',
-  error: 'bg-red-500'
-};
-
-const Toast: React.FC<ToastProps> = ({ message, type = 'info', onClose }) => {
-  useEffect(() => {
-    const timer = setTimeout(onClose, 3000);
-    return () => clearTimeout(timer);
-  }, [onClose]);
-
+const Toast: React.FC<ToastProps> = ({ message, onClose }) => {
   return (
-    <div className={`fixed bottom-4 right-4 px-4 py-2 text-white rounded shadow-lg ${bgColors[type]}`}>
-      {message}
+    <div
+      role="alert"
+      aria-live="assertive"
+      className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded shadow-md transition animate-fade-in"
+    >
+      <span>{message}</span>
+      <button
+        onClick={onClose}
+        aria-label="Close"
+        className="ml-2 text-white"
+      >
+        &times;
+      </button>
     </div>
   );
 };

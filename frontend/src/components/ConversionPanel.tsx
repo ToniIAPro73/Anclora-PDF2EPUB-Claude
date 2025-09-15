@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import PreviewModal from './PreviewModal';
+import Toast from './Toast';
 import { useTranslation } from 'react-i18next';
 
 interface ConversionPanelProps {
@@ -192,7 +193,7 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
       )}
       {taskId && <p>{t('conversionPanel.taskId', { id: taskId })}</p>}
       {status && !isConverting && <p>{t('conversionPanel.status', { status })}</p>}
-      {error && <p className="error">{error}</p>}
+      {error && <Toast message={error} onClose={() => setError(null)} />}
     </div>
   );
 };
