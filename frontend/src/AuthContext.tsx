@@ -32,7 +32,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
   const [language, setLanguage] = useState<string>(() => localStorage.getItem('language') || localStorage.getItem('i18nextLng') || 'es');
   const refreshTimer = useRef<NodeJS.Timeout | null>(null);
-  const [toast, setToast] = useState<{ message: string; type: 'info' | 'success' | 'error' } | null>(null);
+  const [toast, setToast] = useState<{ title: string; message: string; variant: 'success' | 'error' } | null>(null);
 
   const scheduleRefresh = (currentSession: Session | null) => {
     if (refreshTimer.current) {
@@ -73,7 +73,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(null);
       setSession(null);
       setToken(null);
-      setToast({ message: i18n.t('auth.sessionExpired'), type: 'error' });
+      setToast({ title: 'Error', message: i18n.t('auth.sessionExpired'), variant: 'error' });
     }
   };
 
@@ -143,8 +143,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       {children}
       {toast && (
         <Toast
+          title={toast.title}
           message={toast.message}
-          type={toast.type}
+          variant={toast.variant}
           onClose={() => setToast(null)}
         />
       )}
