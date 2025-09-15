@@ -8,6 +8,7 @@ import React, {
 } from 'react';
 import { supabase } from './lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
+import i18n from './i18n';
 
 interface AuthContextType {
   user: User | null;
@@ -17,6 +18,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  language: string;
+  setLanguage: (lang: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,6 +29,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [session, setSession] = useState<Session | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [language, setLanguage] = useState<string>(() => localStorage.getItem('language') || localStorage.getItem('i18nextLng') || 'es');
   const refreshTimer = useRef<NodeJS.Timeout | null>(null);
 
   const scheduleRefresh = (currentSession: Session | null) => {
@@ -67,9 +71,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(null);
       setSession(null);
       setToken(null);
-      alert('Tu sesión ha expirado. Por favor, inicia sesión de nuevo.');
+      alert(i18n.t('auth.sessionExpired'));
     }
   };
+
+  useEffect(() => {
+    i18n.changeLanguage(language);
+    localStorage.setItem('language', language);
+  }, [language]);
 
   useEffect(() => {
     // Get initial session
@@ -130,7 +139,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const token = session?.access_token ?? null;
 
   return (
-    <AuthContext.Provider value={{ user, session, token, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, session, token, loading, login, register, logout, language, setLanguage }}>
       {children}
     </AuthContext.Provider>
   );

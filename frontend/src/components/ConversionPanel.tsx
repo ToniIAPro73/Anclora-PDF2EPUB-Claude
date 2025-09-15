@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import PreviewModal from './PreviewModal';
+import { useTranslation } from 'react-i18next';
 
 interface ConversionPanelProps {
   file: File | null;
@@ -20,6 +21,7 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
   const [showPreview, setShowPreview] = useState(false);
   const { token, logout } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const analyzeFile = async () => {
     if (!file) return;
@@ -87,7 +89,7 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
       }
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Error en la conversión');
+        throw new Error(data.error || t('conversionPanel.conversionError'));
       }
       setTaskId(data.task_id);
       pollStatus(data.task_id);
@@ -123,7 +125,7 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
           clearInterval(interval);
           setIsConverting(false);
           setProgress(100);
-          setStatusMessage('Conversión completada');
+          setStatusMessage(t('conversionPanel.completed'));
           if (data.result && data.result.output_path) {
             const downloadRes = await fetch(data.result.output_path);
             const blob = await downloadRes.blob();
@@ -139,7 +141,7 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
         } else if (data.status === 'FAILURE') {
           clearInterval(interval);
           setIsConverting(false);
-          setError(data.error || 'Error en la conversión');
+          setError(data.error || t('conversionPanel.conversionError'));
           setStatusMessage('');
         }
       } catch (err: any) {
@@ -151,54 +153,46 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
   };
 
   return (
-    <div className="conversion-panel p-4 md:p-6 text-sm md:text-base">
-      {isAnalyzing && <p className="mb-4">Analizando...</p>}
-      <div className="flex flex-col md:flex-row md:items-start md:space-x-6 space-y-4 md:space-y-0">
-        {pipelines.length > 0 && (
-          <div className="pipeline-list flex-1">
-            <h3 className="font-semibold mb-2">Opciones de conversión</h3>
-            <ul className="space-y-2">
-              {pipelines.map((p) => (
-                <li key={p.id} className="flex items-center space-x-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="pipeline"
-                      value={p.id}
-                      checked={selectedPipeline === p.id}
-                      onChange={() => setSelectedPipeline(p.id)}
-                    />
-                    <span>{p.quality} - {p.estimated_time}s</span>
-                  </label>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-        <div className="flex flex-col space-y-4 flex-1">
-          <button
-            onClick={startConversion}
-            disabled={!file || !selectedPipeline || isConverting}
-            className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
-          >
-            {isConverting ? 'Convirtiendo...' : 'Enviar a convertir'}
-          </button>
-          {isConverting && (
-            <div className="w-full">
-              <div className="w-full bg-gray-200 rounded h-4">
-                <div
-                  className="bg-blue-500 h-4 rounded"
-                  style={{ width: `${progress}%` }}
-                ></div>
-              </div>
-              <p className="mt-2">{statusMessage || `Progreso: ${progress}%`}</p>
-            </div>
-          )}
-          {taskId && <p>Task ID: {taskId}</p>}
-          {status && !isConverting && <p>Estado: {status}</p>}
-          {error && <p className="error">{error}</p>}
+    <div className="conversion-panel">
+      {isAnalyzing && <p>{t('conversionPanel.analyzing')}</p>}
+      {pipelines.length > 0 && (
+        <div className="pipeline-list">
+          <h3>{t('conversionPanel.options')}</h3>
+          <ul>
+            {pipelines.map((p) => (
+              <li key={p.id}>
+                <label>
+                  <input
+                    type="radio"
+                    name="pipeline"
+                    value={p.id}
+                    checked={selectedPipeline === p.id}
+                    onChange={() => setSelectedPipeline(p.id)}
+                  />
+                  {t(`engines.${p.quality}`)} - {p.estimated_time}s
+                </label>
+              </li>
+            ))}
+          </ul>
         </div>
-      </div>
+      )}
+      <button onClick={startConversion} disabled={!file || !selectedPipeline || isConverting}>
+        {isConverting ? t('conversionPanel.converting') : t('conversionPanel.submit')}
+      </button>
+      {isConverting && (
+        <div className="w-full mt-4">
+          <div className="w-full bg-gray-200 rounded h-4">
+            <div
+              className="bg-blue-500 h-4 rounded"
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+          <p className="mt-2 text-sm">{statusMessage || t('conversionPanel.progress', { progress })}</p>
+        </div>
+      )}
+      {taskId && <p>{t('conversionPanel.taskId', { id: taskId })}</p>}
+      {status && !isConverting && <p>{t('conversionPanel.status', { status })}</p>}
+      {error && <p className="error">{error}</p>}
     </div>
   );
 };

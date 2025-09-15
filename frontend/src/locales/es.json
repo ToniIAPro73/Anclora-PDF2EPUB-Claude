@@ -1,7 +1,8 @@
 {
   "app": {
     "title": "Anclora PDF2EPUB",
-    "subtitle": "Conversión inteligente de PDF a EPUB3"
+    "subtitle": "Conversión inteligente de PDF a EPUB3",
+    "copyright": "© 2024 Anclora. Todos los derechos reservados."
   },
   "navigation": {
     "home": "Inicio",
@@ -25,7 +26,17 @@
     "invalidCredentials": "Credenciales inválidas",
     "emailRequired": "El correo electrónico es requerido",
     "passwordRequired": "La contraseña es requerida",
-    "passwordMismatch": "Las contraseñas no coinciden"
+    "passwordMismatch": "Las contraseñas no coinciden",
+    "loginSubtitle": "Accede a tu cuenta para continuar",
+    "registerSubtitle": "Completa los datos para registrarte",
+    "emailPlaceholder": "Ingresa tu email",
+    "emailHelp": "Usaremos este email para tu cuenta",
+    "passwordPlaceholder": "Crea una contraseña segura",
+    "passwordMinChars": "Mínimo 6 caracteres",
+    "passwordMin": "La contraseña debe tener al menos 6 caracteres",
+    "confirmPasswordPlaceholder": "Repite tu contraseña",
+    "creatingAccount": "Creando cuenta...",
+    "sessionExpired": "Tu sesión ha expirado. Por favor, inicia sesión de nuevo."
   },
   "home": {
     "hero": {
@@ -81,7 +92,8 @@
     "pleaseWait": "Por favor espera...",
     "conversionStarted": "¡Conversión iniciada exitosamente!",
     "checkHistory": "Revisa el historial para ver el progreso",
-    "conversionError": "Error en la conversión"
+    "conversionError": "Error en la conversión",
+    "analyzeError": "Error al analizar el archivo"
   },
   "history": {
     "title": "Historial de Conversiones",
@@ -110,6 +122,17 @@
     "rapid": "Rápido",
     "balanced": "Equilibrado",
     "quality": "Alta Calidad"
+  },
+  "conversionPanel": {
+    "analyzing": "Analizando...",
+    "options": "Opciones de conversión",
+    "submit": "Enviar a convertir",
+    "converting": "Convirtiendo...",
+    "progress": "Progreso: {{progress}}%",
+    "taskId": "Task ID: {{id}}",
+    "status": "Estado: {{status}}",
+    "conversionError": "Error en la conversión",
+    "completed": "Conversión completada"
   },
   "common": {
     "loading": "Cargando...",
