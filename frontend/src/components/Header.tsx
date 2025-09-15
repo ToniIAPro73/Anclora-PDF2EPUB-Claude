@@ -134,7 +134,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
               }}
             >
               <span>{theme === 'dark' ? '☀️' : '🌙'}</span>
-              <span className="hidden sm:inline" translate="no">
+              <span className="hidden sm:inline">
                 {theme === 'dark' ? t('theme.light') : t('theme.dark')}
               </span>
             </button>
@@ -142,23 +142,21 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
             {/* Usuario */}
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold text-white"
-                   translate="no"
                    style={{ background: 'var(--gradient-nexus)' }}>
                 {getUserInitials(user)}
               </div>
               <div className="hidden sm:block">
                 <span className="text-sm font-medium px-2 py-1 rounded"
-                      translate="no"
                       style={{
                         color: 'var(--text-primary)',
                         backgroundColor: 'rgba(0,0,0,0.1)',
                         whiteSpace: 'nowrap'
                       }}>
                   {(() => {
-                    if (!user) return 'Usuario';
+                    if (!user) return t('auth.login');
                     if (user.user_metadata?.username) return user.user_metadata.username;
                     if (user.email) return user.email.split('@')[0];
-                    return 'Usuario';
+                    return t('auth.login');
                   })()}
                 </span>
               </div>

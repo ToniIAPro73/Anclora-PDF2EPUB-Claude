@@ -6,6 +6,8 @@ import FileUploader from './components/FileUploader';
 import LoginForm from './LoginForm';
 import RegisterForm from './RegisterForm';
 import ProtectedRoute from './ProtectedRoute';
+
+console.log('App.tsx: App component loaded');
 import { useTranslation } from 'react-i18next';
 
 const getInitialTheme = (): 'light' | 'dark' => {

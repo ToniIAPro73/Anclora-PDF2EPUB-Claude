@@ -10,7 +10,11 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected }) => {
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  // Debug logging
+  console.log('FileUploader - Current language:', i18n.language);
+  console.log('FileUploader - uploadTitle translation:', t('fileUploader.uploadTitle'));
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     setError(null);

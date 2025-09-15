@@ -6,6 +6,8 @@ import './index.css';
 import { AuthProvider } from './AuthContext';
 import './i18n';
 
+console.log('index.tsx: Starting application...');
+
 // establecer tema inicial
 const storedTheme = localStorage.getItem('theme');
 const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;

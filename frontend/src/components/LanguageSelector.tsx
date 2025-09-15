@@ -12,9 +12,16 @@ const LanguageSelector: React.FC = () => {
 
   const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
 
+  // Debug logging
+  console.log('LanguageSelector - i18n.language:', i18n.language);
+  console.log('LanguageSelector - currentLanguage:', currentLanguage);
+
   const changeLanguage = (languageCode: string) => {
-    i18n.changeLanguage(languageCode);
-    setIsOpen(false);
+    console.log('Changing language to:', languageCode);
+    i18n.changeLanguage(languageCode).then(() => {
+      console.log('Language changed to:', i18n.language);
+      setIsOpen(false);
+    });
   };
 
   return (

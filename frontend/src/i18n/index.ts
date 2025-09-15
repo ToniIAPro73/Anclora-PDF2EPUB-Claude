@@ -21,8 +21,8 @@ i18n
   .init({
     resources,
     fallbackLng: 'es', // Español como idioma por defecto
-    lng: 'es', // Idioma inicial
-    debug: false,
+    // Removido lng: 'es' para permitir detección automática
+    debug: true, // Habilitado para debugging
 
     interpolation: {
       escapeValue: false, // React ya escapa por defecto
@@ -31,7 +31,15 @@ i18n
     detection: {
       order: ['localStorage', 'navigator', 'htmlTag'],
       caches: ['localStorage'],
+      lookupLocalStorage: 'i18nextLng',
     }
   });
+
+// Debug logging
+i18n.on('languageChanged', (lng) => {
+  console.log('i18n: Language changed to:', lng);
+});
+
+console.log('i18n: Initialized with language:', i18n.language);
 
 export default i18n;
