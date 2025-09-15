@@ -75,7 +75,13 @@
     "advancedOptionsBelow": "For advanced options, use the conversion panel below",
     "analysisComplete": "Analysis complete",
     "recommendedEngine": "Recommended engine",
-    "loginToConvert": "Please log in to start the conversion"
+    "loginToConvert": "Please log in to start the conversion",
+    "startingConversion": "Starting conversion",
+    "usingEngine": "Using engine",
+    "pleaseWait": "Please wait...",
+    "conversionStarted": "Conversion started successfully!",
+    "checkHistory": "Check history to see progress",
+    "conversionError": "Conversion error"
   },
   "history": {
     "title": "Conversion History",

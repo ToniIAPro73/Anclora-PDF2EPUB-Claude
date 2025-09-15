@@ -2,6 +2,7 @@ import React, { useCallback, useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../AuthContext';
 
 interface FileUploaderProps {
   onFileSelected?: (file: File) => void;
@@ -16,10 +17,74 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
   const [_forceUpdate, setForceUpdate] = useState(0);
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { user, session } = useAuth();
 
   // Debug logging
   console.log('FileUploader - Current language:', i18n.language);
   console.log('FileUploader - uploadTitle translation:', t('fileUploader.uploadTitle'));
+
+  // Función para iniciar la conversión real cuando el usuario está autenticado
+  const startActualConversion = async (engineName: string) => {
+    if (!file || !session) return;
+
+    try {
+      // Mostrar mensaje de inicio de conversión
+      const startMessage = `🚀 ${t('fileUploader.startingConversion')}\n\n` +
+        `🎯 ${t('fileUploader.usingEngine')}: ${engineName}\n\n` +
+        `⏳ ${t('fileUploader.pleaseWait')}`;
+
+      alert(startMessage);
+
+      // Preparar datos para la conversión
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('pipeline_id', engineName);
+
+      // Hacer la llamada a la API de conversión
+      const response = await fetch('/api/convert', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (response.status === 401) {
+        // Token expirado, redirigir al login
+        navigate('/login');
+        return;
+      }
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Error en la conversión');
+      }
+
+      // Conversión iniciada exitosamente
+      const successMessage = `✅ ${t('fileUploader.conversionStarted')}\n\n` +
+        `🆔 Task ID: ${data.task_id}\n\n` +
+        `📊 ${t('fileUploader.checkHistory')}`;
+
+      alert(successMessage);
+
+      // Opcional: llamar al callback si existe
+      if (_onConversionStarted) {
+        _onConversionStarted(data.task_id);
+      }
+
+      // Redirigir al historial para ver el progreso
+      setTimeout(() => {
+        navigate('/');
+      }, 2000);
+
+    } catch (error: any) {
+      console.error('Error en conversión:', error);
+      setError(error.message);
+
+      const errorMessage = `❌ ${t('fileUploader.conversionError')}\n\n${error.message}`;
+      alert(errorMessage);
+    }
+  };
 
   // Forzar re-render cuando cambie el idioma
   useEffect(() => {
@@ -66,17 +131,23 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
 
       const recommendedName = engineNames[engineName] || engineName;
 
-      // 3. Mostrar mensaje informativo con recomendación
-      const analysisMessage = `📊 ${t('fileUploader.analysisComplete')}\n\n` +
-        `🎯 ${t('fileUploader.recommendedEngine')}: ${recommendedName}\n\n` +
-        `💡 ${t('fileUploader.loginToConvert')}`;
+      // 3. Verificar si el usuario está autenticado
+      if (!user || !session) {
+        // Usuario no autenticado - mostrar mensaje y redirigir al login
+        const analysisMessage = `📊 ${t('fileUploader.analysisComplete')}\n\n` +
+          `🎯 ${t('fileUploader.recommendedEngine')}: ${recommendedName}\n\n` +
+          `💡 ${t('fileUploader.loginToConvert')}`;
 
-      alert(analysisMessage);
+        alert(analysisMessage);
 
-      // 4. Redirigir al login después de mostrar la información
-      setTimeout(() => {
-        navigate('/login');
-      }, 1000);
+        // Redirigir al login después de mostrar la información
+        setTimeout(() => {
+          navigate('/login');
+        }, 1000);
+      } else {
+        // Usuario autenticado - proceder con la conversión
+        await startActualConversion(engineName);
+      }
 
     } catch (err: any) {
       setError(err.message);
