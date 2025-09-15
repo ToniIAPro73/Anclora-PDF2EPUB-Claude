@@ -41,7 +41,7 @@ const LoginForm: React.FC = () => {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl mb-4 p-2" style={{ background: 'var(--gradient-hero)' }}>
             <img
               src="/images/iconos/Anclora PDF2EPUB fodo transparente.png"
-              alt="Anclora PDF2EPUB"
+              alt={t('app.title')}
               className="w-full h-full object-contain"
             />
           </div>
@@ -53,7 +53,7 @@ const LoginForm: React.FC = () => {
         <div className="card animate-slide-in">
           <div className="mb-6">
             <h2 className="text-2xl font-semibold text-center mb-2">{t('auth.login')}</h2>
-            <p className="text-center text-gray-600">Accede a tu cuenta para continuar</p>
+            <p className="text-center text-gray-600">{t('auth.loginSubtitle')}</p>
           </div>
 
           {error && (
@@ -127,7 +127,7 @@ const LoginForm: React.FC = () => {
 
         {/* Footer */}
         <div className="text-center mt-8 text-sm text-gray-500">
-          <p>© 2024 Anclora. Todos los derechos reservados.</p>
+          <p>{t('app.copyright')}</p>
         </div>
       </div>
     </div>

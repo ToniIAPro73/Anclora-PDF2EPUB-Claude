@@ -70,6 +70,11 @@ open http://localhost
 - **[📚 Complete README](README.en.md)** - Full documentation in English
 - **[🌍 Internationalization](INTERNATIONALIZATION.md)** - Languages and translations guide
 
+### 🌐 Agregar nuevas cadenas traducibles / Adding new translatable strings
+1. Agrega la clave y su traducción en `frontend/src/locales/es.json` y `frontend/src/locales/en.json`.
+2. Usa la función `t('clave')` desde `react-i18next` en los componentes React.
+3. El idioma seleccionado se guarda en `localStorage` y está disponible a través de `AuthContext`.
+
 ## ✨ Características Principales / Key Features
 
 ### 🇪🇸 Español

@@ -1,7 +1,8 @@
 {
   "app": {
     "title": "Anclora PDF2EPUB",
-    "subtitle": "Intelligent PDF to EPUB3 conversion"
+    "subtitle": "Intelligent PDF to EPUB3 conversion",
+    "copyright": "© 2024 Anclora. All rights reserved."
   },
   "navigation": {
     "home": "Home",
@@ -25,7 +26,17 @@
     "invalidCredentials": "Invalid credentials",
     "emailRequired": "Email is required",
     "passwordRequired": "Password is required",
-    "passwordMismatch": "Passwords don't match"
+    "passwordMismatch": "Passwords don't match",
+    "loginSubtitle": "Access your account to continue",
+    "registerSubtitle": "Fill in the details to register",
+    "emailPlaceholder": "Enter your email",
+    "emailHelp": "We'll use this email for your account",
+    "passwordPlaceholder": "Create a secure password",
+    "passwordMinChars": "Minimum 6 characters",
+    "passwordMin": "Password must be at least 6 characters",
+    "confirmPasswordPlaceholder": "Repeat your password",
+    "creatingAccount": "Creating account...",
+    "sessionExpired": "Your session has expired. Please log in again."
   },
   "home": {
     "hero": {
@@ -81,7 +92,8 @@
     "pleaseWait": "Please wait...",
     "conversionStarted": "Conversion started successfully!",
     "checkHistory": "Check history to see progress",
-    "conversionError": "Conversion error"
+    "conversionError": "Conversion error",
+    "analyzeError": "Error analyzing file"
   },
   "history": {
     "title": "Conversion History",
@@ -110,6 +122,17 @@
     "rapid": "Rapid",
     "balanced": "Balanced",
     "quality": "High Quality"
+  },
+  "conversionPanel": {
+    "analyzing": "Analyzing...",
+    "options": "Conversion options",
+    "submit": "Send to convert",
+    "converting": "Converting...",
+    "progress": "Progress: {{progress}}%",
+    "taskId": "Task ID: {{id}}",
+    "status": "Status: {{status}}",
+    "conversionError": "Conversion error",
+    "completed": "Conversion completed"
   },
   "common": {
     "loading": "Loading...",

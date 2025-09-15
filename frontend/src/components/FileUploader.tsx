@@ -100,7 +100,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || 'Error en la conversión');
+        throw new Error(data.error || t('fileUploader.conversionError'));
       }
 
       // Conversión iniciada exitosamente
@@ -185,7 +185,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
 
       const analyzeData = await analyzeRes.json();
       if (!analyzeRes.ok) {
-        throw new Error(analyzeData.error || 'Error al analizar el archivo');
+        throw new Error(analyzeData.error || t('fileUploader.analyzeError'));
       }
 
       // 2. Mostrar análisis y recomendación

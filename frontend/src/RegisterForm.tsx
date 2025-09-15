@@ -27,7 +27,7 @@ const RegisterForm: React.FC = () => {
     }
 
     if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres');
+      setError(t('auth.passwordMin'));
       setIsLoading(false);
       return;
     }
@@ -55,7 +55,7 @@ const RegisterForm: React.FC = () => {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl mb-4 p-2" style={{ background: 'var(--gradient-press)' }}>
             <img
               src="/images/iconos/Anclora PDF2EPUB fodo transparente.png"
-              alt="Anclora PDF2EPUB"
+              alt={t('app.title')}
               className="w-full h-full object-contain"
             />
           </div>
@@ -67,7 +67,7 @@ const RegisterForm: React.FC = () => {
         <div className="card animate-slide-in">
           <div className="mb-6">
             <h2 className="text-2xl font-semibold text-center mb-2">{t('auth.register')}</h2>
-            <p className="text-center text-gray-600">Completa los datos para registrarte</p>
+            <p className="text-center text-gray-600">{t('auth.registerSubtitle')}</p>
           </div>
 
           {error && (
@@ -79,29 +79,29 @@ const RegisterForm: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium mb-2">
-                Email
+                {t('auth.email')}
               </label>
               <input
                 id="email"
                 type="email"
-                placeholder="Ingresa tu email"
+                placeholder={t('auth.emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="input"
                 required
                 disabled={isLoading}
               />
-              <p className="text-xs text-gray-500 mt-1">Usaremos este email para tu cuenta</p>
+              <p className="text-xs text-gray-500 mt-1">{t('auth.emailHelp')}</p>
             </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium mb-2">
-                Contraseña
+                {t('auth.password')}
               </label>
               <input
                 id="password"
                 type="password"
-                placeholder="Crea una contraseña segura"
+                placeholder={t('auth.passwordPlaceholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="input"
@@ -109,17 +109,17 @@ const RegisterForm: React.FC = () => {
                 disabled={isLoading}
                 minLength={6}
               />
-              <p className="text-xs text-gray-500 mt-1">Mínimo 6 caracteres</p>
+              <p className="text-xs text-gray-500 mt-1">{t('auth.passwordMinChars')}</p>
             </div>
 
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium mb-2">
-                Confirmar contraseña
+                {t('auth.confirmPassword')}
               </label>
               <input
                 id="confirmPassword"
                 type="password"
-                placeholder="Repite tu contraseña"
+                placeholder={t('auth.confirmPasswordPlaceholder')}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="input"
@@ -136,23 +136,23 @@ const RegisterForm: React.FC = () => {
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                  Creando cuenta...
+                  {t('auth.creatingAccount')}
                 </div>
               ) : (
-                'Crear cuenta'
+                t('auth.registerButton')
               )}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-gray-600">
-              ¿Ya tienes cuenta?{' '}
+              {t('auth.hasAccount')}{' '}
               <Link
                 to="/login"
                 className="font-medium hover:underline"
                 style={{ color: 'var(--accent-primary)' }}
               >
-                Inicia sesión aquí
+                {t('auth.login')}
               </Link>
             </p>
           </div>
@@ -160,7 +160,7 @@ const RegisterForm: React.FC = () => {
 
         {/* Footer */}
         <div className="text-center mt-8 text-sm text-gray-500">
-          <p>© 2024 Anclora. Todos los derechos reservados.</p>
+          <p>{t('app.copyright')}</p>
         </div>
       </div>
     </div>
