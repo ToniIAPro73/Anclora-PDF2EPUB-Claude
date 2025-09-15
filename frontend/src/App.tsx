@@ -135,9 +135,9 @@ const MainApp: React.FC = () => {
         {currentSection === 'history' && (
           <div className="max-w-6xl mx-auto p-6 space-y-6 animate-fade-in">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold mb-4 gradient-text">Historial de Conversiones</h2>
+              <h2 className="text-3xl font-bold mb-4 gradient-text">{t('history.title')}</h2>
               <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>
-                Revisa y descarga tus conversiones anteriores
+                {t('history.subtitle')}
               </p>
             </div>
             <ConversionHistory />

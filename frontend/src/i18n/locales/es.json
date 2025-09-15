@@ -58,7 +58,7 @@
     "upload": "Subir y Convertir",
     "uploading": "Subiendo...",
     "processing": "Procesando archivo...",
-    "success": "¡Conversión completada!",
+    "success": "¡Conversión iniciada!",
     "error": "Error en la conversión",
     "download": "Descargar EPUB",
     "supportedFormats": "Solo se permiten archivos PDF",
@@ -71,7 +71,8 @@
     "uploadError": "Error al subir archivo",
     "tryAgain": "Intentar de nuevo",
     "changeFile": "Cambiar archivo",
-    "convertNow": "Convertir ahora"
+    "convertNow": "Convertir ahora",
+    "advancedOptionsBelow": "Para opciones avanzadas, usa el panel de conversión que aparece abajo"
   },
   "history": {
     "title": "Historial de Conversiones",
