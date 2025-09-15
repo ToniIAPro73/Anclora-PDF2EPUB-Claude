@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import ConversionHistory from './components/ConversionHistory';
+import ConversionPanel from './components/ConversionPanel';
 import FileUploader from './components/FileUploader';
 import LoginForm from './LoginForm';
 import RegisterForm from './RegisterForm';
@@ -60,6 +61,13 @@ const MainApp: React.FC = () => {
                 <div className="max-w-2xl mx-auto">
                   <FileUploader onFileSelected={setSelectedFile} />
                 </div>
+
+                {/* Conversion Panel - shown when file is selected */}
+                {selectedFile && (
+                  <div className="max-w-4xl mx-auto mt-8">
+                    <ConversionPanel file={selectedFile} />
+                  </div>
+                )}
               </div>
 
               {/* Decorative elements */}
