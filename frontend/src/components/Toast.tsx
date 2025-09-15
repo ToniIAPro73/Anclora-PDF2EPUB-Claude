@@ -19,6 +19,12 @@ export const Toast: React.FC<ToastProps> = ({ title, message, variant, onClose }
     }
   };
 
+  const baseClasses =
+    'fixed bottom-4 right-4 px-4 py-3 rounded shadow-md transition animate-fade-in max-w-sm';
+
+  const titleClasses = 'block font-semibold mb-1';
+  const messageClasses = 'block text-sm opacity-95';
+
   return (
     <div
       role="alert"
