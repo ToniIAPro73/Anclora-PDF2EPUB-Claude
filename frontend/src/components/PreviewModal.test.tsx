@@ -8,17 +8,18 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import React from 'react';
 import PreviewModal from './PreviewModal';
 
-// Mock the useAuth hook
-const mockUseAuth = vi.fn(() => ({
-  token: 'mock-token',
-  user: null,
-  loading: false,
+// Mock the auth context module first
+vi.mock('../AuthContext', () => ({
+  useAuth: vi.fn(() => ({
+    token: 'mock-token',
+    user: null,
+    loading: false,
+  })),
 }));
 
-// Mock the auth context module
-vi.mock('../AuthContext', () => ({
-  useAuth: mockUseAuth,
-}));
+// Get the mocked function
+import { useAuth } from '../AuthContext';
+const mockUseAuth = vi.mocked(useAuth);
 
 // Mock KaTeX
 vi.mock('katex/contrib/auto-render', () => ({

@@ -29,103 +29,20 @@ from . import limiter
 
 bp = Blueprint('routes', __name__)
 
-ALLOWED_EXTENSIONS = {"pdf"}
-ALLOWED_MIME_TYPES = {"application/pdf"}
-MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+# File validation moved to file_validator.py
+from .file_validator import FileSecurityValidator
 logger = logging.getLogger(__name__)
 if 'pdf_conversions_total' in REGISTRY._names_to_collectors:
     conversion_counter = REGISTRY._names_to_collectors['pdf_conversions_total']
 else:
     conversion_counter = Counter('pdf_conversions_total', 'Total PDF conversion requests')
 
-def allowed_file(filename):
-    """Check if the file has an allowed extension"""
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-class FileValidator:
-    """Validator for PDF file uploads"""
-    
-    @staticmethod
-    def validate_file_presence(files):
-        """Check if a file is present in the request"""
-        if 'file' not in files:
-            logger.warning("No file part in request")
-            return False, {'error': 'No file part'}, 400
-        return True, None, None
-    
-    @staticmethod
-    def validate_filename(file):
-        """Check if the filename is valid"""
-        if file.filename == '':
-            logger.warning("Empty filename provided")
-            return False, {'error': 'No selected file'}, 400
-        return True, None, None
-    
-    @staticmethod
-    def validate_file_extension(file):
-        """Check if the file has a valid extension"""
-        if not allowed_file(file.filename):
-            logger.warning(f"Disallowed file extension: {file.filename}")
-            return False, {'error': 'Invalid file type'}, 400
-        return True, None, None
-    
-    @staticmethod
-    def validate_file_size(file):
-        """Check if the file size is within limits"""
-        file.seek(0, os.SEEK_END)
-        size = file.tell()
-        file.seek(0)
-        if size > MAX_FILE_SIZE:
-            logger.warning(f"File too large: {file.filename}")
-            return False, {'error': 'File too large'}, 400
-        return True, None, None
-    
-    @staticmethod
-    def validate_file_content(file):
-        """Check if the file content is valid PDF"""
-        if magic is not None:
-            mime_type = magic.from_buffer(file.read(2048), mime=True)
-            file.seek(0)
-            if mime_type not in ALLOWED_MIME_TYPES:
-                logger.warning(f"Invalid MIME type {mime_type} for file {file.filename}")
-                return False, {'error': 'Invalid file content'}, 400
-        else:
-            header = file.read(4)
-            file.seek(0)
-            if not header.startswith(b"%PDF"):
-                logger.warning(f"Invalid file content for file {file.filename}")
-                return False, {'error': 'Invalid file content'}, 400
-        return True, None, None
-    
-    @classmethod
-    def validate_pdf(cls, request_files):
-        """Run all validation checks on the uploaded PDF file"""
-        # Check file presence
-        valid, error_response, status_code = cls.validate_file_presence(request_files)
-        if not valid:
-            return valid, error_response, status_code
-        
-        file = request_files['file']
-        
-        # Run all validations
-        validations = [
-            cls.validate_filename,
-            cls.validate_file_extension,
-            cls.validate_file_size,
-            cls.validate_file_content
-        ]
-        
-        for validation in validations:
-            valid, error_response, status_code = validation(file)
-            if not valid:
-                return valid, error_response, status_code
-        
-        return True, None, None
+# Legacy FileValidator replaced with FileSecurityValidator
 
 @bp.route('/api/analyze', methods=['POST'])
 def analyze():
-    # Validate the uploaded file
-    valid, error_response, status_code = FileValidator.validate_pdf(request.files)
+    # Enhanced file validation
+    valid, error_response, status_code, file_info = FileSecurityValidator.validate_file_comprehensive(request.files)
     if not valid:
         return jsonify(error_response), status_code
     
@@ -167,10 +84,13 @@ def convert():
     logger.info('Conversion requested')
     
     try:
-        # Validate the uploaded file
-        valid, error_response, status_code = FileValidator.validate_pdf(request.files)
+        # Enhanced file validation
+        valid, error_response, status_code, file_info = FileSecurityValidator.validate_file_comprehensive(request.files)
         if not valid:
             return jsonify(error_response), status_code
+        
+        # Log file info for security audit
+        logger.info(f"File validation passed for conversion: {file_info}")
         
         file = request.files['file']
         

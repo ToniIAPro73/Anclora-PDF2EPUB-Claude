@@ -6,7 +6,13 @@
       "Bash(npm test:*)",
       "Bash(find:*)",
       "Bash(chmod:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(npm audit:*)",
+      "Bash(safety check:*)",
+      "Bash(safety scan)",
+      "Bash(npm update:*)",
+      "Bash(npm run build:*)",
+      "Bash(pip install:*)"
     ],
     "deny": [],
     "ask": []

@@ -252,8 +252,10 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
       return;
     }
 
-    // Verificar tamaño (máximo 50MB)
-    if (selectedFile.size > 50 * 1024 * 1024) {
+    // Verificar tamaño (máximo 25MB - sincronizado con backend)
+    const maxSizeMB = 25;
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
+    if (selectedFile.size > maxSizeBytes) {
       setError(t('fileUploader.maxSize'));
       setIsUploading(false);
       return;
@@ -353,7 +355,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
             </p>
             <div className="flex items-center gap-4 text-sm font-medium" style={{ color: 'var(--text-uploader)', opacity: '0.8' }}>
               <span>📋 {t('fileUploader.onlyPDF')}</span>
-              <span>📏 {t('fileUploader.maxSize')}</span>
+              <span>📏 Max 25MB</span>
               <span>⚡ {t('fileUploader.fastConversion')}</span>
             </div>
           </div>
