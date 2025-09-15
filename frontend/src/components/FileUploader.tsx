@@ -17,7 +17,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
   const [_forceUpdate, setForceUpdate] = useState(0);
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { user, session } = useAuth();
+  const { user, token } = useAuth();
 
   // Debug logging
   console.log('FileUploader - Current language:', i18n.language);
@@ -25,7 +25,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
 
   // Función para iniciar la conversión real cuando el usuario está autenticado
   const startActualConversion = async (engineName: string) => {
-    if (!file || !session) return;
+    if (!file || !token) return;
 
     try {
       // Mostrar mensaje de inicio de conversión
@@ -44,9 +44,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
       const response = await fetch('/api/convert', {
         method: 'POST',
         body: formData,
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined
       });
 
       if (response.status === 401) {
@@ -114,6 +112,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
       const analyzeRes = await fetch('/api/analyze', {
         method: 'POST',
         body: formData,
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
 
       const analyzeData = await analyzeRes.json();
@@ -132,7 +131,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
       const recommendedName = engineNames[engineName] || engineName;
 
       // 3. Verificar si el usuario está autenticado
-      if (!user || !session) {
+      if (!user || !token) {
         // Usuario no autenticado - mostrar mensaje y redirigir al login
         const analysisMessage = `📊 ${t('fileUploader.analysisComplete')}\n\n` +
           `🎯 ${t('fileUploader.recommendedEngine')}: ${recommendedName}\n\n` +

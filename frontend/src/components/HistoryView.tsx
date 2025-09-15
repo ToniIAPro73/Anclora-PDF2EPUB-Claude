@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useAuth } from '../AuthContext';
 
 interface ConversionItem {
   id: number;
@@ -12,13 +13,13 @@ interface ConversionItem {
 const HistoryView: React.FC = () => {
   const [history, setHistory] = useState<ConversionItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const { token } = useAuth();
 
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const token = localStorage.getItem('token');
         const res = await fetch('/api/history', {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
         const data = await res.json();
         if (!res.ok) {
@@ -30,7 +31,7 @@ const HistoryView: React.FC = () => {
       }
     };
     fetchHistory();
-  }, []);
+  }, [token]);
 
   return (
     <div className="history-view">
