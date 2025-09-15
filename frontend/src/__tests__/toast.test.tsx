@@ -5,7 +5,7 @@ import { expect, test } from 'vitest';
 await import('@testing-library/jest-dom');
 import Toast from '../components/Toast';
 
-test('announces message and cleans up on close', () => {
+test('announces message with proper roles and animations and cleans up on close', () => {
   const Wrapper = () => {
     const [show, setShow] = React.useState(true);
     return show ? <Toast message="Hola" onClose={() => setShow(false)} /> : null;
@@ -13,7 +13,9 @@ test('announces message and cleans up on close', () => {
 
   render(<Wrapper />);
   const toast = screen.getByRole('alert');
+  expect(toast).toHaveAttribute('role', 'alert');
   expect(toast).toHaveAttribute('aria-live', 'assertive');
+  expect(toast).toHaveClass('transition', 'animate-fade-in');
   expect(screen.getByText('Hola')).toBeInTheDocument();
   fireEvent.click(screen.getByLabelText(/close/i));
   expect(screen.queryByText('Hola')).toBeNull();
