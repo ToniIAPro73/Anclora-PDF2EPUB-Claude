@@ -195,6 +195,7 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
       {status && !isConverting && <p>{t('conversionPanel.status', { status })}</p>}
       {error && (
         <Toast
+          title="Error"
           message={error}
           variant="error"
           onClose={() => setError(null)}
