@@ -7,6 +7,11 @@ export default ({ mode }) => {
 
   return defineConfig({
     plugins: [react()],
+    test: {
+      environment: 'jsdom',
+      setupFiles: ['./src/test-setup.ts'],
+      globals: true,
+    },
     server: {
       port: 5178,
       host: '0.0.0.0',

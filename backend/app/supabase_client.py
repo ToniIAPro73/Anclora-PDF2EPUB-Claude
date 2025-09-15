@@ -15,8 +15,8 @@ class SupabaseConfig:
     
     # Base configuration
     URL = os.getenv("SUPABASE_URL", "https://kehpwxdkpdxapfxwhfwn.supabase.co")
-    SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlaHB3eGRrcGR4YXBmeHdoZnduIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTI5NTg3OCwiZXhwIjoyMDY2ODcxODc4fQ.ZRYM0R46-qDniCRbLsVlbwRDP0Ra087eOlpvT9FlGHQ")
-    ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+    SECRET_KEY = os.getenv("SUPABASE_SECRET_KEY", "")
+    PUBLISHABLE_KEY = os.getenv("SUPABASE_PUBLISHABLE_KEY", "")
     JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET")
     
     @classmethod
@@ -26,8 +26,8 @@ class SupabaseConfig:
             logger.error("SUPABASE_URL is not set")
             return False
             
-        if not cls.SERVICE_ROLE_KEY:
-            logger.error("SUPABASE_SERVICE_ROLE_KEY is not set")
+        if not cls.SECRET_KEY:
+            logger.error("SUPABASE_SECRET_KEY is not set")
             return False
             
         if not cls.JWT_SECRET:
@@ -51,8 +51,8 @@ is_valid = SupabaseConfig.validate()
 if not is_valid:
     logger.warning("Supabase configuration is incomplete - authentication may fail")
 
-# Create Supabase client with service role key (for backend operations)
-supabase: Client = create_client(SupabaseConfig.URL, SupabaseConfig.SERVICE_ROLE_KEY)
+# Create Supabase client with secret key (for backend operations)
+supabase: Client = create_client(SupabaseConfig.URL, SupabaseConfig.SECRET_KEY)
 
 def verify_supabase_token(token: str) -> Optional[Dict[str, Any]]:
     """

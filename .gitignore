@@ -4,5 +4,104 @@ __pycache__/
 *.pyc
 backend/conversions.db
 
-# Ignore environment files with sensitive data
-.env*
+# ==============================================================================
+# SECURITY: Environment files and secrets (NEVER COMMIT THESE)
+# ==============================================================================
+
+# All environment files
+.env
+.env.*
+!.env.example
+
+# Backend environment files
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Frontend environment files
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# Supabase environment files
+supabase/.env*
+!supabase/.env.example
+
+# ==============================================================================
+# SECURITY: Keys, certificates, and sensitive files
+# ==============================================================================
+
+# Private keys and certificates
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.cer
+
+# Database files with potentially sensitive data
+*.db
+*.sqlite
+*.sqlite3
+
+# Log files that might contain sensitive data
+*.log
+logs/
+
+# Temporary and cache files
+tmp/
+temp/
+.cache/
+.tmp/
+
+# IDE and editor files with potentially sensitive data
+.vscode/settings.json
+.idea/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ==============================================================================
+# SECURITY: Generated secrets and backups
+# ==============================================================================
+
+# Generated secret files
+secrets.*
+*.secrets
+generated-secrets.*
+
+# Backup files
+*.backup
+*.bak
+*.old
+
+# ==============================================================================
+# DEVELOPMENT: Build and dependency files
+# ==============================================================================
+
+# Python
+*.pyc
+__pycache__/
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg

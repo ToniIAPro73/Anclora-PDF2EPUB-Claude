@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../AuthContext';
 import renderMathInElement from 'katex/contrib/auto-render';
+import { createSafeHTML, SanitizationMetrics } from '../utils/sanitize';
 
 declare global {
   interface Window {
@@ -61,7 +62,10 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ taskId, onClose }) => {
             <div
               ref={containerRef}
               className="preview-body"
-              dangerouslySetInnerHTML={{ __html: pages[index] }}
+              dangerouslySetInnerHTML={SanitizationMetrics.measureSanitization(
+                () => createSafeHTML(pages[index]),
+                pages[index]?.length || 0
+              )}
             />
             <div className="preview-nav">
               <button onClick={prev} disabled={index === 0}>
