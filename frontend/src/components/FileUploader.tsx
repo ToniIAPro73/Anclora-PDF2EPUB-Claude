@@ -19,6 +19,51 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
   const navigate = useNavigate();
   const { user, session } = useAuth();
 
+  const PENDING_FILE_KEY = 'pendingFile';
+
+  const clearPendingFile = () => {
+    localStorage.removeItem(PENDING_FILE_KEY);
+  };
+
+  const savePendingFile = (file: File) => {
+    return new Promise<void>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          localStorage.setItem(
+            PENDING_FILE_KEY,
+            JSON.stringify({
+              name: file.name,
+              type: file.type,
+              dataUrl: reader.result,
+              route: window.location.pathname,
+            })
+          );
+        } catch (e) {
+          console.error('Error saving file to localStorage', e);
+        }
+        resolve();
+      };
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const getPendingFile = async (): Promise<{ file: File; route: string } | null> => {
+    const raw = localStorage.getItem(PENDING_FILE_KEY);
+    if (!raw) return null;
+    try {
+      const { name, type, dataUrl, route } = JSON.parse(raw);
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      return { file: new File([blob], name, { type }), route };
+    } catch (e) {
+      console.error('Error reconstructing file from localStorage', e);
+      clearPendingFile();
+      return null;
+    }
+  };
+
   // Debug logging
   console.log('FileUploader - Current language:', i18n.language);
   console.log('FileUploader - uploadTitle translation:', t('fileUploader.uploadTitle'));
@@ -84,6 +129,9 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
       const errorMessage = `❌ ${t('fileUploader.conversionError')}\n\n${error.message}`;
       alert(errorMessage);
     }
+    finally {
+      clearPendingFile();
+    }
   };
 
   // Forzar re-render cuando cambie el idioma
@@ -99,17 +147,37 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
     };
   }, [i18n]);
 
-  // Función para análisis rápido y mostrar recomendación
-  const startQuickConversion = async () => {
-    if (!file || isConverting) return;
+  useEffect(() => {
+    const processPendingFile = async () => {
+      if (!user || !session) return;
+      const pending = await getPendingFile();
+      if (pending) {
+        if (pending.route && pending.route !== window.location.pathname) {
+          navigate(pending.route);
+        }
+        setFile(pending.file);
+        if (onFileSelected) {
+          onFileSelected(pending.file);
+        }
+        await startQuickConversion(pending.file);
+      }
+    };
+    processPendingFile();
+  }, [user, session]);
 
+  // Función para análisis rápido y mostrar recomendación
+  const startQuickConversion = async (inputFile?: File) => {
+    const fileToUse = inputFile || file;
+    if (!fileToUse || isConverting) return;
+
+    setFile(fileToUse);
     setError(null);
     setIsConverting(true);
 
     try {
       // 1. Analizar el archivo para obtener recomendaciones
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', fileToUse);
 
       const analyzeRes = await fetch('/api/analyze', {
         method: 'POST',
@@ -140,10 +208,13 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
 
         alert(analysisMessage);
 
+        await savePendingFile(fileToUse);
+
         // Redirigir al login después de mostrar la información
         setTimeout(() => {
           navigate('/login');
         }, 1000);
+        return;
       } else {
         // Usuario autenticado - proceder con la conversión
         await startActualConversion(engineName);
@@ -205,6 +276,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
   const resetUpload = () => {
     setFile(null);
     setError(null);
+    clearPendingFile();
   };
 
   const formatFileSize = (bytes: number) => {
