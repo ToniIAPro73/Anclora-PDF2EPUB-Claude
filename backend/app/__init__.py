@@ -1,4 +1,5 @@
 from flask import Flask, Response, request, jsonify
+from . import config  # Import config to load environment variables
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from datetime import datetime
@@ -102,3 +103,4 @@ if __name__ == '__main__':
     app = create_app()
     port = int(os.environ.get('FLASK_RUN_PORT', 5175))
     app.run(host='0.0.0.0', port=port)
+
