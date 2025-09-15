@@ -8,12 +8,12 @@ interface FileUploaderProps {
   onConversionStarted?: (taskId: string) => void;
 }
 
-const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversionStarted }) => {
+const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversionStarted: _onConversionStarted }) => {
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
-  const [forceUpdate, setForceUpdate] = useState(0); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [_forceUpdate, setForceUpdate] = useState(0);
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
