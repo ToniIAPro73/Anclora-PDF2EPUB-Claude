@@ -1,14 +1,14 @@
 import React from 'react';
 
-interface ToastProps {
+export interface ToastProps {
   title: string;
   message: string;
   variant: 'success' | 'error';
   onClose: () => void;
 }
 
-const Toast: React.FC<ToastProps> = ({ title, message, variant = 'success', onClose }) => {
-  // Styles based on variant
+export const Toast: React.FC<ToastProps> = ({ title, message, variant, onClose }) => {
+  // Define styles based on toast variant
   const getToastStyles = () => {
     switch (variant) {
       case 'success':
@@ -29,16 +29,14 @@ const Toast: React.FC<ToastProps> = ({ title, message, variant = 'success', onCl
     <div
       role="alert"
       aria-live="assertive"
-      className={`${baseClasses} ${getToastStyles()}`}
+      className={`fixed bottom-4 right-4 px-4 py-3 rounded shadow-md transition animate-fade-in ${getToastStyles()}`}
     >
-      <div>
-        <span className={titleClasses}>{title}</span>
-        <span className={messageClasses}>{message}</span>
-      </div>
+      <strong className="block font-semibold">{title}</strong>
+      <span className="block mt-1">{message}</span>
       <button
         onClick={onClose}
         aria-label="Close"
-        className="ml-3 text-white hover:text-gray-200"
+        className="absolute top-1 right-2 text-white hover:text-gray-200"
       >
         &times;
       </button>
