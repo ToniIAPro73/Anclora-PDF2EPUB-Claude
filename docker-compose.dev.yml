@@ -25,7 +25,6 @@ services:
       - VITE_API_URL=http://localhost:${NGINX_PORT}/api
     volumes:
       - ./frontend:/app
-      - /app/node_modules
     depends_on:
       - backend
     networks:
