@@ -12,13 +12,33 @@
     networks:
       - anclora-network
 
-      env_file:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/Dockerfile.frontend.prod
+    ports:
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+    env_file:
       - ./frontend/.env
+    environment:
       - PORT=${FRONTEND_PORT}
       - VITE_API_URL=http://localhost:${NGINX_PORT}/api
     volumes:
-      - ./    env_file:
-      - ./frontend/.env
+      - ./frontend:/app
+    depends_on:
+      - backend
+    networks:
+      - anclora-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile.backend
+    ports:
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
+    env_file:
+      - ./backend/.env
+    environment:
       - FLASK_APP=${FLASK_APP}
       - FLASK_ENV=${FLASK_ENV}
       - FLASK_RUN_PORT=${BACKEND_PORT}
@@ -29,8 +49,22 @@
       - RESULTS_FOLDER=${RESULTS_FOLDER}
       - CONVERSION_TIMEOUT=${CONVERSION_TIMEOUT}
     volumes:
-      - ./    env_file:
+      - uploads:/app/${UPLOAD_FOLDER}
+      - results:/app/${RESULTS_FOLDER}
+    depends_on:
+      redis:
+        condition: service_started
+    networks:
+      - anclora-network
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile.backend
+    command: celery -A app.tasks.celery_app worker --loglevel=info
+    env_file:
       - ./backend/.env
+    environment:
       - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD}@redis:${REDIS_PORT}/0
       - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD}@redis:${REDIS_PORT}/0
       - UPLOAD_FOLDER=${UPLOAD_FOLDER}
@@ -38,7 +72,6 @@
       - CONVERSION_TIMEOUT=${CONVERSION_TIMEOUT}
       - WORKER_METRICS_PORT=${WORKER_METRICS_PORT}
     volumes:
-      - ./backend:/app
       - uploads:/app/${UPLOAD_FOLDER}
       - results:/app/${RESULTS_FOLDER}
     depends_on:
@@ -58,8 +91,6 @@
       - redis_data:/data
     networks:
       - anclora-network
-
-# PostgreSQL removed - now using Supabase
 
   prometheus:
     image: prom/prometheus
