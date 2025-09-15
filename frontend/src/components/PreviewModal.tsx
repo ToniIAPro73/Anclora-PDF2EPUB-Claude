@@ -49,8 +49,12 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ taskId, onClose }) => {
   const prev = () => setIndex((i) => Math.max(i - 1, 0));
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
+    <div
+      className="modal-overlay transition animate-fade-in"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="modal-content transition animate-fade-in" aria-live="assertive">
         <button onClick={onClose}>Cerrar</button>
         {pages.length > 0 ? (
           <div>
