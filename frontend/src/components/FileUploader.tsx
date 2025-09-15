@@ -19,7 +19,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
   const [_forceUpdate, setForceUpdate] = useState(0);
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { user, token } = useAuth();
+  const { user, token, session } = useAuth();
   const [toast, setToast] = useState<{ message: string; type: 'info' | 'success' | 'error' } | null>(null);
 
   const PENDING_FILE_KEY = 'pendingFile';
