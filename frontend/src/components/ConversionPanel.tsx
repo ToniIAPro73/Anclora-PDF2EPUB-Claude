@@ -151,46 +151,54 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
   };
 
   return (
-    <div className="conversion-panel">
-      {isAnalyzing && <p>Analizando...</p>}
-      {pipelines.length > 0 && (
-        <div className="pipeline-list">
-          <h3>Opciones de conversión</h3>
-          <ul>
-            {pipelines.map((p) => (
-              <li key={p.id}>
-                <label>
-                  <input
-                    type="radio"
-                    name="pipeline"
-                    value={p.id}
-                    checked={selectedPipeline === p.id}
-                    onChange={() => setSelectedPipeline(p.id)}
-                  />
-                  {p.quality} - {p.estimated_time}s
-                </label>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      <button onClick={startConversion} disabled={!file || !selectedPipeline || isConverting}>
-        {isConverting ? 'Convirtiendo...' : 'Enviar a convertir'}
-      </button>
-      {isConverting && (
-        <div className="w-full mt-4">
-          <div className="w-full bg-gray-200 rounded h-4">
-            <div
-              className="bg-blue-500 h-4 rounded"
-              style={{ width: `${progress}%` }}
-            ></div>
+    <div className="conversion-panel p-4 md:p-6 text-sm md:text-base">
+      {isAnalyzing && <p className="mb-4">Analizando...</p>}
+      <div className="flex flex-col md:flex-row md:items-start md:space-x-6 space-y-4 md:space-y-0">
+        {pipelines.length > 0 && (
+          <div className="pipeline-list flex-1">
+            <h3 className="font-semibold mb-2">Opciones de conversión</h3>
+            <ul className="space-y-2">
+              {pipelines.map((p) => (
+                <li key={p.id} className="flex items-center space-x-2">
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      name="pipeline"
+                      value={p.id}
+                      checked={selectedPipeline === p.id}
+                      onChange={() => setSelectedPipeline(p.id)}
+                    />
+                    <span>{p.quality} - {p.estimated_time}s</span>
+                  </label>
+                </li>
+              ))}
+            </ul>
           </div>
-          <p className="mt-2 text-sm">{statusMessage || `Progreso: ${progress}%`}</p>
+        )}
+        <div className="flex flex-col space-y-4 flex-1">
+          <button
+            onClick={startConversion}
+            disabled={!file || !selectedPipeline || isConverting}
+            className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+          >
+            {isConverting ? 'Convirtiendo...' : 'Enviar a convertir'}
+          </button>
+          {isConverting && (
+            <div className="w-full">
+              <div className="w-full bg-gray-200 rounded h-4">
+                <div
+                  className="bg-blue-500 h-4 rounded"
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+              <p className="mt-2">{statusMessage || `Progreso: ${progress}%`}</p>
+            </div>
+          )}
+          {taskId && <p>Task ID: {taskId}</p>}
+          {status && !isConverting && <p>Estado: {status}</p>}
+          {error && <p className="error">{error}</p>}
         </div>
-      )}
-      {taskId && <p>Task ID: {taskId}</p>}
-      {status && !isConverting && <p>Estado: {status}</p>}
-      {error && <p className="error">{error}</p>}
+      </div>
     </div>
   );
 };
