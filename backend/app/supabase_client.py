@@ -9,6 +9,7 @@ import jwt
 # Supabase configuration
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://kehpwxdkpdxapfxwhfwn.supabase.co")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlaHB3eGRrcGR4YXBmeHdoZnduIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTI5NTg3OCwiZXhwIjoyMDY2ODcxODc4fQ.ZRYM0R46-qDniCRbLsVlbwRDP0Ra087eOlpvT9FlGHQ")
+SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "anclora_supabase_jwt_secret_key_super_secure")
 
 # Create Supabase client with service role key (for backend operations)
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
@@ -18,23 +19,22 @@ def verify_supabase_token(token: str) -> Optional[Dict[str, Any]]:
     Verify a Supabase JWT token and return user information
     """
     try:
-        # Decode the JWT token without verification first to get the payload
-        unverified_payload = jwt.decode(token, options={"verify_signature": False})
-        
-        # Check if it's a Supabase token
-        if unverified_payload.get('iss') != 'supabase':
+        payload = jwt.decode(
+            token,
+            SUPABASE_JWT_SECRET,
+            algorithms=["HS256"],
+            audience="authenticated",
+        )
+
+        if payload.get('iss') != 'supabase':
             return None
-            
-        # Verify the token with Supabase's JWT secret
-        # For now, we'll trust the token if it's properly formatted
-        # In production, you should verify with the actual JWT secret
-        
+
         return {
-            'user_id': unverified_payload.get('sub'),
-            'email': unverified_payload.get('email'),
-            'role': unverified_payload.get('role', 'authenticated')
+            'user_id': payload.get('sub'),
+            'email': payload.get('email'),
+            'role': payload.get('role', 'authenticated')
         }
-    except Exception as e:
+    except jwt.PyJWTError as e:
         print(f"Token verification error: {e}")
         return None
 

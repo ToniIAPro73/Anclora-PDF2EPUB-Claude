@@ -33,6 +33,7 @@ cd Anclora-PDF2EPUB-Claude
 # Configurar variables de entorno
 cp .env.example .env
 # Editar .env con tus credenciales de Supabase
+# Asegúrate de incluir SUPABASE_JWT_SECRET con el secreto JWT de tu proyecto
 
 # Levantar la aplicación
 docker-compose up -d
@@ -50,6 +51,7 @@ cd Anclora-PDF2EPUB-Claude
 # Set up environment variables
 cp .env.example .env
 # Edit .env with your Supabase credentials
+# Make sure to set SUPABASE_JWT_SECRET with your project's JWT secret
 
 # Start the application
 docker-compose up -d
