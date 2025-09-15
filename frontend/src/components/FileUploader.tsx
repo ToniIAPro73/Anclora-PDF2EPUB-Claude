@@ -180,6 +180,9 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
       const formData = new FormData();
       formData.append('file', fileToUse);
 
+      console.log('Debug - user:', !!user, 'token:', !!token, 'session:', !!session);
+      console.log('Debug - token preview:', token ? token.substring(0, 20) + '...' : 'null');
+
       const analyzeRes = await fetch('/api/analyze', {
         method: 'POST',
         body: formData,
@@ -433,7 +436,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
           </button>
           <button
             className="btn btn-primary"
-            onClick={startQuickConversion}
+            onClick={() => startQuickConversion()}
             disabled={isConverting}
           >
             {isConverting ? (
@@ -460,7 +463,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
     {toast && (
       <Toast
         message={toast.message}
-        type={toast.type}
+        variant={toast.type}
         onClose={() => setToast(null)}
       />
     )}
