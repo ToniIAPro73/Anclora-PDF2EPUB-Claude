@@ -3,3 +3,6 @@ frontend/dist/
 __pycache__/
 *.pyc
 backend/conversions.db
+
+# Ignore environment files with sensitive data
+.env*
