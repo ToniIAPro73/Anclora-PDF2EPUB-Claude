@@ -100,7 +100,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
               <button
                 key={item.id}
                 onClick={() => setCurrentSection(item.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 ${
                   currentSection === item.id
                     ? 'shadow-md'
                     : 'hover:bg-gray-100'
@@ -125,7 +125,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
             <button
               onClick={toggleTheme}
               aria-label={t('theme.toggle')}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
               style={{
                 background: theme === 'dark'
                   ? 'linear-gradient(90deg, #FFC979 70%, #2EAFC4 100%)'
@@ -165,7 +165,8 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
             {/* Botón de Logout */}
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-red-50 hover:text-red-600"
+              aria-label={t('navigation.logout')}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-red-50 hover:text-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
               style={{ color: 'var(--text-secondary)' }}
             >
               <span>🚪</span>
@@ -181,7 +182,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
               <button
                 key={item.id}
                 onClick={() => setCurrentSection(item.id)}
-                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 ${
                   currentSection === item.id
                     ? ''
                     : ''

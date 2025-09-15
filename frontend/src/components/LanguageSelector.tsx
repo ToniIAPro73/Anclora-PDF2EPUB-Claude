@@ -28,7 +28,8 @@ const LanguageSelector: React.FC = () => {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-1 px-2 py-1 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors duration-200"
+        aria-label="Select Language"
+        className="flex items-center space-x-1 px-2 py-1 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
         title="Select Language"
       >
         <span className="text-base">{currentLanguage.flag}</span>
@@ -48,7 +49,11 @@ const LanguageSelector: React.FC = () => {
           {/* Overlay para cerrar el dropdown */}
           <div
             className="fixed inset-0 z-10"
+            role="button"
+            tabIndex={0}
+            aria-label="Close language menu"
             onClick={() => setIsOpen(false)}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setIsOpen(false)}
           />
 
           {/* Dropdown menu */}
@@ -58,7 +63,7 @@ const LanguageSelector: React.FC = () => {
                 <button
                   key={language.code}
                   onClick={() => changeLanguage(language.code)}
-                  className={`w-full px-3 py-1 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 ${
+                  className={`w-full px-3 py-1 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 ${
                     i18n.language === language.code
                       ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
                       : 'text-gray-700 dark:text-gray-300'
