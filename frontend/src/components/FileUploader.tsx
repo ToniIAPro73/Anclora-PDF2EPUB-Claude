@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import Container from './Container';
+import Toast from './Toast';
 
 interface FileUploaderProps {
   onFileSelected?: (file: File) => void;
@@ -19,6 +20,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { user, token } = useAuth();
+  const [toast, setToast] = useState<{ message: string; type: 'info' | 'success' | 'error' } | null>(null);
 
   const PENDING_FILE_KEY = 'pendingFile';
 
@@ -79,7 +81,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
         `🎯 ${t('fileUploader.usingEngine')}: ${engineName}\n\n` +
         `⏳ ${t('fileUploader.pleaseWait')}`;
 
-      alert(startMessage);
+      setToast({ message: startMessage, type: 'info' });
 
       // Preparar datos para la conversión
       const formData = new FormData();
@@ -109,7 +111,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
         `🆔 Task ID: ${data.task_id}\n\n` +
         `📊 ${t('fileUploader.checkHistory')}`;
 
-      alert(successMessage);
+      setToast({ message: successMessage, type: 'success' });
 
       // Opcional: llamar al callback si existe
       if (_onConversionStarted) {
@@ -126,7 +128,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
       setError(error.message);
 
       const errorMessage = `❌ ${t('fileUploader.conversionError')}\n\n${error.message}`;
-      alert(errorMessage);
+      setToast({ message: errorMessage, type: 'error' });
     }
     finally {
       clearPendingFile();
@@ -206,7 +208,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
           `🎯 ${t('fileUploader.recommendedEngine')}: ${recommendedName}\n\n` +
           `💡 ${t('fileUploader.loginToConvert')}`;
 
-        alert(analysisMessage);
+        setToast({ message: analysisMessage, type: 'info' });
 
         await savePendingFile(fileToUse);
 
@@ -288,6 +290,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
   };
 
   return (
+    <>
     <Container>
       <div
         {...getRootProps()}
@@ -454,6 +457,14 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
         </div>
       )}
     </Container>
+    {toast && (
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(null)}
+      />
+    )}
+    </>
   );
 };
 

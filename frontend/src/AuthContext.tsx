@@ -9,6 +9,7 @@ import React, {
 import { supabase } from './lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
 import i18n from './i18n';
+import Toast from './components/Toast';
 
 interface AuthContextType {
   user: User | null;
@@ -31,6 +32,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
   const [language, setLanguage] = useState<string>(() => localStorage.getItem('language') || localStorage.getItem('i18nextLng') || 'es');
   const refreshTimer = useRef<NodeJS.Timeout | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'info' | 'success' | 'error' } | null>(null);
 
   const scheduleRefresh = (currentSession: Session | null) => {
     if (refreshTimer.current) {
@@ -71,7 +73,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(null);
       setSession(null);
       setToken(null);
-      alert(i18n.t('auth.sessionExpired'));
+      setToast({ message: i18n.t('auth.sessionExpired'), type: 'error' });
     }
   };
 
@@ -141,6 +143,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   return (
     <AuthContext.Provider value={{ user, session, token, loading, login, register, logout, language, setLanguage }}>
       {children}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </AuthContext.Provider>
   );
 };
