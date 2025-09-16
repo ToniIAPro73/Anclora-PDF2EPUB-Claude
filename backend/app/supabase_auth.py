@@ -38,11 +38,16 @@ def supabase_auth_required(f):
     def decorated_function(*args, **kwargs):
         # Get the Authorization header
         auth_header = request.headers.get('Authorization', '')
+        logger.info(f"🔍 Auth header received: {auth_header[:50]}..." if auth_header else "🔍 NO AUTH HEADER")
         
         # Extract token
         token = extract_token_from_header(auth_header)
         if not token:
-            logger.warning("Missing or invalid authorization header")
+            logger.error(f"🔍 Failed to extract token from header: '{auth_header}'")
+            logger.error("🔍 All headers received:")
+            for header, value in request.headers:
+                if 'auth' in header.lower():
+                    logger.error(f"🔍   {header}: {value[:50]}...")
             return jsonify({
                 'error': 'Authentication required',
                 'message': 'Missing or invalid authorization header'

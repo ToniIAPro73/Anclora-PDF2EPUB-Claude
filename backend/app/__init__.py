@@ -34,13 +34,16 @@ REQUEST_LATENCY = Histogram(
 
 def create_app():
     app = Flask(__name__)
+    
+    # No CORS needed - using frontend proxy instead
 
     handler = logging.StreamHandler()
     handler.setFormatter(JsonFormatter())
     root = logging.getLogger()
     root.handlers = [handler]
-    root.setLevel(logging.INFO)
+    root.setLevel(logging.DEBUG)  # Changed to DEBUG for more verbose logging
     app.logger = logging.getLogger(__name__)
+    app.logger.setLevel(logging.DEBUG)
 
     # Configuración desde variables de entorno
     app.config.from_mapping(
@@ -87,8 +90,10 @@ def create_app():
 
     # Registrar rutas
     from . import routes
+    from . import test_routes
 
     app.register_blueprint(routes.bp)
+    app.register_blueprint(test_routes.test_bp)
 
     @app.errorhandler(429)
     def ratelimit_handler(e):

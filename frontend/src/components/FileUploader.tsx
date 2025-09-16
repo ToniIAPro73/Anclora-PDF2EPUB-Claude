@@ -88,11 +88,18 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
       formData.append('file', file);
       formData.append('pipeline_id', engineName);
 
-      // Hacer la llamada a la API de conversión
+      // Debug: Log token information
+      console.log('🔍 Debug: Token available:', !!token);
+      console.log('🔍 Debug: Token preview:', token ? token.substring(0, 50) + '...' : 'NO TOKEN');
+      console.log('🔍 Debug: User info:', user ? { id: user.id, email: user.email } : 'NO USER');
+      
+      // Hacer la llamada a la API de conversión (via proxy)
       const response = await fetch('/api/convert', {
         method: 'POST',
         body: formData,
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       });
 
       if (response.status === 401) {

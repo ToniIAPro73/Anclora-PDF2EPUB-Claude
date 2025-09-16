@@ -100,7 +100,9 @@ def verify_supabase_token(token: str) -> Optional[Dict[str, Any]]:
         return None
     
     try:
-        logger.info(f"Verifying token with JWT secret (length: {len(SupabaseConfig.get_jwt_secret())})")
+        logger.info(f"🔍 Verifying token: {token[:30]}...")
+        logger.info(f"🔍 JWT secret length: {len(SupabaseConfig.get_jwt_secret())}")
+        
         # Decode the token with proper error handling
         payload = jwt.decode(
             token,
@@ -108,7 +110,10 @@ def verify_supabase_token(token: str) -> Optional[Dict[str, Any]]:
             algorithms=["HS256"],
             options={"verify_aud": False}  # Don't verify audience claim
         )
-        logger.info(f"Token decoded successfully. Issuer: {payload.get('iss')}, User: {payload.get('sub')[:8]}...")
+        logger.info(f"🔍 Token decoded successfully!")
+        logger.info(f"🔍 Issuer: {payload.get('iss')}")
+        logger.info(f"🔍 User: {payload.get('sub')}")
+        logger.info(f"🔍 Expires: {payload.get('exp')}")
         
         # Validate the token is from Supabase
         if payload.get('iss') != 'supabase':
