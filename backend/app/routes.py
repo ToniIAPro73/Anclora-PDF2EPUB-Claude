@@ -140,10 +140,28 @@ def convert():
             logger.error(f"Failed to create conversion record for user {user_id}")
             return jsonify({'error': 'Failed to create conversion record'}), 500
         
+        # Clean up any previous failed tasks for this user
+        try:
+            import redis
+            r = redis.Redis(
+                host='localhost',
+                port=6379,
+                password='XNdpx7I-taa6vZDF3ttieYd1gxs0oE9e9xHt4utbkCQ',
+                db=0
+            )
+            # Get all celery task keys
+            celery_keys = r.keys('celery-task-meta-*')
+            if celery_keys:
+                logger.info(f"Cleaning up {len(celery_keys)} previous tasks before starting new conversion")
+                for key in celery_keys:
+                    r.delete(key)
+        except Exception as cleanup_error:
+            logger.warning(f"Failed to cleanup previous tasks: {cleanup_error}")
+
         # Start asynchronous conversion task
         logger.info(f"Starting conversion task {task_id} for user {user_id}")
         convert_pdf_to_epub.apply_async(
-            args=[task_id, pdf_path, epub_path, pipeline_id], 
+            args=[task_id, pdf_path, epub_path, pipeline_id],
             task_id=task_id
         )
         

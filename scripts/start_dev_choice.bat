@@ -8,11 +8,16 @@ echo ANCLORA PDF2EPUB - INICIAR DESARROLLO
 echo =====================================================
 echo.
 
+REM Obtener carpeta padre del script (salir de scripts/ al repo)
+for %%i in ("%~dp0..") do set "REPO_ROOT=%%~fi"
+
 REM Crear script VBS para seleccionar carpeta
 echo Set objShell = CreateObject("Shell.Application") > "%TEMP%\selectfolder.vbs"
-echo Set objFolder = objShell.BrowseForFolder(0, "Selecciona la carpeta del proyecto Anclora PDF2EPUB", 0, "%CD%") >> "%TEMP%\selectfolder.vbs"
+echo Set objFolder = objShell.BrowseForFolder(0, "Selecciona la carpeta del proyecto Anclora PDF2EPUB", ^&H0001, "%REPO_ROOT%") >> "%TEMP%\selectfolder.vbs"
 echo If Not objFolder Is Nothing Then >> "%TEMP%\selectfolder.vbs"
 echo     WScript.Echo objFolder.Self.Path >> "%TEMP%\selectfolder.vbs"
+echo Else >> "%TEMP%\selectfolder.vbs"
+echo     WScript.Echo "CANCELLED" >> "%TEMP%\selectfolder.vbs"
 echo End If >> "%TEMP%\selectfolder.vbs"
 
 REM Ejecutar selector y obtener carpeta
@@ -21,9 +26,15 @@ for /f "delims=" %%i in ('cscript //nologo "%TEMP%\selectfolder.vbs"') do set PR
 REM Limpiar archivo temporal
 del "%TEMP%\selectfolder.vbs" >nul 2>&1
 
-REM Verificar si se selecciono carpeta
+REM Verificar si se selecciono carpeta o se cancelo
 if "%PROJECT_FOLDER%"=="" (
     echo No se selecciono ninguna carpeta. Saliendo...
+    pause
+    exit /b 1
+)
+
+if "%PROJECT_FOLDER%"=="CANCELLED" (
+    echo Seleccion cancelada por el usuario. Saliendo...
     pause
     exit /b 1
 )

@@ -5,6 +5,7 @@ import { ApiError } from "../lib/errors";
 import { apiGet, apiPost } from "../lib/apiClient";
 import PreviewModal from "./PreviewModal";
 import Toast from "./Toast";
+import CircularProgress from "./CircularProgress";
 import { useTranslation } from "react-i18next";
 
 interface ConversionPanelProps {
@@ -172,33 +173,77 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
     <div className="conversion-panel">
       {isAnalyzing && <p>{t("conversionPanel.analyzing")}</p>}
       {pipelines.length > 0 && (
-        <div className="pipeline-list">
-          <h3>{t("conversionPanel.options")}</h3>
-          <ul>
+        <div className="pipeline-selection">
+          <h3 className="text-lg font-semibold mb-6 text-center" style={{color: '#23436B'}}>{t("conversionPanel.options")}</h3>
+          <div className="grid grid-cols-3 gap-3 max-w-md mx-auto">
             {pipelines.map((p) => (
-              <li key={p.id}>
-                <label>
-                  <input
-                    type="radio"
-                    name="pipeline"
-                    value={p.id}
-                    checked={selectedPipeline === p.id}
-                    onChange={() => setSelectedPipeline(p.id)}
-                  />
-                  {t(`engines.${p.quality}`)} - {p.estimated_time}s
-                </label>
-              </li>
+              <div
+                key={p.id}
+                onClick={() => setSelectedPipeline(p.id)}
+                className="pipeline-card cursor-pointer relative transition-all duration-300 hover:scale-105"
+                style={{
+                  background: selectedPipeline === p.id
+                    ? `linear-gradient(135deg, ${
+                        p.quality === 'low' ? '#38BDF8, #2EAFC4' :
+                        p.quality === 'medium' ? '#2EAFC4, #FFC979' :
+                        '#FFC979, #23436B'
+                      })`
+                    : 'linear-gradient(135deg, #F6F7F9, #FFFFFF)',
+                  border: selectedPipeline === p.id ? '2px solid #23436B' : '2px solid #E1E8ED',
+                  borderRadius: '12px',
+                  padding: '16px 12px',
+                  boxShadow: selectedPipeline === p.id
+                    ? '0 8px 25px rgba(46, 175, 196, 0.3)'
+                    : '0 2px 8px rgba(0, 0, 0, 0.08)',
+                  minHeight: '120px'
+                }}
+              >
+                <div className="text-center h-full flex flex-col justify-between">
+                  <div className={`w-3 h-3 rounded-full mx-auto mb-2 ${
+                    selectedPipeline === p.id ? 'bg-white shadow-sm' :
+                    p.quality === 'low' ? 'bg-gradient-to-r from-green-400 to-green-500' :
+                    p.quality === 'medium' ? 'bg-gradient-to-r from-yellow-400 to-orange-400' :
+                    'bg-gradient-to-r from-orange-400 to-red-500'
+                  }`} style={{
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                  }}></div>
+
+                  <h4 className="font-semibold text-sm mb-1" style={{
+                    color: selectedPipeline === p.id ? '#FFFFFF' : '#23436B',
+                    textShadow: selectedPipeline === p.id ? '0 1px 2px rgba(0,0,0,0.2)' : 'none'
+                  }}>
+                    {t(`engines.${p.quality}`)}
+                  </h4>
+
+                  <p className="text-xs mb-1" style={{
+                    color: selectedPipeline === p.id ? 'rgba(255,255,255,0.9)' : '#162032',
+                    opacity: 0.8
+                  }}>
+                    {p.estimated_time}s
+                  </p>
+
+                  <div className="text-xs" style={{
+                    color: selectedPipeline === p.id ? 'rgba(255,255,255,0.8)' : '#162032',
+                    opacity: 0.7
+                  }}>
+                    {p.quality === 'low' && '⚡'}
+                    {p.quality === 'medium' && '⚖️'}
+                    {p.quality === 'high' && '✨'}
+                  </div>
+
+                  {selectedPipeline === p.id && (
+                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center" style={{
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+                    }}>
+                      <span className="text-xs text-blue-600">✓</span>
+                    </div>
+                  )}
+                </div>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
       )}
-      <button 
-        onClick={startConversion} 
-        disabled={!file || !selectedPipeline || isConverting}
-        className="btn btn-primary mt-4"
-      >
-        {isConverting ? t("conversionPanel.converting") : t("conversionPanel.submit")}
-      </button>
       {isConverting && (
         <div className="w-full mt-4">
           <div className="w-full bg-gray-200 rounded h-4">
@@ -212,7 +257,6 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
           </p>
         </div>
       )}
-      {taskId && <p>{t("conversionPanel.taskId", { id: taskId })}</p>}
       {status && !isConverting && <p>{t("conversionPanel.status", { status })}</p>}
       {error && (
         <Toast

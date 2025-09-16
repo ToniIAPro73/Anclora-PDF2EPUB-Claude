@@ -54,7 +54,13 @@ PIPELINE_STEP_LATENCY = Histogram(
 )
 
 if os.environ.get("WORKER_METRICS_PORT"):
-    start_http_server(int(os.environ["WORKER_METRICS_PORT"]))
+    try:
+        port = int(os.environ["WORKER_METRICS_PORT"])
+        start_http_server(port)
+        logger.info(f"Prometheus metrics server started on port {port}")
+    except Exception as e:
+        logger.warning(f"Failed to start Prometheus metrics server: {e}. Continuing without metrics.")
+        pass
 
 converter = EnhancedPDFToEPUBConverter()
 
@@ -95,7 +101,14 @@ def convert_pdf_to_epub(self, task_id, input_path, output_path=None, pipeline=No
     """
 
     start_time = time.time()
-    pipeline = pipeline or ["conversion"]
+
+    # Convert pipeline_id to pipeline steps if needed
+    if isinstance(pipeline, str):
+        # If pipeline is a string (pipeline_id), convert to steps
+        pipeline = ["analysis", "conversion"]  # Always analyze first, then convert
+    else:
+        pipeline = pipeline or ["conversion"]
+
     total_steps = len(pipeline)
     pipeline_metrics = []
 
