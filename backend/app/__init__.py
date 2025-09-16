@@ -1,15 +1,15 @@
 from flask import Flask, Response, request, jsonify
 from . import config  # Import config to load environment variables
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+# from flask_limiter import Limiter
+# from flask_limiter.util import get_remote_address
 from datetime import datetime
 import os
 import time
 import logging
 import json
-from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+# from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 
-limiter = Limiter(key_func=get_remote_address)
+# limiter = Limiter(key_func=get_remote_address)
 
 class JsonFormatter(logging.Formatter):
     """Simple JSON formatter for structured logs."""
@@ -25,12 +25,12 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(log_record)
 
 
-REQUEST_COUNT = Counter(
-    "http_requests_total", "Total HTTP requests", ["method", "endpoint", "http_status"]
-)
-REQUEST_LATENCY = Histogram(
-    "http_request_duration_seconds", "HTTP request latency", ["method", "endpoint"]
-)
+# REQUEST_COUNT = Counter(
+#     "http_requests_total", "Total HTTP requests", ["method", "endpoint", "http_status"]
+# )
+# REQUEST_LATENCY = Histogram(
+#     "http_request_duration_seconds", "HTTP request latency", ["method", "endpoint"]
+# )
 
 def create_app():
     app = Flask(__name__)
@@ -57,7 +57,7 @@ def create_app():
         JWT_EXPIRATION=int(os.environ.get('JWT_EXPIRATION', 3600)),
     )
 
-    limiter.init_app(app)
+    # limiter.init_app(app)
 
     # Asegurarse de que existan los directorios
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
@@ -71,8 +71,8 @@ def create_app():
     @app.after_request
     def log_request(response):  # pragma: no cover - simple middleware
         latency = time.time() - getattr(request, "start_time", time.time())
-        REQUEST_COUNT.labels(request.method, request.path, response.status_code).inc()
-        REQUEST_LATENCY.labels(request.method, request.path).observe(latency)
+        # REQUEST_COUNT.labels(request.method, request.path, response.status_code).inc()
+        # REQUEST_LATENCY.labels(request.method, request.path).observe(latency)
         app.logger.info(
             "request",
             extra={
@@ -84,15 +84,15 @@ def create_app():
         )
         return response
 
-    @app.route("/metrics")
-    def metrics():
-        return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
+    # @app.route("/metrics")
+    # def metrics():
+    #     return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
 
     # Registrar rutas
-    from . import routes
+    # from . import routes
     from . import test_routes
 
-    app.register_blueprint(routes.bp)
+    # app.register_blueprint(routes.bp)
     app.register_blueprint(test_routes.test_bp)
 
     @app.errorhandler(429)
