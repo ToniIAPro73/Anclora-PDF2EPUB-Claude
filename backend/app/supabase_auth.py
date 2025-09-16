@@ -50,9 +50,11 @@ def supabase_auth_required(f):
         
         # Verify the token
         try:
+            logger.info(f"Attempting to verify token: {token[:30]}...")
             user_info = verify_supabase_token(token)
             if not user_info:
-                logger.warning("Invalid or expired token")
+                logger.error(f"Token verification failed for token: {token[:50]}...")
+                logger.error("Possible causes: expired token, wrong JWT secret, or format issue")
                 return jsonify({
                     'error': 'Authentication failed',
                     'message': 'Invalid or expired token'

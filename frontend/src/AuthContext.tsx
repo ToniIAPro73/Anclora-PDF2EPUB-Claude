@@ -40,7 +40,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
     const expiresAt = currentSession?.expires_at ? currentSession.expires_at * 1000 : null;
     if (expiresAt) {
-      const timeout = Math.max(expiresAt - Date.now() - 60_000, 0);
+      // Refresh 5 minutes before expiry instead of 1 minute
+      const timeout = Math.max(expiresAt - Date.now() - 300_000, 10_000);
+      console.log(`Token refresh scheduled in ${Math.round(timeout / 1000)} seconds`);
       refreshTimer.current = setTimeout(refreshSession, timeout);
     }
   };
@@ -84,12 +86,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setToken(session?.access_token ?? null);
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.warn('Session error, clearing invalid session:', error.message);
+        supabase.auth.signOut();
+        setSession(null);
+        setUser(null);
+        setToken(null);
+        setToast({
+          title: 'Session Expired',
+          message: 'Please log in again due to security updates.',
+          variant: 'error'
+        });
+      } else {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setToken(session?.access_token ?? null);
+        scheduleRefresh(session);
+      }
       setLoading(false);
-      scheduleRefresh(session);
     });
 
     // Listen for auth changes

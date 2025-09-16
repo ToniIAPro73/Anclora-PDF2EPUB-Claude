@@ -51,8 +51,39 @@ is_valid = SupabaseConfig.validate()
 if not is_valid:
     logger.warning("Supabase configuration is incomplete - authentication may fail")
 
-# Create Supabase client with secret key (for backend operations)
-supabase: Client = create_client(SupabaseConfig.URL, SupabaseConfig.SECRET_KEY)
+# Lazy initialization of Supabase client
+_supabase_client: Optional[Client] = None
+
+def get_supabase_client() -> Client:
+    """Get or create the Supabase client"""
+    global _supabase_client
+    if _supabase_client is None:
+        # Refresh config values in case they were loaded after module import
+        from . import config  # This ensures env vars are loaded
+        url = os.getenv("SUPABASE_URL", SupabaseConfig.URL)
+        secret_key = os.getenv("SUPABASE_SECRET_KEY", SupabaseConfig.SECRET_KEY)
+        
+        logger.info(f"Initializing Supabase client with URL: {url}")
+        logger.info(f"Secret key length: {len(secret_key)}")
+        
+        try:
+            _supabase_client = create_client(url, secret_key)
+            logger.info("✅ Supabase client initialized successfully")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize Supabase client: {e}")
+            logger.warning("🔄 Falling back to mock client for development")
+            from .supabase_client_minimal import LocalSupabaseClient
+            _supabase_client = LocalSupabaseClient()
+    return _supabase_client
+
+# For backward compatibility, create a property that behaves like the old global variable
+class SupabaseClientWrapper:
+    def __getattr__(self, name):
+        """Forward all attribute access to the actual Supabase client"""
+        return getattr(get_supabase_client(), name)
+
+# Create wrapper instance - this won't initialize the client until accessed
+supabase = SupabaseClientWrapper()
 
 def verify_supabase_token(token: str) -> Optional[Dict[str, Any]]:
     """
@@ -69,6 +100,7 @@ def verify_supabase_token(token: str) -> Optional[Dict[str, Any]]:
         return None
     
     try:
+        logger.info(f"Verifying token with JWT secret (length: {len(SupabaseConfig.get_jwt_secret())})")
         # Decode the token with proper error handling
         payload = jwt.decode(
             token,
@@ -76,6 +108,7 @@ def verify_supabase_token(token: str) -> Optional[Dict[str, Any]]:
             algorithms=["HS256"],
             options={"verify_aud": False}  # Don't verify audience claim
         )
+        logger.info(f"Token decoded successfully. Issuer: {payload.get('iss')}, User: {payload.get('sub')[:8]}...")
         
         # Validate the token is from Supabase
         if payload.get('iss') != 'supabase':
@@ -110,7 +143,7 @@ def create_conversion_record(user_id: str, task_id: str, input_filename: str) ->
     Create a new conversion record in Supabase
     """
     try:
-        result = supabase.table('conversions').insert({
+        result = get_supabase_client().table('conversions').insert({
             'task_id': task_id,
             'user_id': user_id,
             'status': 'PENDING',
@@ -130,7 +163,7 @@ def update_conversion_status(task_id: str, status: str, **kwargs) -> bool:
         update_data = {'status': status}
         update_data.update(kwargs)
 
-        result = supabase.table('conversions').update(update_data).eq('task_id', task_id).execute()
+        result = get_supabase_client().table('conversions').update(update_data).eq('task_id', task_id).execute()
         return len(result.data) > 0
     except Exception as e:
         logger.error(f"Error updating conversion status: {e}")
@@ -141,7 +174,7 @@ def get_user_conversions(user_id: str, limit: int = 10, offset: int = 0) -> list
     Get user's conversion history
     """
     try:
-        result = supabase.table('conversions')\
+        result = get_supabase_client().table('conversions')\
             .select('*')\
             .eq('user_id', user_id)\
             .order('created_at', desc=True)\
@@ -159,7 +192,7 @@ def get_conversion_by_task_id(task_id: str) -> Optional[Dict[str, Any]]:
     Get conversion by task ID
     """
     try:
-        result = supabase.table('conversions')\
+        result = get_supabase_client().table('conversions')\
             .select('*')\
             .eq('task_id', task_id)\
             .single()\
