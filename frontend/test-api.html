@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API Connection Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        async function testAPI() {
+            const results = document.getElementById('results');
+            
+            try {
+                // Test 1: Simple GET request
+                results.innerHTML += '<h2>Test 1: GET /api/test/ping</h2>';
+                const response1 = await fetch('/api/test/ping', {
+                    method: 'GET',
+                    mode: 'cors',
+                    credentials: 'include'
+                });
+                
+                if (response1.ok) {
+                    const data1 = await response1.json();
+                    results.innerHTML += `<p style="color: green;">✅ Success: ${JSON.stringify(data1)}</p>`;
+                } else {
+                    results.innerHTML += `<p style="color: red;">❌ Failed: ${response1.status} ${response1.statusText}</p>`;
+                }
+                
+                // Test 2: POST request with FormData
+                results.innerHTML += '<h2>Test 2: POST /api/test/convert-no-auth</h2>';
+                const formData = new FormData();
+                const blob = new Blob(['test content'], { type: 'text/plain' });
+                formData.append('file', blob, 'test.txt');
+                
+                const response2 = await fetch('/api/test/convert-no-auth', {
+                    method: 'POST',
+                    body: formData,
+                    mode: 'cors',
+                    credentials: 'include'
+                });
+                
+                if (response2.ok) {
+                    const data2 = await response2.json();
+                    results.innerHTML += `<p style="color: green;">✅ Success: ${JSON.stringify(data2)}</p>`;
+                } else {
+                    results.innerHTML += `<p style="color: red;">❌ Failed: ${response2.status} ${response2.statusText}</p>`;
+                }
+                
+            } catch (error) {
+                results.innerHTML += `<p style="color: red;">❌ Error: ${error.message}</p>`;
+                console.error('API Test Error:', error);
+            }
+        }
+        
+        // Run tests when page loads
+        window.addEventListener('load', testAPI);
+    </script>
+</body>
+</html>

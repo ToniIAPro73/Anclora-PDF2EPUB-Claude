@@ -36,7 +36,18 @@ def create_app():
     app = Flask(__name__)
     
     # Habilitamos CORS para todas las rutas
-    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+    # Configuración específica para desarrollo - permite localhost en diferentes puertos
+    allowed_origins = [
+        "http://localhost:5178",  # Frontend dev server
+        "http://127.0.0.1:5178",  # Alternative localhost
+        "http://localhost:3000",  # Alternative frontend port
+        "http://127.0.0.1:3000"   # Alternative localhost
+    ]
+    CORS(app,
+         resources={r"/*": {"origins": allowed_origins}},
+         supports_credentials=True,
+         allow_headers=["Content-Type", "Authorization"],
+         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 
     handler = logging.StreamHandler()
     handler.setFormatter(JsonFormatter())
@@ -90,11 +101,13 @@ def create_app():
     #     return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
 
     # Registrar rutas
-    # from . import routes
+    # from . import routes  # Temporarily disabled due to import issues
     from . import test_routes
+    from . import simple_routes  # Simplified routes without problematic dependencies
 
-    # app.register_blueprint(routes.bp)
+    # app.register_blueprint(routes.bp)  # Temporarily disabled
     app.register_blueprint(test_routes.test_bp)
+    app.register_blueprint(simple_routes.bp)  # Main routes for now
 
     @app.errorhandler(429)
     def ratelimit_handler(e):
