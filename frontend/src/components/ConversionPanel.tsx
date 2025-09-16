@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { ApiError } from "../lib/errors";
+import { apiGet, apiPost } from "../lib/apiClient";
 import PreviewModal from "./PreviewModal";
 import Toast from "./Toast";
 import { useTranslation } from "react-i18next";
@@ -37,7 +38,7 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
   const [pipelines, setPipelines] = useState<PipelineOption[]>([]);
   const [selectedPipeline, setSelectedPipeline] = useState<string>("");
   const [showPreview, setShowPreview] = useState(false);
-  const { api, logout } = useAuth();
+  const { token, logout } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -52,7 +53,8 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
       const formData = new FormData();
       formData.append("file", file);
       
-      const data = await api.post("analyze", formData);
+      console.log("Analyzing file with token:", token ? "Present" : "Missing");
+      const data = await apiPost("analyze", formData, token);
       setPipelines(data.pipelines || []);
       
       // Auto-select the recommended pipeline if available
@@ -63,7 +65,7 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
       }
     } catch (err) {
       console.error("Error analyzing file:", err);
-      if (err instanceof ApiError && err.isAuthError()) {
+      if (err instanceof ApiError && err.code === "UNAUTHORIZED") {
         logout();
         navigate("/login");
         return;
@@ -97,12 +99,13 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
       formData.append("file", file);
       formData.append("pipeline_id", selectedPipeline);
       
-      const data = await api.post("convert", formData);
+      console.log("Starting conversion with token:", token ? "Present" : "Missing");
+      const data = await apiPost("convert", formData, token);
       setTaskId(data.task_id);
       pollStatus(data.task_id);
     } catch (err) {
       console.error("Error starting conversion:", err);
-      if (err instanceof ApiError && err.isAuthError()) {
+      if (err instanceof ApiError && err.code === "UNAUTHORIZED") {
         logout();
         navigate("/login");
         return;
@@ -115,7 +118,8 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
   const pollStatus = (id: string) => {
     const interval = setInterval(async () => {
       try {
-        const data = await api.get<StatusResponse>(`status/${id}`);
+        console.log("Checking status with token:", token ? "Present" : "Missing");
+        const data = await apiGet<StatusResponse>(`status/${id}`, token);
         
         setStatus(data.status);
         if (data.status === "PROGRESS") {
@@ -151,7 +155,7 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
       } catch (err) {
         clearInterval(interval);
         setIsConverting(false);
-        if (err instanceof ApiError && err.isAuthError()) {
+        if (err instanceof ApiError && err.code === "UNAUTHORIZED") {
           logout();
           navigate("/login");
           return;

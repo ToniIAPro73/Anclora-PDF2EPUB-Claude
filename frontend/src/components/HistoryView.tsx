@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { ApiError } from "../lib/errors";
+import { apiGet } from "../lib/apiClient";
 
 interface ConversionItem {
   id: number;
@@ -15,17 +16,18 @@ interface ConversionItem {
 const HistoryView: React.FC = () => {
   const [history, setHistory] = useState<ConversionItem[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const { api } = useAuth();
+  const { token } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const data = await api.get<ConversionItem[]>("history");
+        console.log("Fetching history with token:", token ? "Present" : "Missing");
+        const data = await apiGet<ConversionItem[]>("history", token);
         setHistory(data);
       } catch (err) {
         console.error("Error fetching history:", err);
-        if (err instanceof ApiError && err.isAuthError()) {
+        if (err instanceof ApiError && err.code === "UNAUTHORIZED") {
           navigate("/login");
           return;
         }
@@ -33,7 +35,7 @@ const HistoryView: React.FC = () => {
       }
     };
     fetchHistory();
-  }, [api, navigate]);
+  }, [token, navigate]);
 
   return (
     <div className="history-view p-4 md:p-6 text-sm md:text-base">

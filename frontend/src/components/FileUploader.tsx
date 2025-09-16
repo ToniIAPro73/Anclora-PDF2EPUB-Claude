@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { ApiError } from "../lib/errors";
+import { apiPost } from "../lib/apiClient";
 import Container from "./Container";
 import Toast from "./Toast";
 
@@ -23,7 +24,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
   const [_forceUpdate, setForceUpdate] = useState(0);
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { user, token, session, api } = useAuth();
+  const { user, token, session } = useAuth();
   const [toast, setToast] = useState<{ 
     title: string; 
     message: string; 
@@ -96,9 +97,9 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       formData.append("file", file);
       formData.append("pipeline_id", engineName);
 
-      // Use the API client from auth context
+      // Use the direct apiPost function with token
       console.log("Making API request to convert with token:", token ? "Present" : "Missing");
-      const data = await api.post("convert", formData);
+      const data = await apiPost("convert", formData, token);
 
       // Conversión iniciada exitosamente
       const successMessage = `✅ ${t("fileUploader.conversionStarted")}\n\n` +
@@ -187,9 +188,9 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       console.log("Debug - user:", !!user, "token:", !!token, "session:", !!session);
       console.log("Debug - token preview:", token ? token.substring(0, 20) + "..." : "null");
 
-      // Use the API client from auth context
+      // Use the direct apiPost function with token
       console.log("Making API request to analyze with token:", token ? "Present" : "Missing");
-      const analyzeData = await api.post("analyze", formData);
+      const analyzeData = await apiPost("analyze", formData, token);
 
       // 2. Mostrar análisis y recomendación
       const engineName = analyzeData.recommended || analyzeData.pipeline_id || "balanced";

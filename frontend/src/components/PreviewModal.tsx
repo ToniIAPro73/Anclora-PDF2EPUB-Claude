@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../AuthContext";
 import { ApiError } from "../lib/errors";
+import { apiGet } from "../lib/apiClient";
 import renderMathInElement from "katex/contrib/auto-render";
 import { createSafeHTML, SanitizationMetrics } from "../utils/sanitize";
 
@@ -27,7 +28,7 @@ interface PreviewResponse {
 }
 
 const PreviewModal: React.FC<PreviewModalProps> = ({ taskId, onClose }) => {
-  const { api } = useAuth();
+  const { token } = useAuth();
   const [pages, setPages] = useState<string[]>([]);
   const [index, setIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -38,12 +39,13 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ taskId, onClose }) => {
     const load = async () => {
       try {
         setLoading(true);
-        const data = await api.get<PreviewResponse>(`preview/${taskId}`);
+        console.log("Loading preview with token:", token ? "Present" : "Missing");
+        const data = await apiGet<PreviewResponse>(`preview/${taskId}`, token);
         setPages(data.pages || []);
         setError(null);
       } catch (err) {
         console.error("Error loading preview:", err);
-        if (err instanceof ApiError && err.isAuthError()) {
+        if (err instanceof ApiError && err.code === "UNAUTHORIZED") {
           setError("Session expired. Please log in again.");
         } else {
           setError(err instanceof Error ? err.message : "Failed to load preview");
@@ -53,7 +55,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ taskId, onClose }) => {
       }
     };
     load();
-  }, [taskId, api]);
+  }, [taskId, token]);
 
   useEffect(() => {
     // Render math equations when pages or index changes
