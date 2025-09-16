@@ -105,3 +105,11 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+# ==============================================================================
+# DEVELOPMENT: Local environment & generated data
+# ==============================================================================
+virtual-env/
+venv/
+venv-py311/
+data/
