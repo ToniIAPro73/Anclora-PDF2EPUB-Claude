@@ -15,7 +15,9 @@
       "Bash(pip install:*)",
       "Bash(curl:*)",
       "Bash(/dev/null)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(timeout:*)",
+      "WebFetch(domain:supabase.com)"
     ],
     "deny": [],
     "ask": []
