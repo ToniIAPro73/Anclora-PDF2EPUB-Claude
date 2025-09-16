@@ -1,45 +1,87 @@
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useCallback, useState, useEffect, useMemo } from "react";
 import { useDropzone } from "react-dropzone";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
-import { ApiError } from "../lib/errors";
-import { apiPost } from "../lib/apiClient";
+import { ApiError, NetworkError, ValidationError, FileProcessingError } from "../lib/errors";
+import { apiPost, createFormData } from "../lib/apiClient";
 import Container from "./Container";
 import Toast from "./Toast";
+
+// File storage key in localStorage
+const PENDING_FILE_KEY = "pendingFile";
+
+// Toast configuration interface
+interface ToastConfig {
+  title: string;
+  message: string;
+  variant: "success" | "error" | "warning" | "info";
+}
+
+// File analysis result interface
+interface AnalysisResult {
+  pipelines: Array<{
+    id: string;
+    quality: string;
+    estimated_time: number;
+  }>;
+  recommended?: string;
+  pipeline_id?: string;
+}
+
+// Conversion result interface
+interface ConversionResult {
+  task_id: string;
+  status: string;
+}
 
 interface FileUploaderProps {
   onFileSelected?: (file: File) => void;
   onConversionStarted?: (taskId: string) => void;
 }
 
+/**
+ * Enhanced FileUploader component with optimized file handling and error management
+ */
 const FileUploader: React.FC<FileUploaderProps> = ({ 
   onFileSelected, 
-  onConversionStarted: _onConversionStarted 
+  onConversionStarted 
 }) => {
+  // State management
   const [file, setFile] = useState<File | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiError | Error | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
-  const [_forceUpdate, setForceUpdate] = useState(0);
+  const [toast, setToast] = useState<ToastConfig | null>(null);
+  
+  // Hooks
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { user, token, session } = useAuth();
-  const [toast, setToast] = useState<{ 
-    title: string; 
-    message: string; 
-    variant: "success" | "error" 
-  } | null>(null);
 
-  const PENDING_FILE_KEY = "pendingFile";
+  // Debug logging for authentication state
+  useEffect(() => {
+    console.info("🔐 Auth state:", { 
+      user: !!user, 
+      token: token ? `${token.substring(0, 10)}...` : null,
+      session: !!session 
+    });
+  }, [user, token, session]);
 
-  const clearPendingFile = () => {
+  /**
+   * Clear any pending file from localStorage
+   */
+  const clearPendingFile = useCallback(() => {
     localStorage.removeItem(PENDING_FILE_KEY);
-  };
+  }, []);
 
-  const savePendingFile = (file: File) => {
+  /**
+   * Save file to localStorage for persistence across login
+   */
+  const savePendingFile = useCallback(async (file: File): Promise<void> => {
     return new Promise<void>((resolve, reject) => {
       const reader = new FileReader();
+      
       reader.onload = () => {
         try {
           localStorage.setItem(
@@ -49,130 +91,195 @@ const FileUploader: React.FC<FileUploaderProps> = ({
               type: file.type,
               dataUrl: reader.result,
               route: window.location.pathname,
+              timestamp: Date.now() // Add timestamp for expiration
             })
           );
+          console.info("📁 File saved to localStorage:", file.name);
+          resolve();
         } catch (e) {
-          console.error("Error saving file to localStorage", e);
+          console.error("❌ Error saving file to localStorage:", e);
+          reject(e);
         }
-        resolve();
       };
-      reader.onerror = () => reject(reader.error);
+      
+      reader.onerror = () => {
+        console.error("❌ Error reading file:", reader.error);
+        reject(reader.error);
+      };
+      
       reader.readAsDataURL(file);
     });
-  };
+  }, []);
 
-  const getPendingFile = async (): Promise<{ file: File; route: string } | null> => {
+  /**
+   * Retrieve pending file from localStorage
+   */
+  const getPendingFile = useCallback(async (): Promise<{ file: File; route: string } | null> => {
     const raw = localStorage.getItem(PENDING_FILE_KEY);
     if (!raw) return null;
+    
     try {
-      const { name, type, dataUrl, route } = JSON.parse(raw);
+      const { name, type, dataUrl, route, timestamp } = JSON.parse(raw);
+      
+      // Check if the saved file has expired (24 hours)
+      const MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+      if (Date.now() - timestamp > MAX_AGE) {
+        console.info("📁 Saved file expired, removing from localStorage");
+        clearPendingFile();
+        return null;
+      }
+      
       const res = await fetch(dataUrl);
       const blob = await res.blob();
+      console.info("📁 File retrieved from localStorage:", name);
       return { file: new File([blob], name, { type }), route };
     } catch (e) {
-      console.error("Error reconstructing file from localStorage", e);
+      console.error("❌ Error reconstructing file from localStorage:", e);
       clearPendingFile();
       return null;
     }
-  };
+  }, [clearPendingFile]);
 
-  // Debug logging
-  console.log("FileUploader - Current language:", i18n.language);
-  console.log("FileUploader - uploadTitle translation:", t("fileUploader.uploadTitle"));
+  /**
+   * Display a toast message
+   */
+  const showToast = useCallback((config: ToastConfig) => {
+    setToast(config);
+    // Auto-dismiss success and info toasts after 5 seconds
+    if (config.variant === 'success' || config.variant === 'info') {
+      setTimeout(() => setToast(null), 5000);
+    }
+  }, []);
 
-  // Función para iniciar la conversión real cuando el usuario está autenticado
-  const startActualConversion = async (engineName: string) => {
+  /**
+   * Handle API errors with appropriate user feedback
+   */
+  const handleApiError = useCallback((error: unknown, context: string) => {
+    console.error(`❌ Error in ${context}:`, error);
+    
+    let errorMessage: string;
+    
+    if (error instanceof ApiError) {
+      // Use user-friendly message from specialized error classes
+      errorMessage = error.getUserMessage();
+      
+      // Handle authentication errors
+      if (error.isAuthError()) {
+        return { requiresAuth: true, message: errorMessage };
+      }
+      
+      // Log detailed diagnostics for debugging
+      console.debug("🔍 Error diagnostics:", error.getDiagnostics());
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    } else {
+      errorMessage = "An unknown error occurred";
+    }
+    
+    return { requiresAuth: false, message: errorMessage };
+  }, []);
+
+  /**
+   * Start the actual conversion process
+   */
+  const startActualConversion = useCallback(async (engineName: string) => {
     if (!file) return;
 
     try {
-      // Mostrar mensaje de inicio de conversión
-      const startMessage = `🚀 ${t("fileUploader.startingConversion")}\n\n` +
-        `🎯 ${t("fileUploader.usingEngine")}: ${engineName}\n\n` +
-        `⏳ ${t("fileUploader.pleaseWait")}`;
+      setIsConverting(true);
+      
+      // Show starting conversion toast
+      showToast({ 
+        title: "Info", 
+        message: `🚀 ${t("fileUploader.startingConversion")}\n\n` +
+                 `🎯 ${t("fileUploader.usingEngine")}: ${engineName}\n\n` +
+                 `⏳ ${t("fileUploader.pleaseWait")}`,
+        variant: "info" 
+      });
 
-      setToast({ title: "Info", message: startMessage, variant: "success" });
+      // Create optimized FormData with diagnostic logging
+      const formData = createFormData({
+        file,
+        pipeline_id: engineName
+      });
 
-      // Preparar datos para la conversión
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("pipeline_id", engineName);
+      // Make API request with enhanced error handling
+      const data = await apiPost<ConversionResult>("convert", formData, token);
+      console.info("✅ Conversion started successfully:", data);
 
-      // Use the direct apiPost function with token
-      console.log("Making API request to convert with token:", token ? "Present" : "Missing");
-      const data = await apiPost("convert", formData, token);
+      // Show success toast
+      showToast({ 
+        title: "Success", 
+        message: `✅ ${t("fileUploader.conversionStarted")}\n\n` +
+                 `🆔 Task ID: ${data.task_id}\n\n` +
+                 `📊 ${t("fileUploader.checkHistory")}`,
+        variant: "success" 
+      });
 
-      // Conversión iniciada exitosamente
-      const successMessage = `✅ ${t("fileUploader.conversionStarted")}\n\n` +
-        `🆔 Task ID: ${data.task_id}\n\n` +
-        `📊 ${t("fileUploader.checkHistory")}`;
-
-      setToast({ title: "Success", message: successMessage, variant: "success" });
-
-      // Opcional: llamar al callback si existe
-      if (_onConversionStarted) {
-        _onConversionStarted(data.task_id);
+      // Call the callback if provided
+      if (onConversionStarted) {
+        onConversionStarted(data.task_id);
       }
 
-      // Redirigir al historial para ver el progreso
+      // Redirect to history page after a short delay
       setTimeout(() => {
         navigate("/");
       }, 2000);
 
     } catch (error) {
-      console.error("Error en conversión:", error);
+      const { requiresAuth, message } = handleApiError(error, "conversion");
       
-      if (error instanceof ApiError && error.isAuthError()) {
-        // Token expired, redirect to login
+      if (requiresAuth) {
+        // Save file and redirect to login
         await savePendingFile(file);
         navigate("/login");
         return;
       }
       
-      setError(error instanceof Error ? error.message : "Unknown error");
-
-      const errorMessage = `❌ ${t("fileUploader.conversionError")}\n\n${
-        error instanceof Error ? error.message : "Unknown error"
-      }`;
-      setToast({ title: "Error", message: errorMessage, variant: "error" });
-    }
-    finally {
+      setError(error instanceof Error ? error : new Error(message));
+      showToast({ 
+        title: "Error", 
+        message: `❌ ${t("fileUploader.conversionError")}\n\n${message}`,
+        variant: "error" 
+      });
+    } finally {
+      setIsConverting(false);
       clearPendingFile();
     }
-  };
+  }, [file, token, t, navigate, showToast, handleApiError, savePendingFile, clearPendingFile, onConversionStarted]);
 
-  // Forzar re-render cuando cambie el idioma
-  useEffect(() => {
-    const handleLanguageChange = () => {
-      console.log("FileUploader - Language changed, forcing update");
-      setForceUpdate(prev => prev + 1);
-    };
-
-    i18n.on("languageChanged", handleLanguageChange);
-    return () => {
-      i18n.off("languageChanged", handleLanguageChange);
-    };
-  }, [i18n]);
-
+  /**
+   * Process any pending file when user is authenticated
+   */
   useEffect(() => {
     const processPendingFile = async () => {
       if (!user || !session) return;
+      
       const pending = await getPendingFile();
       if (pending) {
+        // Navigate to the original route if needed
         if (pending.route && pending.route !== window.location.pathname) {
           navigate(pending.route);
         }
+        
+        // Set the file and notify parent component
         setFile(pending.file);
         if (onFileSelected) {
           onFileSelected(pending.file);
         }
+        
+        // Start quick conversion process
         await startQuickConversion(pending.file);
       }
     };
+    
     processPendingFile();
-  }, [user, session]);
+  }, [user, session, getPendingFile, navigate, onFileSelected, startQuickConversion]);
 
-  // Función para análisis rápido y mostrar recomendación
-  const startQuickConversion = async (inputFile?: File) => {
+  /**
+   * Quick analysis and conversion process
+   */
+  const startQuickConversion = useCallback(async (inputFile?: File) => {
     const fileToUse = inputFile || file;
     if (!fileToUse || isConverting) return;
 
@@ -181,75 +288,84 @@ const FileUploader: React.FC<FileUploaderProps> = ({
     setIsConverting(true);
 
     try {
-      // 1. Analizar el archivo para obtener recomendaciones
-      const formData = new FormData();
-      formData.append("file", fileToUse);
+      // Show analyzing toast
+      showToast({ 
+        title: "Info", 
+        message: `🔍 ${t("fileUploader.analyzing")}`,
+        variant: "info" 
+      });
+      
+      // Create FormData with diagnostic logging
+      const formData = createFormData({
+        file: fileToUse
+      });
 
-      console.log("Debug - user:", !!user, "token:", !!token, "session:", !!session);
-      console.log("Debug - token preview:", token ? token.substring(0, 20) + "..." : "null");
+      // Make API request with enhanced error handling
+      console.info("🔍 Analyzing file:", fileToUse.name);
+      const analyzeData = await apiPost<AnalysisResult>("analyze", formData, token);
+      console.info("✅ Analysis complete:", analyzeData);
 
-      // Use the direct apiPost function with token
-      console.log("Making API request to analyze with token:", token ? "Present" : "Missing");
-      const analyzeData = await apiPost("analyze", formData, token);
-
-      // 2. Mostrar análisis y recomendación
+      // Determine recommended engine
       const engineName = analyzeData.recommended || analyzeData.pipeline_id || "balanced";
       const engineNames: Record<string, string> = {
         "rapid": t("engines.rapid"),
         "balanced": t("engines.balanced"),
         "quality": t("engines.quality")
       };
-
       const recommendedName = engineNames[engineName] || engineName;
 
-      // 3. Verificar si el usuario está autenticado
+      // Check if user is authenticated
       if (!user || !token) {
-        // Usuario no autenticado - mostrar mensaje y redirigir al login
-        const analysisMessage = `📊 ${t("fileUploader.analysisComplete")}\n\n` +
-          `🎯 ${t("fileUploader.recommendedEngine")}: ${recommendedName}\n\n` +
-          `💡 ${t("fileUploader.loginToConvert")}`;
-
-        setToast({ title: "Info", message: analysisMessage, variant: "success" });
+        // User not authenticated - show message and redirect to login
+        showToast({ 
+          title: "Info", 
+          message: `📊 ${t("fileUploader.analysisComplete")}\n\n` +
+                   `🎯 ${t("fileUploader.recommendedEngine")}: ${recommendedName}\n\n` +
+                   `💡 ${t("fileUploader.loginToConvert")}`,
+          variant: "info" 
+        });
 
         await savePendingFile(fileToUse);
 
-        // Redirigir al login después de mostrar la información
+        // Redirect to login after showing the information
         setTimeout(() => {
           navigate("/login");
-        }, 1000);
+        }, 1500);
         return;
       } else {
-        // Usuario autenticado - proceder con la conversión
+        // User authenticated - proceed with conversion
         await startActualConversion(engineName);
       }
-
     } catch (error) {
-      console.error("Error en análisis:", error);
+      const { requiresAuth, message } = handleApiError(error, "analysis");
       
-      if (error instanceof ApiError && error.isAuthError()) {
-        // Token expired, redirect to login
+      if (requiresAuth) {
+        // Save file and redirect to login
         await savePendingFile(fileToUse);
         navigate("/login");
         return;
       }
       
-      setError(error instanceof Error ? error.message : "Unknown error");
-      setToast({
+      setError(error instanceof Error ? error : new Error(message));
+      showToast({
         title: "Error",
-        message: `❌ ${t("fileUploader.analyzeError")}\n\n${
-          error instanceof Error ? error.message : "Unknown error"
-        }`,
+        message: `❌ ${t("fileUploader.analyzeError")}\n\n${message}`,
         variant: "error"
       });
     } finally {
       setIsConverting(false);
     }
-  };
+  }, [file, isConverting, token, user, t, navigate, showToast, handleApiError, savePendingFile, startActualConversion]);
 
+  /**
+   * Handle file drop
+   */
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
 
     const selectedFile = acceptedFiles[0];
+    console.info("📄 File selected:", selectedFile.name, `(${formatFileSize(selectedFile.size)})`);
+    
     setFile(selectedFile);
     setError(null);
 
@@ -258,20 +374,40 @@ const FileUploader: React.FC<FileUploaderProps> = ({
     }
   }, [onFileSelected]);
 
+  /**
+   * Configure dropzone
+   */
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
       "application/pdf": [".pdf"]
     },
-    multiple: false
+    multiple: false,
+    maxSize: 25 * 1024 * 1024, // 25MB
+    onDropRejected: (rejections) => {
+      const rejection = rejections[0];
+      if (rejection) {
+        if (rejection.errors[0]?.code === "file-too-large") {
+          setError(new ValidationError("El archivo excede el tamaño máximo permitido (25MB)"));
+        } else {
+          setError(new ValidationError(rejection.errors[0]?.message || "Archivo rechazado"));
+        }
+      }
+    }
   });
 
-  const resetUpload = () => {
+  /**
+   * Reset the upload state
+   */
+  const resetUpload = useCallback(() => {
     setFile(null);
     setError(null);
     clearPendingFile();
-  };
+  }, [clearPendingFile]);
 
+  /**
+   * Format file size for display
+   */
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
@@ -280,32 +416,50 @@ const FileUploader: React.FC<FileUploaderProps> = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
+  /**
+   * Get CSS classes for the dropzone based on state
+   */
+  const dropzoneClasses = useMemo(() => {
+    const baseClasses = "relative overflow-hidden rounded-2xl border-2 border-dashed transition-all duration-300 cursor-pointer";
+    
+    if (isDragActive) {
+      return `${baseClasses} border-blue-400 scale-105`;
+    } else if (file) {
+      return `${baseClasses} border-green-400`;
+    } else if (error) {
+      return `${baseClasses} border-red-400`;
+    } else {
+      return `${baseClasses} border-gray-300 hover:border-gray-400 bg-uploader-pattern`;
+    }
+  }, [isDragActive, file, error]);
+
+  /**
+   * Get CSS styles for the dropzone based on state
+   */
+  const dropzoneStyles = useMemo(() => {
+    const styles: React.CSSProperties = {};
+    
+    if (isDragActive) {
+      styles.borderColor = "var(--accent-primary)";
+      styles.backgroundColor = "rgba(46, 175, 196, 0.15)";
+    } else if (file) {
+      styles.borderColor = "#10b981";
+      styles.backgroundColor = "rgba(16, 185, 129, 0.1)";
+    } else if (error) {
+      styles.borderColor = "#ef4444";
+      styles.backgroundColor = "rgba(239, 68, 68, 0.1)";
+    }
+    
+    return styles;
+  }, [isDragActive, file, error]);
+
   return (
     <>
     <Container>
       <div
         {...getRootProps()}
-        className={`
-          relative overflow-hidden rounded-2xl border-2 border-dashed transition-all duration-300 cursor-pointer
-          ${isDragActive
-            ? "border-blue-400 scale-105"
-            : file
-              ? "border-green-400"
-              : error
-                ? "border-red-400"
-                : "border-gray-300 hover:border-gray-400"
-          }
-          ${isUploading ? "pointer-events-none" : ""}
-          ${!isDragActive && !file && !error ? "bg-uploader-pattern" : ""}
-        `}
-        style={{
-          borderColor: isDragActive ? "var(--accent-primary)" :
-                      file ? "#10b981" :
-                      error ? "#ef4444" : "var(--border-color)",
-          backgroundColor: isDragActive ? "rgba(46, 175, 196, 0.15)" :
-                          file ? "rgba(16, 185, 129, 0.1)" :
-                          error ? "rgba(239, 68, 68, 0.1)" : undefined
-        }}
+        className={dropzoneClasses}
+        style={dropzoneStyles}
       >
         <input {...getInputProps()} />
 
@@ -399,7 +553,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
               border: "1px solid var(--border-color)"
             }}>
               <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                {error}
+                {error instanceof Error ? error.message : String(error)}
               </p>
             </div>
             <button
