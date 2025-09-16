@@ -5,11 +5,12 @@ import React, {
   useEffect,
   ReactNode,
   useRef,
-} from 'react';
-import { supabase } from './lib/supabase';
-import type { User, Session } from '@supabase/supabase-js';
-import i18n from './i18n';
-import Toast from './components/Toast';
+} from "react";
+import { supabase } from "./lib/supabase";
+import type { User, Session } from "@supabase/supabase-js";
+import i18n from "./i18n";
+import Toast from "./components/Toast";
+import { createAuthenticatedApi } from "./lib/apiClient";
 
 interface AuthContextType {
   user: User | null;
@@ -21,6 +22,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   language: string;
   setLanguage: (lang: string) => void;
+  api: ReturnType<typeof createAuthenticatedApi>; // Add API client to context
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,9 +32,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [session, setSession] = useState<Session | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [language, setLanguage] = useState<string>(() => localStorage.getItem('language') || localStorage.getItem('i18nextLng') || 'es');
+  const [language, setLanguage] = useState<string>(() => 
+    localStorage.getItem("language") || 
+    localStorage.getItem("i18nextLng") || 
+    "es"
+  );
   const refreshTimer = useRef<NodeJS.Timeout | null>(null);
-  const [toast, setToast] = useState<{ title: string; message: string; variant: 'success' | 'error' } | null>(null);
+  const [toast, setToast] = useState<{ 
+    title: string; 
+    message: string; 
+    variant: "success" | "error" 
+  } | null>(null);
+
+  // Create API client with token provider
+  const api = createAuthenticatedApi(() => token);
 
   const scheduleRefresh = (currentSession: Session | null) => {
     if (refreshTimer.current) {
@@ -57,7 +70,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setToken(newSession?.access_token ?? null);
       scheduleRefresh(newSession);
     } catch (err) {
-      console.error('Error refreshing session', err);
+      console.error("Error refreshing session", err);
       try {
         const { data } = await supabase.auth.getSession();
         const newSession = data.session;
@@ -75,28 +88,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(null);
       setSession(null);
       setToken(null);
-      setToast({ title: 'Error', message: i18n.t('auth.sessionExpired'), variant: 'error' });
+      setToast({ 
+        title: "Error", 
+        message: i18n.t("auth.sessionExpired"), 
+        variant: "error" 
+      });
     }
   };
 
   useEffect(() => {
     i18n.changeLanguage(language);
-    localStorage.setItem('language', language);
+    localStorage.setItem("language", language);
   }, [language]);
 
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
-        console.warn('Session error, clearing invalid session:', error.message);
+        console.warn("Session error, clearing invalid session:", error.message);
         supabase.auth.signOut();
         setSession(null);
         setUser(null);
         setToken(null);
         setToast({
-          title: 'Session Expired',
-          message: 'Please log in again due to security updates.',
-          variant: 'error'
+          title: "Session Expired",
+          message: "Please log in again due to security updates.",
+          variant: "error"
         });
       } else {
         setSession(session);
@@ -154,7 +171,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, token, loading, login, register, logout, language, setLanguage }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      session, 
+      token, 
+      loading, 
+      login, 
+      register, 
+      logout, 
+      language, 
+      setLanguage,
+      api // Provide API client through context
+    }}>
       {children}
       {toast && (
         <Toast
@@ -171,8 +199,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
-

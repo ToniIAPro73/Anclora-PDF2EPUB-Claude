@@ -1,18 +1,21 @@
-import React, { useCallback, useState, useEffect } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../AuthContext';
-import { apiPost } from '../lib/apiClient';
-import Container from './Container';
-import Toast from './Toast';
+import React, { useCallback, useState, useEffect } from "react";
+import { useDropzone } from "react-dropzone";
+import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../AuthContext";
+import { ApiError } from "../lib/errors";
+import Container from "./Container";
+import Toast from "./Toast";
 
 interface FileUploaderProps {
   onFileSelected?: (file: File) => void;
   onConversionStarted?: (taskId: string) => void;
 }
 
-const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversionStarted: _onConversionStarted }) => {
+const FileUploader: React.FC<FileUploaderProps> = ({ 
+  onFileSelected, 
+  onConversionStarted: _onConversionStarted 
+}) => {
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -20,10 +23,14 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
   const [_forceUpdate, setForceUpdate] = useState(0);
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { user, token, session } = useAuth();
-  const [toast, setToast] = useState<{ title: string; message: string; variant: 'success' | 'error' } | null>(null);
+  const { user, token, session, api } = useAuth();
+  const [toast, setToast] = useState<{ 
+    title: string; 
+    message: string; 
+    variant: "success" | "error" 
+  } | null>(null);
 
-  const PENDING_FILE_KEY = 'pendingFile';
+  const PENDING_FILE_KEY = "pendingFile";
 
   const clearPendingFile = () => {
     localStorage.removeItem(PENDING_FILE_KEY);
@@ -44,7 +51,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
             })
           );
         } catch (e) {
-          console.error('Error saving file to localStorage', e);
+          console.error("Error saving file to localStorage", e);
         }
         resolve();
       };
@@ -62,43 +69,43 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
       const blob = await res.blob();
       return { file: new File([blob], name, { type }), route };
     } catch (e) {
-      console.error('Error reconstructing file from localStorage', e);
+      console.error("Error reconstructing file from localStorage", e);
       clearPendingFile();
       return null;
     }
   };
 
   // Debug logging
-  console.log('FileUploader - Current language:', i18n.language);
-  console.log('FileUploader - uploadTitle translation:', t('fileUploader.uploadTitle'));
+  console.log("FileUploader - Current language:", i18n.language);
+  console.log("FileUploader - uploadTitle translation:", t("fileUploader.uploadTitle"));
 
   // Función para iniciar la conversión real cuando el usuario está autenticado
   const startActualConversion = async (engineName: string) => {
-    if (!file || !token) return;
+    if (!file) return;
 
     try {
       // Mostrar mensaje de inicio de conversión
-      const startMessage = `🚀 ${t('fileUploader.startingConversion')}\n\n` +
-        `🎯 ${t('fileUploader.usingEngine')}: ${engineName}\n\n` +
-        `⏳ ${t('fileUploader.pleaseWait')}`;
+      const startMessage = `🚀 ${t("fileUploader.startingConversion")}\n\n` +
+        `🎯 ${t("fileUploader.usingEngine")}: ${engineName}\n\n` +
+        `⏳ ${t("fileUploader.pleaseWait")}`;
 
-      setToast({ title: 'Info', message: startMessage, variant: 'success' });
+      setToast({ title: "Info", message: startMessage, variant: "success" });
 
       // Preparar datos para la conversión
       const formData = new FormData();
-      formData.append('file', file);
-      formData.append('pipeline_id', engineName);
+      formData.append("file", file);
+      formData.append("pipeline_id", engineName);
 
-      // Use the apiClient utility to make the request
-      console.log('Making API request to convert with token:', token ? 'Present' : 'Missing');
-      const data = await apiPost('convert', formData, token);
+      // Use the API client from auth context
+      console.log("Making API request to convert with token:", token ? "Present" : "Missing");
+      const data = await api.post("convert", formData);
 
       // Conversión iniciada exitosamente
-      const successMessage = `✅ ${t('fileUploader.conversionStarted')}\n\n` +
+      const successMessage = `✅ ${t("fileUploader.conversionStarted")}\n\n` +
         `🆔 Task ID: ${data.task_id}\n\n` +
-        `📊 ${t('fileUploader.checkHistory')}`;
+        `📊 ${t("fileUploader.checkHistory")}`;
 
-      setToast({ title: 'Success', message: successMessage, variant: 'success' });
+      setToast({ title: "Success", message: successMessage, variant: "success" });
 
       // Opcional: llamar al callback si existe
       if (_onConversionStarted) {
@@ -107,23 +114,25 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
 
       // Redirigir al historial para ver el progreso
       setTimeout(() => {
-        navigate('/');
+        navigate("/");
       }, 2000);
 
-    } catch (error: any) {
-      console.error('Error en conversión:', error);
+    } catch (error) {
+      console.error("Error en conversión:", error);
       
-      if (error.message === 'UNAUTHORIZED') {
+      if (error instanceof ApiError && error.isAuthError()) {
         // Token expired, redirect to login
         await savePendingFile(file);
-        navigate('/login');
+        navigate("/login");
         return;
       }
       
-      setError(error.message);
+      setError(error instanceof Error ? error.message : "Unknown error");
 
-      const errorMessage = `❌ ${t('fileUploader.conversionError')}\n\n${error.message}`;
-      setToast({ title: 'Error', message: errorMessage, variant: 'error' });
+      const errorMessage = `❌ ${t("fileUploader.conversionError")}\n\n${
+        error instanceof Error ? error.message : "Unknown error"
+      }`;
+      setToast({ title: "Error", message: errorMessage, variant: "error" });
     }
     finally {
       clearPendingFile();
@@ -133,13 +142,13 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
   // Forzar re-render cuando cambie el idioma
   useEffect(() => {
     const handleLanguageChange = () => {
-      console.log('FileUploader - Language changed, forcing update');
+      console.log("FileUploader - Language changed, forcing update");
       setForceUpdate(prev => prev + 1);
     };
 
-    i18n.on('languageChanged', handleLanguageChange);
+    i18n.on("languageChanged", handleLanguageChange);
     return () => {
-      i18n.off('languageChanged', handleLanguageChange);
+      i18n.off("languageChanged", handleLanguageChange);
     };
   }, [i18n]);
 
@@ -173,21 +182,21 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
     try {
       // 1. Analizar el archivo para obtener recomendaciones
       const formData = new FormData();
-      formData.append('file', fileToUse);
+      formData.append("file", fileToUse);
 
-      console.log('Debug - user:', !!user, 'token:', !!token, 'session:', !!session);
-      console.log('Debug - token preview:', token ? token.substring(0, 20) + '...' : 'null');
+      console.log("Debug - user:", !!user, "token:", !!token, "session:", !!session);
+      console.log("Debug - token preview:", token ? token.substring(0, 20) + "..." : "null");
 
-      // Use the apiClient utility to make the request
-      console.log('Making API request to analyze with token:', token ? 'Present' : 'Missing');
-      const analyzeData = await apiPost('analyze', formData, token);
+      // Use the API client from auth context
+      console.log("Making API request to analyze with token:", token ? "Present" : "Missing");
+      const analyzeData = await api.post("analyze", formData);
 
       // 2. Mostrar análisis y recomendación
-      const engineName = analyzeData.recommended || analyzeData.pipeline_id || 'balanced';
+      const engineName = analyzeData.recommended || analyzeData.pipeline_id || "balanced";
       const engineNames: Record<string, string> = {
-        'rapid': t('engines.rapid'),
-        'balanced': t('engines.balanced'),
-        'quality': t('engines.quality')
+        "rapid": t("engines.rapid"),
+        "balanced": t("engines.balanced"),
+        "quality": t("engines.quality")
       };
 
       const recommendedName = engineNames[engineName] || engineName;
@@ -195,17 +204,17 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
       // 3. Verificar si el usuario está autenticado
       if (!user || !token) {
         // Usuario no autenticado - mostrar mensaje y redirigir al login
-        const analysisMessage = `📊 ${t('fileUploader.analysisComplete')}\n\n` +
-          `🎯 ${t('fileUploader.recommendedEngine')}: ${recommendedName}\n\n` +
-          `💡 ${t('fileUploader.loginToConvert')}`;
+        const analysisMessage = `📊 ${t("fileUploader.analysisComplete")}\n\n` +
+          `🎯 ${t("fileUploader.recommendedEngine")}: ${recommendedName}\n\n` +
+          `💡 ${t("fileUploader.loginToConvert")}`;
 
-        setToast({ title: 'Info', message: analysisMessage, variant: 'success' });
+        setToast({ title: "Info", message: analysisMessage, variant: "success" });
 
         await savePendingFile(fileToUse);
 
         // Redirigir al login después de mostrar la información
         setTimeout(() => {
-          navigate('/login');
+          navigate("/login");
         }, 1000);
         return;
       } else {
@@ -213,21 +222,23 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
         await startActualConversion(engineName);
       }
 
-    } catch (error: any) {
-      console.error('Error en análisis:', error);
+    } catch (error) {
+      console.error("Error en análisis:", error);
       
-      if (error.message === 'UNAUTHORIZED') {
+      if (error instanceof ApiError && error.isAuthError()) {
         // Token expired, redirect to login
         await savePendingFile(fileToUse);
-        navigate('/login');
+        navigate("/login");
         return;
       }
       
-      setError(error.message);
+      setError(error instanceof Error ? error.message : "Unknown error");
       setToast({
-        title: 'Error',
-        message: `❌ ${t('fileUploader.analyzeError')}\n\n${error.message}`,
-        variant: 'error'
+        title: "Error",
+        message: `❌ ${t("fileUploader.analyzeError")}\n\n${
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
+        variant: "error"
       });
     } finally {
       setIsConverting(false);
@@ -244,12 +255,12 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
     if (onFileSelected) {
       onFileSelected(selectedFile);
     }
-  }, [onFileSelected, t]);
+  }, [onFileSelected]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'application/pdf': ['.pdf']
+      "application/pdf": [".pdf"]
     },
     multiple: false
   });
@@ -261,11 +272,11 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   return (
@@ -276,23 +287,23 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
         className={`
           relative overflow-hidden rounded-2xl border-2 border-dashed transition-all duration-300 cursor-pointer
           ${isDragActive
-            ? 'border-blue-400 scale-105'
+            ? "border-blue-400 scale-105"
             : file
-              ? 'border-green-400'
+              ? "border-green-400"
               : error
-                ? 'border-red-400'
-                : 'border-gray-300 hover:border-gray-400'
+                ? "border-red-400"
+                : "border-gray-300 hover:border-gray-400"
           }
-          ${isUploading ? 'pointer-events-none' : ''}
-          ${!isDragActive && !file && !error ? 'bg-uploader-pattern' : ''}
+          ${isUploading ? "pointer-events-none" : ""}
+          ${!isDragActive && !file && !error ? "bg-uploader-pattern" : ""}
         `}
         style={{
-          borderColor: isDragActive ? 'var(--accent-primary)' :
-                      file ? '#10b981' :
-                      error ? '#ef4444' : 'var(--border-color)',
-          backgroundColor: isDragActive ? 'rgba(46, 175, 196, 0.15)' :
-                          file ? 'rgba(16, 185, 129, 0.1)' :
-                          error ? 'rgba(239, 68, 68, 0.1)' : undefined
+          borderColor: isDragActive ? "var(--accent-primary)" :
+                      file ? "#10b981" :
+                      error ? "#ef4444" : "var(--border-color)",
+          backgroundColor: isDragActive ? "rgba(46, 175, 196, 0.15)" :
+                          file ? "rgba(16, 185, 129, 0.1)" :
+                          error ? "rgba(239, 68, 68, 0.1)" : undefined
         }}
       >
         <input {...getInputProps()} />
@@ -301,11 +312,11 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
         {isUploading && (
           <div className="flex flex-col items-center justify-center py-12 px-6">
             <div className="w-16 h-16 rounded-full mb-4 flex items-center justify-center"
-                 style={{ background: 'var(--gradient-action)' }}>
+                 style={{ background: "var(--gradient-action)" }}>
               <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             </div>
-            <p className="text-lg font-medium" style={{ color: 'var(--text-primary)' }}>
-              {t('fileUploader.processing')}
+            <p className="text-lg font-medium" style={{ color: "var(--text-primary)" }}>
+              {t("fileUploader.processing")}
             </p>
           </div>
         )}
@@ -314,23 +325,23 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
         {!file && !error && !isUploading && (
           <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
             <div className="w-20 h-20 rounded-2xl mb-6 flex items-center justify-center p-3"
-                 style={{ background: isDragActive ? 'var(--gradient-action)' : 'var(--gradient-hero)' }}>
+                 style={{ background: isDragActive ? "var(--gradient-action)" : "var(--gradient-hero)" }}>
               <img
                 src="/images/iconos/Icono PDF.png"
                 alt="Icono PDF"
                 className="w-full h-full object-contain"
               />
             </div>
-            <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-uploader)' }}>
-              {isDragActive ? t('fileUploader.dropHere') : t('fileUploader.uploadTitle')}
+            <h3 className="text-xl font-semibold mb-2" style={{ color: "var(--text-uploader)" }}>
+              {isDragActive ? t("fileUploader.dropHere") : t("fileUploader.uploadTitle")}
             </h3>
-            <p className="mb-4 font-medium" style={{ color: 'var(--text-uploader)', opacity: '0.9' }}>
-              {t('fileUploader.uploadInstructions')}
+            <p className="mb-4 font-medium" style={{ color: "var(--text-uploader)", opacity: "0.9" }}>
+              {t("fileUploader.uploadInstructions")}
             </p>
-            <div className="flex items-center gap-4 text-sm font-medium" style={{ color: 'var(--text-uploader)', opacity: '0.8' }}>
-              <span>📋 {t('fileUploader.onlyPDF')}</span>
+            <div className="flex items-center gap-4 text-sm font-medium" style={{ color: "var(--text-uploader)", opacity: "0.8" }}>
+              <span>📋 {t("fileUploader.onlyPDF")}</span>
               <span>📏 Max 25MB</span>
-              <span>⚡ {t('fileUploader.fastConversion')}</span>
+              <span>⚡ {t("fileUploader.fastConversion")}</span>
             </div>
           </div>
         )}
@@ -340,7 +351,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
           <div className="flex items-center justify-between py-6 px-6">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl flex items-center justify-center p-2"
-                   style={{ background: 'var(--gradient-nexus)' }}>
+                   style={{ background: "var(--gradient-nexus)" }}>
                 <img
                   src="/images/iconos/Icono PDF.png"
                   alt="Icono PDF"
@@ -348,10 +359,10 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
                 />
               </div>
               <div>
-                <h4 className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
+                <h4 className="font-semibold text-lg" style={{ color: "var(--text-primary)" }}>
                   {file.name}
                 </h4>
-                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
                   {formatFileSize(file.size)} • PDF
                 </p>
               </div>
@@ -368,25 +379,25 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
         {error && !isUploading && (
           <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
             <div className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center p-3 relative"
-                 style={{ background: 'var(--bg-secondary)' }}>
+                 style={{ background: "var(--bg-secondary)" }}>
               <img
                 src="/images/iconos/Icono PDF.png"
                 alt="Icono PDF"
                 className="w-full h-full object-contain opacity-60"
               />
               <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center"
-                   style={{ background: 'var(--accent-primary)' }}>
+                   style={{ background: "var(--accent-primary)" }}>
                 <span className="text-white text-xs font-bold">!</span>
               </div>
             </div>
-            <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-              {t('fileUploader.uploadError')}
+            <h3 className="text-lg font-semibold mb-2" style={{ color: "var(--text-primary)" }}>
+              {t("fileUploader.uploadError")}
             </h3>
             <div className="mb-4 p-3 rounded-lg" style={{
-              background: 'var(--bg-secondary)',
-              border: '1px solid var(--border-color)'
+              background: "var(--bg-secondary)",
+              border: "1px solid var(--border-color)"
             }}>
-              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
                 {error}
               </p>
             </div>
@@ -394,7 +405,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
               onClick={resetUpload}
               className="btn btn-secondary"
             >
-              {t('fileUploader.tryAgain')}
+              {t("fileUploader.tryAgain")}
             </button>
           </div>
         )}
@@ -408,7 +419,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
             className="btn btn-secondary"
             disabled={isConverting}
           >
-            🔄 {t('fileUploader.changeFile')}
+            🔄 {t("fileUploader.changeFile")}
           </button>
           <button
             className="btn btn-primary"
@@ -418,10 +429,10 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
             {isConverting ? (
               <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                {t('fileUploader.processing')}
+                {t("fileUploader.processing")}
               </>
             ) : (
-              <>🔍 {t('fileUploader.convertNow')}</>
+              <>🔍 {t("fileUploader.convertNow")}</>
             )}
           </button>
         </div>
@@ -430,8 +441,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
       {/* Info message about advanced options */}
       {file && !error && !isUploading && !isConverting && (
         <div className="text-center mt-3">
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            💡 {t('fileUploader.advancedOptionsBelow')}
+          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+            💡 {t("fileUploader.advancedOptionsBelow")}
           </p>
         </div>
       )}

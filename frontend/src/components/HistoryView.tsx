@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { apiGet } from '../lib/apiClient';
-import { useAuth } from '../AuthContext';
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../AuthContext";
+import { ApiError } from "../lib/errors";
 
 interface ConversionItem {
   id: number;
@@ -14,26 +15,25 @@ interface ConversionItem {
 const HistoryView: React.FC = () => {
   const [history, setHistory] = useState<ConversionItem[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const { token } = useAuth();
+  const { api } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const res = await fetch('/api/history', {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        });
-        
-        if (error.message === 'UNAUTHORIZED') {
-          navigate('/login');
+        const data = await api.get<ConversionItem[]>("history");
+        setHistory(data);
+      } catch (err) {
+        console.error("Error fetching history:", err);
+        if (err instanceof ApiError && err.isAuthError()) {
+          navigate("/login");
           return;
         }
-        setHistory(data);
-      } catch (err: any) {
-        setError(err.message);
+        setError(err instanceof Error ? err.message : "Failed to load history");
       }
     };
     fetchHistory();
-  }, [token]);
+  }, [api, navigate]);
 
   return (
     <div className="history-view p-4 md:p-6 text-sm md:text-base">
@@ -52,7 +52,7 @@ const HistoryView: React.FC = () => {
             )}
             <div className="flex justify-between mb-2">
               <span className="font-medium">{item.status}</span>
-              <span>{item.created_at ? new Date(item.created_at).toLocaleString() : '-'}</span>
+              <span>{item.created_at ? new Date(item.created_at).toLocaleString() : "-"}</span>
             </div>
             {item.output_path && (
               <div className="flex space-x-4">
@@ -88,13 +88,13 @@ const HistoryView: React.FC = () => {
                   )}
                 </td>
                 <td className="p-2 md:p-4">{item.status}</td>
-                <td className="p-2 md:p-4">{item.created_at ? new Date(item.created_at).toLocaleString() : '-'}</td>
+                <td className="p-2 md:p-4">{item.created_at ? new Date(item.created_at).toLocaleString() : "-"}</td>
                 <td className="p-2 md:p-4">
                   {item.output_path && (
                     <>
                       <a href={item.output_path} download>
                         Descargar
-                      </a>{' '}
+                      </a>{" "}
                       <a href={item.output_path} target="_blank" rel="noopener noreferrer">
                         Ver
                       </a>
@@ -111,4 +111,3 @@ const HistoryView: React.FC = () => {
 };
 
 export default HistoryView;
-
