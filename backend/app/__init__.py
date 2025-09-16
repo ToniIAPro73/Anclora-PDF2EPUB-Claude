@@ -7,13 +7,13 @@ import os
 import time
 import logging
 import json
+from flask_cors import CORS  # Importamos CORS
 # from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 
 # limiter = Limiter(key_func=get_remote_address)
 
 class JsonFormatter(logging.Formatter):
     """Simple JSON formatter for structured logs."""
-
     def format(self, record):  # type: ignore[override]
         log_record = {
             "level": record.levelname,
@@ -35,7 +35,8 @@ class JsonFormatter(logging.Formatter):
 def create_app():
     app = Flask(__name__)
     
-    # No CORS needed - using frontend proxy instead
+    # Habilitamos CORS para todas las rutas
+    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
     handler = logging.StreamHandler()
     handler.setFormatter(JsonFormatter())
@@ -98,14 +99,8 @@ def create_app():
     @app.errorhandler(429)
     def ratelimit_handler(e):
         return jsonify({
-            "error": "Rate limit exceeded",
-            "message": e.description
+            "error": "ratelimit exceeded",
+            "message": str(e.description),
         }), 429
 
     return app
-# Para ejecución directa
-if __name__ == '__main__':
-    app = create_app()
-    port = int(os.environ.get('FLASK_RUN_PORT', 5175))
-    app.run(host='0.0.0.0', port=port)
-

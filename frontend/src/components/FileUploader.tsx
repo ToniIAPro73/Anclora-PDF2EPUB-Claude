@@ -59,20 +59,70 @@ const FileUploader: React.FC<FileUploaderProps> = ({
   const navigate = useNavigate();
   const { user, token, session } = useAuth();
 
-  // Debug logging for authentication state
-  useEffect(() => {
-    console.info("🔐 Auth state:", { 
-      user: !!user, 
-      token: token ? `${token.substring(0, 10)}...` : null,
-      session: !!session 
-    });
-  }, [user, token, session]);
+  /**
+   * Format file size for display
+   */
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  };
+
+  /**
+   * Display a toast message
+   */
+  const showToast = useCallback((config: ToastConfig) => {
+    setToast(config);
+    // Auto-dismiss success and info toasts after 5 seconds
+    if (config.variant === 'success' || config.variant === 'info') {
+      setTimeout(() => setToast(null), 5000);
+    }
+  }, []);
 
   /**
    * Clear any pending file from localStorage
    */
   const clearPendingFile = useCallback(() => {
     localStorage.removeItem(PENDING_FILE_KEY);
+  }, []);
+
+  /**
+   * Reset the upload state
+   */
+  const resetUpload = useCallback(() => {
+    setFile(null);
+    setError(null);
+    clearPendingFile();
+  }, [clearPendingFile]);
+
+  /**
+   * Handle API errors with appropriate user feedback
+   */
+  const handleApiError = useCallback((error: unknown, context: string) => {
+    console.error(`❌ Error in ${context}:`, error);
+    
+    let errorMessage: string;
+    
+    if (error instanceof ApiError) {
+      // Use user-friendly message from specialized error classes
+      errorMessage = error.getUserMessage();
+      
+      // Handle authentication errors
+      if (error.isAuthError()) {
+        return { requiresAuth: true, message: errorMessage };
+      }
+      
+      // Log detailed diagnostics for debugging
+      console.debug("🔍 Error diagnostics:", error.getDiagnostics());
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    } else {
+      errorMessage = "An unknown error occurred";
+    }
+    
+    return { requiresAuth: false, message: errorMessage };
   }, []);
 
   /**
@@ -139,45 +189,6 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       return null;
     }
   }, [clearPendingFile]);
-
-  /**
-   * Display a toast message
-   */
-  const showToast = useCallback((config: ToastConfig) => {
-    setToast(config);
-    // Auto-dismiss success and info toasts after 5 seconds
-    if (config.variant === 'success' || config.variant === 'info') {
-      setTimeout(() => setToast(null), 5000);
-    }
-  }, []);
-
-  /**
-   * Handle API errors with appropriate user feedback
-   */
-  const handleApiError = useCallback((error: unknown, context: string) => {
-    console.error(`❌ Error in ${context}:`, error);
-    
-    let errorMessage: string;
-    
-    if (error instanceof ApiError) {
-      // Use user-friendly message from specialized error classes
-      errorMessage = error.getUserMessage();
-      
-      // Handle authentication errors
-      if (error.isAuthError()) {
-        return { requiresAuth: true, message: errorMessage };
-      }
-      
-      // Log detailed diagnostics for debugging
-      console.debug("🔍 Error diagnostics:", error.getDiagnostics());
-    } else if (error instanceof Error) {
-      errorMessage = error.message;
-    } else {
-      errorMessage = "An unknown error occurred";
-    }
-    
-    return { requiresAuth: false, message: errorMessage };
-  }, []);
 
   /**
    * Start the actual conversion process
@@ -249,35 +260,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({
   }, [file, token, t, navigate, showToast, handleApiError, savePendingFile, clearPendingFile, onConversionStarted]);
 
   /**
-   * Process any pending file when user is authenticated
-   */
-  useEffect(() => {
-    const processPendingFile = async () => {
-      if (!user || !session) return;
-      
-      const pending = await getPendingFile();
-      if (pending) {
-        // Navigate to the original route if needed
-        if (pending.route && pending.route !== window.location.pathname) {
-          navigate(pending.route);
-        }
-        
-        // Set the file and notify parent component
-        setFile(pending.file);
-        if (onFileSelected) {
-          onFileSelected(pending.file);
-        }
-        
-        // Start quick conversion process
-        await startQuickConversion(pending.file);
-      }
-    };
-    
-    processPendingFile();
-  }, [user, session, getPendingFile, navigate, onFileSelected, startQuickConversion]);
-
-  /**
    * Quick analysis and conversion process
+   * IMPORTANTE: Esta función debe definirse ANTES de ser usada en useEffect
    */
   const startQuickConversion = useCallback(async (inputFile?: File) => {
     const fileToUse = inputFile || file;
@@ -357,6 +341,44 @@ const FileUploader: React.FC<FileUploaderProps> = ({
     }
   }, [file, isConverting, token, user, t, navigate, showToast, handleApiError, savePendingFile, startActualConversion]);
 
+  // Debug logging for authentication state
+  useEffect(() => {
+    console.info("🔐 Auth state:", { 
+      user: !!user, 
+      token: token ? `${token.substring(0, 10)}...` : null,
+      session: !!session 
+    });
+  }, [user, token, session]);
+
+  /**
+   * Process any pending file when user is authenticated
+   * IMPORTANTE: Este useEffect debe definirse DESPUÉS de startQuickConversion
+   */
+  useEffect(() => {
+    const processPendingFile = async () => {
+      if (!user || !session) return;
+      
+      const pending = await getPendingFile();
+      if (pending) {
+        // Navigate to the original route if needed
+        if (pending.route && pending.route !== window.location.pathname) {
+          navigate(pending.route);
+        }
+        
+        // Set the file and notify parent component
+        setFile(pending.file);
+        if (onFileSelected) {
+          onFileSelected(pending.file);
+        }
+        
+        // Start quick conversion process
+        await startQuickConversion(pending.file);
+      }
+    };
+    
+    processPendingFile();
+  }, [user, session, getPendingFile, navigate, onFileSelected, startQuickConversion]);
+
   /**
    * Handle file drop
    */
@@ -372,7 +394,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
     if (onFileSelected) {
       onFileSelected(selectedFile);
     }
-  }, [onFileSelected]);
+  }, [onFileSelected, formatFileSize]);
 
   /**
    * Configure dropzone
@@ -395,26 +417,6 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       }
     }
   });
-
-  /**
-   * Reset the upload state
-   */
-  const resetUpload = useCallback(() => {
-    setFile(null);
-    setError(null);
-    clearPendingFile();
-  }, [clearPendingFile]);
-
-  /**
-   * Format file size for display
-   */
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-  };
 
   /**
    * Get CSS classes for the dropzone based on state
