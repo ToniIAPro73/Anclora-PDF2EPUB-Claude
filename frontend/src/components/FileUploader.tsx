@@ -484,7 +484,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
             <div className="w-20 h-20 rounded-2xl mb-6 flex items-center justify-center p-3"
                  style={{ background: isDragActive ? "var(--gradient-action)" : "var(--gradient-hero)" }}>
               <img
-                src="/images/iconos/Icono PDF.png"
+                src="/images/iconos/icono-pdf.png"
                 alt="Icono PDF"
                 className="w-full h-full object-contain"
               />
@@ -510,7 +510,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
               <div className="w-12 h-12 rounded-xl flex items-center justify-center p-2"
                    style={{ background: "var(--gradient-nexus)" }}>
                 <img
-                  src="/images/iconos/Icono PDF.png"
+                  src="/images/iconos/icono-pdf.png"
                   alt="Icono PDF"
                   className="w-full h-full object-contain"
                 />
@@ -538,7 +538,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
             <div className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center p-3 relative"
                  style={{ background: "var(--bg-secondary)" }}>
               <img
-                src="/images/iconos/Icono PDF.png"
+                src="/images/iconos/icono-pdf.png"
                 alt="Icono PDF"
                 className="w-full h-full object-contain opacity-60"
               />

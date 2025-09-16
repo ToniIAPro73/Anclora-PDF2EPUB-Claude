@@ -85,7 +85,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
             <div className="flex items-center justify-center w-12 h-12 rounded-lg p-1"
                  style={{ background: 'var(--gradient-hero)' }}>
               <img
-                src="/images/iconos/Anclora PDF2EPUB fodo transparente.png"
+                src="/images/iconos/anclora-logo.png"
                 alt={t('app.title')}
                 className="w-full h-full object-contain"
               />

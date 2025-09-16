@@ -54,7 +54,7 @@ const RegisterForm: React.FC = () => {
         <div className="text-center mb-8 animate-fade-in">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl mb-4 p-2" style={{ background: 'var(--gradient-press)' }}>
             <img
-              src="/images/iconos/Anclora PDF2EPUB fodo transparente.png"
+              src="/images/iconos/anclora-logo.png"
               alt={t('app.title')}
               className="w-full h-full object-contain"
             />
