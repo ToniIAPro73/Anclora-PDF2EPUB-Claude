@@ -1,7 +1,7 @@
 from flask import Flask, Response, request, jsonify
 from . import config  # Import config to load environment variables
-# from flask_limiter import Limiter
-# from flask_limiter.util import get_remote_address
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from datetime import datetime
 import os
 import time
@@ -10,7 +10,7 @@ import json
 from flask_cors import CORS  # Importamos CORS
 # from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 
-# limiter = Limiter(key_func=get_remote_address)
+limiter = Limiter(key_func=get_remote_address)
 
 class JsonFormatter(logging.Formatter):
     """Simple JSON formatter for structured logs."""
@@ -69,7 +69,7 @@ def create_app():
         JWT_EXPIRATION=int(os.environ.get('JWT_EXPIRATION', 3600)),
     )
 
-    # limiter.init_app(app)
+    limiter.init_app(app)
 
     # Asegurarse de que existan los directorios
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
@@ -101,13 +101,15 @@ def create_app():
     #     return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
 
     # Registrar rutas
-    # from . import routes  # Temporarily disabled due to import issues
+    from . import routes  # Activated for full Celery support
     from . import test_routes
-    from . import simple_routes  # Simplified routes without problematic dependencies
+    from . import credits_routes  # Sistema de créditos
+    # from . import simple_routes  # Disabled - using full routes with Celery
 
-    # app.register_blueprint(routes.bp)  # Temporarily disabled
+    app.register_blueprint(routes.bp)  # Full routes with Celery
     app.register_blueprint(test_routes.test_bp)
-    app.register_blueprint(simple_routes.bp)  # Main routes for now
+    app.register_blueprint(credits_routes.bp)  # Rutas de créditos
+    # app.register_blueprint(simple_routes.bp)  # Disabled for now
 
     @app.errorhandler(429)
     def ratelimit_handler(e):

@@ -8,27 +8,10 @@ echo ANCLORA PDF2EPUB - INICIAR DESARROLLO
 echo =====================================================
 echo.
 
-REM Crear script VBS para seleccionar carpeta
-echo Set objShell = CreateObject("Shell.Application") > "%TEMP%\selectfolder.vbs"
-echo Set objFolder = objShell.BrowseForFolder(0, "Selecciona la carpeta del proyecto Anclora PDF2EPUB", 0, "%CD%") >> "%TEMP%\selectfolder.vbs"
-echo If Not objFolder Is Nothing Then >> "%TEMP%\selectfolder.vbs"
-echo     WScript.Echo objFolder.Self.Path >> "%TEMP%\selectfolder.vbs"
-echo End If >> "%TEMP%\selectfolder.vbs"
+REM Usar la carpeta padre del script (que está en scripts/)
+for %%i in ("%~dp0..") do set PROJECT_FOLDER=%%~fi
 
-REM Ejecutar selector y obtener carpeta
-for /f "delims=" %%i in ('cscript //nologo "%TEMP%\selectfolder.vbs"') do set PROJECT_FOLDER=%%i
-
-REM Limpiar archivo temporal
-del "%TEMP%\selectfolder.vbs" >nul 2>&1
-
-REM Verificar si se selecciono carpeta
-if "%PROJECT_FOLDER%"=="" (
-    echo No se selecciono ninguna carpeta. Saliendo...
-    pause
-    exit /b 1
-)
-
-echo Carpeta seleccionada: %PROJECT_FOLDER%
+echo Carpeta del proyecto: %PROJECT_FOLDER%
 
 REM Verificar estructura del proyecto
 if not exist "%PROJECT_FOLDER%\backend" (
@@ -109,9 +92,8 @@ echo echo    BACKEND FLASK - Puerto 5175 >> "%TEMP%\anclora_backend.bat"
 echo echo    Carpeta: %PROJECT_FOLDER% >> "%TEMP%\anclora_backend.bat"
 echo echo ================================== >> "%TEMP%\anclora_backend.bat"
 echo echo. >> "%TEMP%\anclora_backend.bat"
-echo cd /d "%PROJECT_FOLDER%" >> "%TEMP%\anclora_backend.bat"
+echo cd /d "%PROJECT_FOLDER%\backend" >> "%TEMP%\anclora_backend.bat"
 echo %VENV_CMD% >> "%TEMP%\anclora_backend.bat"
-echo cd backend >> "%TEMP%\anclora_backend.bat"
 echo echo Instalando dependencias Python... >> "%TEMP%\anclora_backend.bat"
 echo pip install -r requirements.txt >> "%TEMP%\anclora_backend.bat"
 echo echo. >> "%TEMP%\anclora_backend.bat"
@@ -131,10 +113,11 @@ echo echo   Carpeta: %PROJECT_FOLDER%\frontend >> "%TEMP%\anclora_frontend.bat"
 echo echo ================================== >> "%TEMP%\anclora_frontend.bat"
 echo echo. >> "%TEMP%\anclora_frontend.bat"
 echo cd /d "%PROJECT_FOLDER%\frontend" >> "%TEMP%\anclora_frontend.bat"
-echo echo Instalando dependencias Node... >> "%TEMP%\anclora_frontend.bat"
-echo npm install >> "%TEMP%\anclora_frontend.bat"
+echo echo Verificando dependencias Node... >> "%TEMP%\anclora_frontend.bat"
+echo npm install --silent >> "%TEMP%\anclora_frontend.bat"
 echo echo. >> "%TEMP%\anclora_frontend.bat"
 echo echo Iniciando servidor Vite... >> "%TEMP%\anclora_frontend.bat"
+echo echo Si no se inicia automaticamente, presiona Ctrl+C y ejecuta manualmente: npm start >> "%TEMP%\anclora_frontend.bat"
 echo npm start >> "%TEMP%\anclora_frontend.bat"
 echo echo. >> "%TEMP%\anclora_frontend.bat"
 echo echo Frontend detenido. >> "%TEMP%\anclora_frontend.bat"
@@ -149,9 +132,8 @@ echo echo  CELERY WORKER - Conversiones PDF >> "%TEMP%\anclora_celery.bat"
 echo echo  Carpeta: %PROJECT_FOLDER%\backend >> "%TEMP%\anclora_celery.bat"
 echo echo ================================== >> "%TEMP%\anclora_celery.bat"
 echo echo. >> "%TEMP%\anclora_celery.bat"
-echo cd /d "%PROJECT_FOLDER%" >> "%TEMP%\anclora_celery.bat"
+echo cd /d "%PROJECT_FOLDER%\backend" >> "%TEMP%\anclora_celery.bat"
 echo %VENV_CMD% >> "%TEMP%\anclora_celery.bat"
-echo cd backend >> "%TEMP%\anclora_celery.bat"
 echo echo Esperando 15 segundos a que el backend este listo... >> "%TEMP%\anclora_celery.bat"
 echo timeout /t 15 /nobreak >> "%TEMP%\anclora_celery.bat"
 echo echo. >> "%TEMP%\anclora_celery.bat"
@@ -169,17 +151,17 @@ echo.
 
 REM Abrir terminales con un poco de delay entre cada uno
 echo [1/3] Abriendo Backend...
-start "Backend" cmd /c "%TEMP%\anclora_backend.bat"
+start "Backend" "%TEMP%\anclora_backend.bat"
 
 timeout /t 2 /nobreak >nul
 
 echo [2/3] Abriendo Frontend...
-start "Frontend" cmd /c "%TEMP%\anclora_frontend.bat"
+start "Frontend" "%TEMP%\anclora_frontend.bat"
 
 timeout /t 2 /nobreak >nul
 
 echo [3/3] Abriendo Celery Worker...
-start "Celery" cmd /c "%TEMP%\anclora_celery.bat"
+start "Celery" "%TEMP%\anclora_celery.bat"
 
 echo.
 echo =====================================================
@@ -199,9 +181,6 @@ echo  --^> http://localhost:5178
 echo.
 echo Para DETENER todo ejecuta: stop_dev.bat
 echo.
-
-REM Limpiar scripts temporales despues de 2 minutos
-echo Los archivos temporales se limpiaran automaticamente.
 
 timeout /t 5 /nobreak >nul
 pause

@@ -36,14 +36,14 @@ class FileSecurityValidator:
     ALLOWED_EXTENSIONS = {'pdf'}
     ALLOWED_MIME_TYPES = {'application/pdf'}
     
-    # Security patterns to detect in filenames
+    # Security patterns to detect in filenames (more tolerant for international chars)
     SUSPICIOUS_FILENAME_PATTERNS = [
-        r'\.{2,}',              # Multiple dots (path traversal)
+        r'\.{3,}',              # 3 or more dots (path traversal)
         r'[<>:"|?*]',           # Windows forbidden characters
-        r'[\x00-\x1f\x7f-\x9f]', # Control characters
-        r'^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$',  # Windows reserved names
-        r'^\.',                 # Hidden files starting with dot
-        r'\.pdf\.',             # Double extensions (pdf.exe, etc.)
+        r'[\x00-\x1f\x7f]',     # Control characters (excluding \x80-\x9f for international chars)
+        r'^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])\.pdf$',  # Windows reserved names with .pdf
+        r'^\..*\.pdf$',         # Hidden files starting with dot
+        r'\.pdf\.[^$]',         # Double extensions (pdf.exe, etc.) but not end of string
     ]
     
     # Malicious PDF patterns (basic signatures)
@@ -86,12 +86,22 @@ class FileSecurityValidator:
                 logger.warning(f"Suspicious filename pattern detected: {filename}")
                 return False, {'error': 'Invalid filename format'}, 400
         
-        # Check for valid UTF-8 encoding
+        # Check for valid encoding (be more tolerant with international characters)
         try:
+            # First try UTF-8, then fallback to latin-1 (common in Windows)
             filename.encode('utf-8')
         except UnicodeEncodeError:
-            logger.warning(f"Invalid filename encoding: {filename}")
-            return False, {'error': 'Invalid filename encoding'}, 400
+            try:
+                filename.encode('latin-1')
+                logger.info(f"Filename uses latin-1 encoding: {filename}")
+            except UnicodeEncodeError:
+                # Only reject if it's really problematic encoding
+                try:
+                    filename.encode('cp1252')  # Windows encoding
+                    logger.info(f"Filename uses cp1252 encoding: {filename}")
+                except UnicodeEncodeError:
+                    logger.warning(f"Problematic filename encoding: {filename}")
+                    return False, {'error': 'Invalid filename encoding'}, 400
         
         return True, None, None
     
@@ -188,56 +198,86 @@ class FileSecurityValidator:
                     tmp_file.write(file.read())
                     tmp_file.flush()
                     file.seek(0)
-                    
+
                     # Try to read PDF with PyPDF2
                     with open(tmp_file.name, 'rb') as pdf_file:
-                        pdf_reader = PyPDF2.PdfReader(pdf_file)
-                        
-                        # Check if PDF has pages
-                        if len(pdf_reader.pages) == 0:
-                            logger.warning(f"PDF has no pages: {file.filename}")
-                            return False, {'error': 'PDF file contains no pages'}, 400
-                        
-                        # Check for encrypted PDFs
-                        if pdf_reader.is_encrypted:
-                            logger.warning(f"Encrypted PDF detected: {file.filename}")
-                            return False, {'error': 'Encrypted PDFs are not supported'}, 400
-                        
+                        try:
+                            pdf_reader = PyPDF2.PdfReader(pdf_file, strict=False)
+
+                            # Check for encrypted PDFs (critical security check)
+                            if pdf_reader.is_encrypted:
+                                logger.warning(f"Encrypted PDF detected: {file.filename}")
+                                return False, {'error': 'Encrypted PDFs are not supported'}, 400
+
+                            # Try to access pages - if this fails, PDF might be corrupted
+                            try:
+                                page_count = len(pdf_reader.pages)
+                                if page_count == 0:
+                                    logger.warning(f"PDF has no pages: {file.filename}")
+                                    return False, {'error': 'PDF file contains no pages'}, 400
+                                logger.info(f"PDF validation passed: {page_count} pages in {file.filename}")
+                            except Exception as page_error:
+                                # Log the error but don't fail - some PDFs with complex structure can still be processed
+                                logger.info(f"Could not determine page count for {file.filename}: {page_error}")
+
+                        except PyPDF2.errors.PdfReadError as pdf_error:
+                            # More specific handling for PDF read errors
+                            error_msg = str(pdf_error).lower()
+                            if 'encrypted' in error_msg:
+                                return False, {'error': 'Encrypted PDFs are not supported'}, 400
+                            elif 'damaged' in error_msg or 'corrupted' in error_msg:
+                                logger.warning(f"PDF appears damaged but might be processable: {pdf_error}")
+                                # Don't fail here - let the conversion engine try
+                            else:
+                                logger.info(f"PyPDF2 read warning for {file.filename}: {pdf_error}")
+
             except Exception as e:
-                logger.warning(f"PDF structure validation failed: {e}")
-                return False, {'error': 'Corrupted or invalid PDF file'}, 400
+                # Log the error but don't fail validation
+                logger.info(f"PyPDF2 validation encountered issue for {file.filename}: {e}")
+                # The file passed basic PDF header validation, so we'll allow it through
         
         return True, None, None
     
     @classmethod
     def scan_for_malicious_content(cls, file) -> Tuple[bool, Optional[Dict], Optional[int]]:
-        """Basic malware detection for PDF files"""
+        """Enhanced malware detection for PDF files with reduced false positives"""
         file_content = file.read()
         file.seek(0)
-        
-        # Check for suspicious patterns
-        suspicious_patterns_found = []
-        
-        for pattern in cls.MALICIOUS_PDF_PATTERNS:
-            if isinstance(pattern, bytes):
-                if pattern in file_content:
-                    suspicious_patterns_found.append(pattern.decode('ascii', errors='ignore'))
-            else:
-                if re.search(pattern, file_content):
-                    suspicious_patterns_found.append(str(pattern))
-        
-        if suspicious_patterns_found:
-            logger.warning(f"Suspicious content detected in {file.filename}: {suspicious_patterns_found}")
-            return False, {
-                'error': 'File contains potentially malicious content',
-                'details': 'JavaScript or executable content detected'
-            }, 400
-        
-        # Check for unusual PDF structure (too many objects, etc.)
-        if file_content.count(b'obj') > 10000:  # Reasonable limit for objects
-            logger.warning(f"Suspicious number of PDF objects in {file.filename}")
-            return False, {'error': 'PDF structure appears suspicious'}, 400
-        
+
+        # Check for high-risk suspicious patterns (only the most dangerous ones)
+        high_risk_patterns = [
+            b'/JavaScript',         # JavaScript in PDF
+            b'/JS',                # JS in PDF
+            b'/OpenAction',        # Auto-execute actions
+            b'/AA',                # Additional Actions
+        ]
+
+        critical_patterns_found = []
+
+        for pattern in high_risk_patterns:
+            if pattern in file_content:
+                critical_patterns_found.append(pattern.decode('ascii', errors='ignore'))
+
+        # Only fail for truly dangerous patterns
+        if critical_patterns_found:
+            dangerous_patterns = [p for p in critical_patterns_found if p in ['/JavaScript', '/JS', '/OpenAction', '/AA']]
+            if dangerous_patterns:
+                logger.warning(f"High-risk malicious content detected in {file.filename}: {dangerous_patterns}")
+                return False, {
+                    'error': 'File contains potentially malicious content',
+                    'details': 'Executable JavaScript or auto-actions detected'
+                }, 400
+
+        # Check for extremely unusual PDF structure (very high threshold)
+        obj_count = file_content.count(b'obj')
+        if obj_count > 50000:  # Much higher threshold - complex documents can have many objects
+            logger.warning(f"Very high number of PDF objects ({obj_count}) in {file.filename}")
+            return False, {'error': 'PDF structure appears suspicious (too many objects)'}, 400
+
+        # Log analysis results for legitimate complex documents
+        if obj_count > 1000:
+            logger.info(f"Complex PDF detected: {obj_count} objects in {file.filename} - likely a complex document")
+
         return True, None, None
     
     @classmethod

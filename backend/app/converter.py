@@ -835,12 +835,25 @@ def suggest_best_pipeline(pdf_path):
         ConversionEngine.QUALITY: 95,
     }
 
+    # Importar servicio de créditos para calcular costos
+    from .credits_service import credits_service
+
     options = []
     for engine in converter.engines:
+        # Calcular costo de la conversión
+        estimated_cost = credits_service.calculate_conversion_cost(engine.value, analysis.page_count)
+
         options.append({
             "id": engine.value,
+            "quality": engine.value.split('.')[-1],  # low, medium, high
             "estimated_time": analysis.page_count * time_factors[engine],
             "estimated_quality": quality_estimates[engine],
+            "estimated_cost": estimated_cost,  # Costo en créditos
+            "cost_breakdown": {
+                "base_cost": credits_service.DEFAULT_PIPELINE_COSTS.get(engine.value, {}).get('base_cost', 5),
+                "cost_per_page": credits_service.DEFAULT_PIPELINE_COSTS.get(engine.value, {}).get('cost_per_page', 0),
+                "total_pages": analysis.page_count
+            }
         })
 
     return {

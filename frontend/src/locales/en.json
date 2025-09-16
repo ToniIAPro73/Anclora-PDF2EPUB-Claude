@@ -10,6 +10,25 @@
     "profile": "Profile",
     "logout": "Logout"
   },
+  "menu": {
+    "inviteFriends": "Invite friends",
+    "subscription": "Subscription",
+    "comingSoon": "Coming soon",
+    "language": "Language"
+  },
+  "credits": {
+    "available": "available",
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "summary": "Credits summary",
+    "earned": "Earned",
+    "spent": "Spent",
+    "referralCode": "Referral code",
+    "lowBalance": "Low credit balance",
+    "getMore": "Get more credits",
+    "refresh": "Refresh"
+  },
   "auth": {
     "login": "Login",
     "register": "Register",

@@ -20,30 +20,25 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
   const strokeDasharray = circumference;
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 
-  // Gradiente de colores basado en el progreso (Anclora Nexus + Press)
+  // Degradado del azul oscuro al verde agua claro
   const getProgressColor = (progress: number) => {
-    if (progress < 25) return '#38BDF8'; // Azul Nexus
-    if (progress < 50) return '#2EAFC4'; // Turquesa
-    if (progress < 75) return '#FFC979'; // Amarillo Press
-    return '#23436B'; // Azul oscuro (completado)
+    // Interpolación entre azul oscuro (#23436B) y verde agua claro (#7DD3FC)
+    const darkBlue = { r: 35, g: 67, b: 107 };
+    const lightAqua = { r: 125, g: 211, b: 252 };
+
+    const ratio = progress / 100;
+    const r = Math.round(darkBlue.r + (lightAqua.r - darkBlue.r) * ratio);
+    const g = Math.round(darkBlue.g + (lightAqua.g - darkBlue.g) * ratio);
+    const b = Math.round(darkBlue.b + (lightAqua.b - darkBlue.b) * ratio);
+
+    return `rgb(${r}, ${g}, ${b})`;
   };
 
-  const getGradientStops = (progress: number) => {
-    const startColor = '#38BDF8';
-    const midColor = '#2EAFC4';
-    const endColor = '#FFC979';
-    const completeColor = '#23436B';
-
-    if (progress < 50) {
-      return [startColor, midColor];
-    } else if (progress < 100) {
-      return [midColor, endColor];
-    } else {
-      return [endColor, completeColor];
-    }
+  const getGradientStops = () => {
+    return ['#23436B', '#2EAFC4', '#7DD3FC']; // Azul oscuro -> Turquesa -> Verde agua claro
   };
 
-  const gradientStops = getGradientStops(progress);
+  const gradientStops = getGradientStops();
   const currentColor = getProgressColor(progress);
 
   return (
@@ -53,31 +48,57 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
         height={size}
         className="transform -rotate-90"
         style={{
-          filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))'
+          filter: 'drop-shadow(0 6px 12px rgba(35, 67, 107, 0.25))'
         }}
       >
         <defs>
-          <linearGradient id={`progress-gradient-${progress}`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient
+            id={`progress-gradient-${progress}`}
+            x1="0%"
+            y1="0%"
+            x2="100%"
+            y2="100%"
+            gradientUnits="objectBoundingBox"
+          >
             <stop offset="0%" stopColor={gradientStops[0]} />
-            <stop offset="100%" stopColor={gradientStops[1]} />
+            <stop offset="50%" stopColor={gradientStops[1]} />
+            <stop offset="100%" stopColor={gradientStops[2]} />
           </linearGradient>
-          <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="rgba(0,0,0,0.3)"/>
+
+          <filter id={`shadow-${progress}`} x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+            <feOffset dx="0" dy="3" result="offset"/>
+            <feComponentTransfer>
+              <feFuncA type="linear" slope="0.4"/>
+            </feComponentTransfer>
+            <feMerge>
+              <feMergeNode/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+
+          <filter id={`inner-shadow-${progress}`} x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="2"/>
+            <feOffset dx="0" dy="-1" result="offset"/>
+            <feComposite in2="SourceGraphic" operator="subtract"/>
           </filter>
         </defs>
 
-        {/* Círculo de fondo */}
+        {/* Círculo de fondo con relieve */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="#F6F7F9"
+          stroke="#E2E8F0"
           strokeWidth={strokeWidth}
           fill="none"
-          className="opacity-30"
+          className="opacity-40"
+          style={{
+            filter: 'inset 0 2px 4px rgba(0,0,0,0.1)'
+          }}
         />
 
-        {/* Círculo de progreso */}
+        {/* Círculo de progreso con degradado y relieve */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -88,22 +109,50 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
           strokeDasharray={strokeDasharray}
           strokeDashoffset={strokeDashoffset}
           strokeLinecap="round"
-          filter="url(#shadow)"
+          filter={`url(#shadow-${progress})`}
           style={{
-            transition: 'stroke-dashoffset 0.3s ease, stroke 0.3s ease',
+            transition: 'stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.3s ease',
+            strokeShadow: 'inset 0 1px 2px rgba(255,255,255,0.3), 0 2px 4px rgba(35,67,107,0.2)'
+          }}
+        />
+
+        {/* Círculo interior para efecto de relieve */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius - strokeWidth / 4}
+          stroke="rgba(255,255,255,0.1)"
+          strokeWidth="1"
+          fill="none"
+          strokeDasharray={strokeDasharray}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          style={{
+            transition: 'stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         />
       </svg>
 
-      {/* Porcentaje en el centro */}
+      {/* Porcentaje en el centro con relieve */}
       {showPercentage && (
         <div
           className="absolute inset-0 flex items-center justify-center"
           style={{
-            fontSize: `${size * 0.2}px`,
-            fontWeight: '600',
+            fontSize: `${size * 0.22}px`,
+            fontWeight: '700',
             color: currentColor,
-            textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+            textShadow: `
+              0 1px 0 rgba(255,255,255,0.4),
+              0 2px 4px rgba(35,67,107,0.3),
+              0 0 8px rgba(125,211,252,0.2)
+            `,
+            background: `linear-gradient(135deg,
+              rgba(255,255,255,0.1) 0%,
+              rgba(255,255,255,0.05) 50%,
+              transparent 100%)`,
+            WebkitBackgroundClip: 'text',
+            backgroundClip: 'text',
+            filter: 'drop-shadow(0 1px 2px rgba(35,67,107,0.2))'
           }}
         >
           {Math.round(progress)}%

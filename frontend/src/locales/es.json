@@ -10,6 +10,25 @@
     "profile": "Perfil",
     "logout": "Cerrar Sesión"
   },
+  "menu": {
+    "inviteFriends": "Invitar amigos",
+    "subscription": "Suscripción",
+    "comingSoon": "Próximamente",
+    "language": "Idioma"
+  },
+  "credits": {
+    "available": "disponibles",
+    "loading": "Cargando...",
+    "error": "Error",
+    "retry": "Reintentar",
+    "summary": "Resumen de créditos",
+    "earned": "Ganados",
+    "spent": "Gastados",
+    "referralCode": "Código de referido",
+    "lowBalance": "Saldo bajo de créditos",
+    "getMore": "Obtener más créditos",
+    "refresh": "Actualizar"
+  },
   "auth": {
     "login": "Iniciar Sesión",
     "register": "Registrarse",

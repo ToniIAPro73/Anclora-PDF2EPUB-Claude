@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../AuthContext';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from './LanguageSelector';
 import Container from './Container';
+import CreditBalance from './CreditBalance';
 
 interface HeaderProps {
   theme: 'light' | 'dark';
@@ -14,13 +15,12 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, setCurrentSection }) => {
   const { logout, user } = useAuth();
   const { t } = useTranslation();
-
-  // User object is available for debugging if needed
-
-
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [currentCredits, setCurrentCredits] = useState(0);
 
   const handleLogout = () => {
     logout();
+    setShowUserMenu(false);
   };
 
   // Helper function to get user initials
@@ -118,61 +118,152 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
           </nav>
 
           {/* Controles de Usuario */}
-          <div className="flex items-center gap-3">
-            {/* Selector de Idioma */}
-            <LanguageSelector />
+          <div className="flex items-center gap-4">
+            {/* Balance de Créditos y Usuario */}
+            <div className="relative">
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="flex items-center gap-3 p-2 rounded-lg transition-all duration-200 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                {/* Balance de Créditos */}
+                <CreditBalance onCreditsUpdate={setCurrentCredits} />
 
-            {/* Toggle de Tema */}
-            <button
-              onClick={toggleTheme}
-              aria-label={t('theme.toggle')}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-              style={{
-                background: theme === 'dark'
-                  ? 'linear-gradient(90deg, #FFC979 70%, #2EAFC4 100%)'
-                  : 'linear-gradient(120deg, #2EAFC4 70%, #FFC979 100%)',
-                color: 'var(--anclora-dark)'
-              }}
-            >
-              <span>{theme === 'dark' ? '☀️' : '🌙'}</span>
-              <span className="hidden sm:inline">
-                {theme === 'dark' ? t('theme.light') : t('theme.dark')}
-              </span>
-            </button>
+                {/* Avatar del Usuario */}
+                <div className="flex items-center justify-center w-9 h-9 rounded-full text-sm font-bold text-white"
+                     style={{ background: 'var(--gradient-nexus)' }}>
+                  {getUserInitials(user)}
+                </div>
 
-            {/* Usuario */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold text-white"
-                   style={{ background: 'var(--gradient-nexus)' }}>
-                {getUserInitials(user)}
-              </div>
-              <div className="hidden sm:block">
-                <span className="text-sm font-medium px-2 py-1 rounded"
-                      style={{
-                        color: 'var(--text-primary)',
-                        backgroundColor: 'rgba(0,0,0,0.1)',
-                        whiteSpace: 'nowrap'
-                      }}>
-                  {(() => {
-                    if (!user) return t('auth.login');
-                    if (user.user_metadata?.username) return user.user_metadata.username;
-                    if (user.email) return user.email.split('@')[0];
-                    return t('auth.login');
-                  })()}
-                </span>
-              </div>
+                {/* Icono de dropdown */}
+                <svg
+                  className={`w-4 h-4 transition-transform duration-200 ${showUserMenu ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {/* Menú Dropdown */}
+              {showUserMenu && (
+                <>
+                  {/* Overlay para cerrar el menú */}
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowUserMenu(false)}
+                  />
+
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border z-20"
+                       style={{
+                         backgroundColor: 'var(--bg-card)',
+                         borderColor: 'var(--border-color)',
+                         boxShadow: 'var(--shadow-lg)'
+                       }}>
+
+                    {/* Header del menú con info del usuario */}
+                    <div className="p-4 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-12 h-12 rounded-full text-lg font-bold text-white"
+                             style={{ background: 'var(--gradient-nexus)' }}>
+                          {getUserInitials(user)}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
+                            {(() => {
+                              if (!user) return t('auth.login');
+                              if (user.user_metadata?.username) return user.user_metadata.username;
+                              if (user.email) return user.email.split('@')[0];
+                              return t('auth.login');
+                            })()}
+                          </p>
+                          {user?.email && (
+                            <p className="text-xs text-gray-500">{user.email}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Balance de créditos detallado */}
+                      <div className="mt-3">
+                        <CreditBalance showDetails={true} />
+                      </div>
+                    </div>
+
+                    {/* Opciones del menú */}
+                    <div className="py-2">
+                      {/* Invitar amigos */}
+                      <button
+                        className="w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                        style={{ color: 'var(--text-primary)' }}
+                        onClick={() => {
+                          setShowUserMenu(false);
+                          // TODO: Abrir modal de invitaciones
+                        }}
+                      >
+                        <span>👥</span>
+                        <span>{t('menu.inviteFriends')}</span>
+                      </button>
+
+                      {/* Suscripción */}
+                      <button
+                        className="w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50 transition-colors opacity-50 cursor-not-allowed"
+                        style={{ color: 'var(--text-primary)' }}
+                        disabled
+                      >
+                        <span>💎</span>
+                        <span>{t('menu.subscription')}</span>
+                        <span className="ml-auto text-xs bg-gray-200 px-2 py-1 rounded-full">
+                          {t('menu.comingSoon')}
+                        </span>
+                      </button>
+
+                      <div className="border-t my-2" style={{ borderColor: 'var(--border-color)' }} />
+
+                      {/* Selector de idioma */}
+                      <div className="px-4 py-2">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span>🌍</span>
+                          <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                            {t('menu.language')}
+                          </span>
+                        </div>
+                        <div className="ml-6">
+                          <LanguageSelector />
+                        </div>
+                      </div>
+
+                      {/* Toggle de tema */}
+                      <button
+                        onClick={() => {
+                          toggleTheme();
+                          setShowUserMenu(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                        style={{ color: 'var(--text-primary)' }}
+                      >
+                        <span>{theme === 'dark' ? '☀️' : '🌙'}</span>
+                        <span>
+                          {theme === 'dark' ? t('theme.light') : t('theme.dark')}
+                        </span>
+                      </button>
+
+                      <div className="border-t my-2" style={{ borderColor: 'var(--border-color)' }} />
+
+                      {/* Cerrar sesión */}
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-red-50 hover:text-red-600 transition-colors"
+                        style={{ color: 'var(--text-primary)' }}
+                      >
+                        <span>🚪</span>
+                        <span>{t('navigation.logout')}</span>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
-
-            {/* Botón de Logout */}
-            <button
-              onClick={handleLogout}
-              aria-label={t('navigation.logout')}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-red-50 hover:text-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              <span>🚪</span>
-              <span className="hidden sm:inline">{t('navigation.logout')}</span>
-            </button>
           </div>
         </div>
 
