@@ -3,6 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
+import { apiPost } from '../lib/apiClient';
 import Container from './Container';
 import Toast from './Toast';
 
@@ -88,30 +89,9 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
       formData.append('file', file);
       formData.append('pipeline_id', engineName);
 
-      // Debug: Log token information
-      console.log('🔍 Debug: Token available:', !!token);
-      console.log('🔍 Debug: Token preview:', token ? token.substring(0, 50) + '...' : 'NO TOKEN');
-      console.log('🔍 Debug: User info:', user ? { id: user.id, email: user.email } : 'NO USER');
-      
-      // Hacer la llamada a la API de conversión (via proxy)
-      const response = await fetch('/api/convert', {
-        method: 'POST',
-        body: formData,
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      if (response.status === 401) {
-        // Token expirado, redirigir al login
-        navigate('/login');
-        return;
-      }
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || t('fileUploader.conversionError'));
-      }
+      // Use the apiClient utility to make the request
+      console.log('Making API request to convert with token:', token ? 'Present' : 'Missing');
+      const data = await apiPost('convert', formData, token);
 
       // Conversión iniciada exitosamente
       const successMessage = `✅ ${t('fileUploader.conversionStarted')}\n\n` +
@@ -132,6 +112,14 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
 
     } catch (error: any) {
       console.error('Error en conversión:', error);
+      
+      if (error.message === 'UNAUTHORIZED') {
+        // Token expired, redirect to login
+        await savePendingFile(file);
+        navigate('/login');
+        return;
+      }
+      
       setError(error.message);
 
       const errorMessage = `❌ ${t('fileUploader.conversionError')}\n\n${error.message}`;
@@ -190,16 +178,9 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
       console.log('Debug - user:', !!user, 'token:', !!token, 'session:', !!session);
       console.log('Debug - token preview:', token ? token.substring(0, 20) + '...' : 'null');
 
-      const analyzeRes = await fetch('/api/analyze', {
-        method: 'POST',
-        body: formData,
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
-
-      const analyzeData = await analyzeRes.json();
-      if (!analyzeRes.ok) {
-        throw new Error(analyzeData.error || t('fileUploader.analyzeError'));
-      }
+      // Use the apiClient utility to make the request
+      console.log('Making API request to analyze with token:', token ? 'Present' : 'Missing');
+      const analyzeData = await apiPost('analyze', formData, token);
 
       // 2. Mostrar análisis y recomendación
       const engineName = analyzeData.recommended || analyzeData.pipeline_id || 'balanced';
@@ -232,47 +213,33 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
         await startActualConversion(engineName);
       }
 
-    } catch (err: any) {
-      setError(err.message);
-      console.error('Error en análisis rápido:', err);
+    } catch (error: any) {
+      console.error('Error en análisis:', error);
+      
+      if (error.message === 'UNAUTHORIZED') {
+        // Token expired, redirect to login
+        await savePendingFile(fileToUse);
+        navigate('/login');
+        return;
+      }
+      
+      setError(error.message);
+      setToast({
+        title: 'Error',
+        message: `❌ ${t('fileUploader.analyzeError')}\n\n${error.message}`,
+        variant: 'error'
+      });
     } finally {
       setIsConverting(false);
     }
   };
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    setError(null);
-    setIsUploading(true);
-
-    // Verificar si hay algún archivo
-    if (acceptedFiles.length === 0) {
-      setIsUploading(false);
-      return;
-    }
+    if (acceptedFiles.length === 0) return;
 
     const selectedFile = acceptedFiles[0];
-
-    // Verificar que sea un PDF
-    if (selectedFile.type !== 'application/pdf') {
-      setError(t('fileUploader.supportedFormats'));
-      setIsUploading(false);
-      return;
-    }
-
-    // Verificar tamaño (máximo 25MB - sincronizado con backend)
-    const maxSizeMB = 25;
-    const maxSizeBytes = maxSizeMB * 1024 * 1024;
-    if (selectedFile.size > maxSizeBytes) {
-      setError(t('fileUploader.maxSize'));
-      setIsUploading(false);
-      return;
-    }
-
-    // Simular un pequeño delay para mostrar el loading
-    await new Promise(resolve => setTimeout(resolve, 500));
-
     setFile(selectedFile);
-    setIsUploading(false);
+    setError(null);
 
     if (onFileSelected) {
       onFileSelected(selectedFile);
@@ -482,5 +449,3 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, onConversio
 };
 
 export default FileUploader;
-
-

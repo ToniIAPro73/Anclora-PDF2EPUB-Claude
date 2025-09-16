@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { apiGet } from '../lib/apiClient';
 import { useAuth } from '../AuthContext';
 
 interface ConversionItem {
@@ -21,9 +22,10 @@ const HistoryView: React.FC = () => {
         const res = await fetch('/api/history', {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error || 'Error al obtener historial');
+        
+        if (error.message === 'UNAUTHORIZED') {
+          navigate('/login');
+          return;
         }
         setHistory(data);
       } catch (err: any) {
@@ -109,3 +111,4 @@ const HistoryView: React.FC = () => {
 };
 
 export default HistoryView;
+

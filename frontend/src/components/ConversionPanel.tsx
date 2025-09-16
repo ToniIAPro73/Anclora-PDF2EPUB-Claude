@@ -44,10 +44,11 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
         setIsAnalyzing(false);
         return;
       }
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Error al analizar');
-      }
+      
+      if (error.message === 'UNAUTHORIZED') {
+          navigate('/login');
+          return;
+        }
       setPipelines(data.pipelines || []);
     } catch (err: any) {
       setError(err.message);
@@ -88,10 +89,11 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
         setIsConverting(false);
         return;
       }
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || t('conversionPanel.conversionError'));
-      }
+      
+      if (error.message === 'UNAUTHORIZED') {
+          navigate('/login');
+          return;
+        }
       setTaskId(data.task_id);
       pollStatus(data.task_id);
     } catch (err: any) {
@@ -113,7 +115,7 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
           setIsConverting(false);
           return;
         }
-        const data = await res.json();
+        
         setStatus(data.status);
         if (data.status === 'PROGRESS') {
           if (typeof data.progress === 'number') {
@@ -206,3 +208,4 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
 };
 
 export default ConversionPanel;
+

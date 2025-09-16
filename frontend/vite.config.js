@@ -20,7 +20,9 @@ export default ({ mode }) => {
           target: 'http://localhost:5175',
           changeOrigin: true,
           secure: false,
+          rewrite: (path) => path
         }
+      }
       }
     },
     preview: {

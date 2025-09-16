@@ -47,10 +47,11 @@ const PipelineWizard: React.FC<PipelineWizardProps> = ({ file }) => {
         setIsAnalyzing(false);
         return;
       }
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Error al analizar');
-      }
+      
+      if (error.message === 'UNAUTHORIZED') {
+          navigate('/login');
+          return;
+        }
       setPipelines(data.pipelines || []);
       setStep('selection');
     } catch (err: any) {
@@ -91,10 +92,11 @@ const PipelineWizard: React.FC<PipelineWizardProps> = ({ file }) => {
         setIsConverting(false);
         return;
       }
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Error en la conversión');
-      }
+      
+      if (error.message === 'UNAUTHORIZED') {
+          navigate('/login');
+          return;
+        }
       pollStatus(data.task_id);
     } catch (err: any) {
       setError(err.message);
@@ -115,7 +117,7 @@ const PipelineWizard: React.FC<PipelineWizardProps> = ({ file }) => {
           setIsConverting(false);
           return;
         }
-        const data = await res.json();
+        
         setStatus(data.status);
         if (data.status === 'SUCCESS') {
           clearInterval(interval);
@@ -194,3 +196,4 @@ const PipelineWizard: React.FC<PipelineWizardProps> = ({ file }) => {
 };
 
 export default PipelineWizard;
+

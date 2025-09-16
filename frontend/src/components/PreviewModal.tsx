@@ -28,7 +28,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ taskId, onClose }) => {
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
       if (res.ok) {
-        const data = await res.json();
+        
         setPages(data.pages || []);
       }
     };
@@ -88,3 +88,4 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ taskId, onClose }) => {
 };
 
 export default PreviewModal;
+
