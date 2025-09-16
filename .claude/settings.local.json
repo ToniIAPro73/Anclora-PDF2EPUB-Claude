@@ -12,7 +12,10 @@
       "Bash(safety scan)",
       "Bash(npm update:*)",
       "Bash(npm run build:*)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(curl:*)",
+      "Bash(/dev/null)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,13 +1,13 @@
-# Use a stable, non-alpine Node 18 image
-FROM node:18-slim
+# Use a stable, non-alpine Node 20 image for Vite 7 compatibility
+FROM node:20-slim
 
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
-# Clean install dependencies for reproducibility
-RUN npm install
+# Clean install dependencies for reproducibility and fix Rollup issues
+RUN npm ci --no-audit
 
 # Copy the rest of the app
 COPY . .
