@@ -90,9 +90,9 @@ const MainApp: React.FC = () => {
                 {/* Layout de borde a borde cuando hay archivo seleccionado */}
                 {selectedFile ? (
                   <div className="w-full">
-                    <div className="grid grid-cols-12 items-start max-w-7xl mx-auto px-4">
+                    <div className="grid grid-cols-12 items-start max-w-6xl mx-auto px-8">
                       {/* Columna izquierda - Cards (3 columnas) */}
-                      <div className="col-span-3 pl-8 pr-4 py-6" style={{ marginTop: '-100px' }}>
+                      <div className="col-span-3 pr-6 py-6" style={{ marginTop: '-50px' }}>
                         <ConversionPanel
                           file={selectedFile}
                           onConversionStateChange={setConversionState}
@@ -101,7 +101,7 @@ const MainApp: React.FC = () => {
                       </div>
 
                       {/* Columna central - File Uploader (6 columnas) */}
-                      <div className="col-span-6 flex flex-col items-center px-4">
+                      <div className="col-span-6 flex flex-col items-center px-6">
                         <FileUploader
                           onFileSelected={setSelectedFile}
                           selectedFile={selectedFile}
@@ -125,7 +125,7 @@ const MainApp: React.FC = () => {
                       </div>
 
                       {/* Columna derecha - AI ChatBox (3 columnas) */}
-                      <div className="col-span-3 flex items-start justify-center pl-4 pr-8 py-6" style={{ marginTop: '-100px' }}>
+                      <div className="col-span-3 flex items-start justify-center pl-6 py-6" style={{ marginTop: '-50px' }}>
                         <AIChatBox
                           userCredits={pipelineData.userCredits}
                           selectedPipeline={pipelineData.selectedPipeline}

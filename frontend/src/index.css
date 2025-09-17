@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
+@import url('https://fonts.googleapis.com/css2?family=Playwrite+IS&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -358,4 +359,88 @@ p {
   .bg-uploader-pattern::before {
     animation: none !important;
   }
+}
+
+/* ===== EFECTOS VISUALES AVANZADOS ===== */
+
+/* CSS Properties for animated border */
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+/* Glowing animated border effect for selected cards */
+.selected-card-glow::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  background: repeating-conic-gradient(
+    from var(--angle, 0deg), 
+    #2EAFC4 0% 5%, 
+    #7DD3FC 5% 15%, 
+    #FFC979 15% 25%,
+    #2EAFC4 25% 35%,
+    #7DD3FC 35% 45%,
+    #FFC979 45% 55%,
+    #2EAFC4 55% 65%,
+    #7DD3FC 65% 75%,
+    #FFC979 75% 85%,
+    #2EAFC4 85% 100%
+  );
+  border-radius: 12px;
+  animation: rotate-border 3s linear infinite;
+  z-index: -1;
+}
+
+.selected-card-glow::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(46, 175, 196, 0.6) 0%,
+    rgba(125, 211, 252, 0.4) 30%,
+    rgba(255, 201, 121, 0.3) 60%,
+    transparent 80%
+  );
+  border-radius: 20px;
+  animation: glow-pulse 2s ease-in-out infinite alternate;
+  z-index: -2;
+  filter: blur(8px);
+}
+
+@keyframes rotate-border {
+  to {
+    --angle: 360deg;
+  }
+}
+
+@keyframes glow-pulse {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.05);
+    opacity: 0.6;
+  }
+}
+
+/* Enhanced hover effects */
+.pipeline-card:hover {
+  filter: brightness(1.05);
+}
+
+.selected-card-glow:hover {
+  filter: brightness(1.1);
+}
+
+/* Prevent glow effect overflow issues */
+.conversion-panel {
+  overflow: visible;
+}
+
+.pipeline-selection {
+  overflow: visible;
 }

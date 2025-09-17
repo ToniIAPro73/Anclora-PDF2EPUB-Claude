@@ -259,8 +259,8 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file, onConversionSta
     <div className="conversion-panel relative">
       {pipelines.length > 0 && (
         <div className="pipeline-selection">
-          {/* Cards en columna vertical compacta */}
-          <div className="flex flex-col space-y-3">
+          {/* Cards en columna vertical con más separación */}
+          <div className="flex flex-col space-y-6">
             {pipelines.map((p, index) => {
               // Calcular la parte del degradado para cada card (igual al botón)
               const getCardGradient = (cardIndex: number) => {
@@ -280,18 +280,20 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file, onConversionSta
                 <div
                   key={p.id}
                   onClick={() => setSelectedPipeline(p.id)}
-                  className="pipeline-card cursor-pointer relative transition-all duration-300 hover:scale-105"
+                  className={`pipeline-card cursor-pointer relative transition-all duration-300 hover:scale-105 ${isSelected ? 'selected-card-glow' : ''}`}
                   style={{
                     background: getCardGradient(index),
-                    border: isSelected ? '2px solid #1E3A8A' : '2px solid #000000',
-                    borderRadius: '16px',
-                    padding: '32px 24px',
+                    border: isSelected ? '3px solid transparent' : '2px solid rgba(0,0,0,0.15)',
+                    borderRadius: '12px',
+                    padding: '20px 16px',
                     boxShadow: isSelected
-                      ? '0 8px 30px rgba(30, 58, 138, 0.4), 0 0 20px rgba(30, 58, 138, 0.3)'
-                      : '0 2px 6px rgba(0, 0, 0, 0.1)',
-                    minHeight: '160px',
+                      ? '0 12px 40px rgba(30, 58, 138, 0.6), 0 0 30px rgba(30, 58, 138, 0.4), inset 0 1px 0 rgba(255,255,255,0.2)'
+                      : '0 2px 8px rgba(0, 0, 0, 0.15)',
+                    minHeight: '120px',
                     width: '100%',
-                    transform: isSelected ? 'translateY(-2px)' : 'translateY(0)',
+                    transform: isSelected ? 'translateY(-4px)' : 'translateY(0)',
+                    position: 'relative' as const,
+                    overflow: 'hidden' as const,
                   }}
                 >
                   <div className="text-center h-full flex flex-col justify-between">
