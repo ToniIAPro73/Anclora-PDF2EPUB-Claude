@@ -75,6 +75,79 @@ const FileUploader: React.FC<FileUploaderProps> = ({
     console.log("🎬 showLottieAnimation state changed to:", showLottieAnimation);
   }, [showLottieAnimation]);
 
+  // Watch for selectedFile changes from parent and trigger animation
+  useEffect(() => {
+    console.log("📄 selectedFile prop changed:", selectedFile?.name || "null");
+    if (selectedFile && selectedFile !== file) {
+      console.log("📄 New file detected from parent, starting animation sequence");
+      
+      // Update internal file state
+      setFile(selectedFile);
+      setError(null);
+      setShowAdvancedMessage(false);
+      
+      // Start animation sequence
+      setTimeout(() => {
+        console.log("🔍 Starting Lottie animation from selectedFile change");
+        
+        // Show the animation container
+        const container = document.getElementById('lottie-animation-container');
+        if (container) {
+          container.style.display = 'flex';
+          console.log("🔍 Container shown from selectedFile");
+          
+          // Initialize Lottie animation
+          const initLottie = (attempt = 1) => {
+            console.log(`🎬 Attempt ${attempt} - Checking for canvas:`, !!canvasRef.current);
+            if (canvasRef.current) {
+              console.log("🎬 Initializing Lottie animation from selectedFile");
+              try {
+                dotLottieRef.current = new DotLottie({
+                  autoplay: true,
+                  loop: true,
+                  canvas: canvasRef.current,
+                  src: "/atpV03BrWT.lottie"
+                });
+                console.log("🎬 Lottie animation initialized successfully from selectedFile!");
+              } catch (error) {
+                console.error("🎬 Error initializing Lottie from selectedFile:", error);
+              }
+            } else if (attempt < 5) {
+              console.log(`🎬 Canvas not found, retrying in ${attempt * 100}ms...`);
+              setTimeout(() => initLottie(attempt + 1), attempt * 100);
+            } else {
+              console.error("🎬 Canvas not found after 5 attempts from selectedFile!");
+            }
+          };
+
+          setTimeout(() => initLottie(), 100);
+        }
+
+        // Clear any existing timer
+        if (analysisTimerRef.current) {
+          clearTimeout(analysisTimerRef.current);
+        }
+
+        // End animation after 2.5 seconds and show message
+        analysisTimerRef.current = setTimeout(() => {
+          console.log("🔍 Ending Lottie animation - hiding container from selectedFile");
+          const container = document.getElementById('lottie-animation-container');
+          if (container) {
+            container.style.display = 'none';
+          }
+          if (dotLottieRef.current) {
+            dotLottieRef.current.destroy();
+            dotLottieRef.current = null;
+          }
+          
+          // Show message after animation
+          console.log("💡 Setting showAdvancedMessage to true from selectedFile");
+          setShowAdvancedMessage(true);
+        }, 2500);
+      }, 100); // Small delay to ensure DOM is ready
+    }
+  }, [selectedFile, file]);
+
   // Cleanup timers on unmount
   useEffect(() => {
     return () => {
