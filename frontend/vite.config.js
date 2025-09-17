@@ -14,12 +14,16 @@ export default ({ mode }) => {
     },
     server: {
       port: 5000,
-      host: "0.0.0.0",
-      allowedHosts: "all",
+      host: true, // listen on all interfaces
+      allowedHosts: true, // Correct Vite syntax (not webpack's "all")
+      hmr: { 
+        protocol: "wss", 
+        clientPort: 443 
+      },
       proxy: {
         // Proxy all /api requests to the backend server
         "/api": {
-          target: "http://localhost:3002",
+          target: "http://127.0.0.1:3002",
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path,
@@ -37,7 +41,7 @@ export default ({ mode }) => {
     },
     preview: {
       port: 5000,
-      host: "0.0.0.0",
+      host: true
     },
     build: {
       sourcemap: true,
