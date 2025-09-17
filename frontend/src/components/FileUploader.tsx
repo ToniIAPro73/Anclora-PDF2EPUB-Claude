@@ -59,21 +59,14 @@ const FileUploader: React.FC<FileUploaderProps> = ({
   const [showLottieAnimation, setShowLottieAnimation] = useState(false);
   const [showAdvancedMessage, setShowAdvancedMessage] = useState(false);
   const [toast, setToast] = useState<ToastConfig | null>(null);
+  const [animationInProgress, setAnimationInProgress] = useState(false);
 
   // Lottie animation reference
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dotLottieRef = useRef<DotLottie | null>(null);
   const analysisTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const shouldShowMessageRef = useRef<boolean>(false);
 
-  // Debug isAnalyzing state changes
-  useEffect(() => {
-    console.log("🔍 isAnalyzing state changed to:", isAnalyzing);
-  }, [isAnalyzing]);
-
-  // Debug showLottieAnimation state changes
-  useEffect(() => {
-    console.log("🎬 showLottieAnimation state changed to:", showLottieAnimation);
-  }, [showLottieAnimation]);
 
   // Cleanup timers on unmount
   useEffect(() => {
@@ -83,11 +76,19 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       }
     };
   }, []);
-  
+
   // Hooks
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { user, token, session } = useAuth();
+
+  // Restore state when component re-renders due to AuthContext changes
+  useEffect(() => {
+    if (file && shouldShowMessageRef.current && !showAdvancedMessage) {
+      console.log("📋 RESTORING: shouldShowMessageRef.current is true but showAdvancedMessage is false - restoring state");
+      setShowAdvancedMessage(true);
+    }
+  }, [user, token, session, file, showAdvancedMessage]); // Triggers on AuthContext changes
 
   /**
    * Format file size for display
@@ -371,32 +372,38 @@ const FileUploader: React.FC<FileUploaderProps> = ({
 
   // Sincronizar con el archivo seleccionado externamente
   useEffect(() => {
+    console.log("📋 useEffect [selectedFile, file] TRIGGER - selectedFile:", !!selectedFile, "file:", !!file, "selectedFile !== file:", selectedFile !== file, "showAdvancedMessage:", showAdvancedMessage, "animationInProgress:", animationInProgress);
     if (selectedFile !== file) {
+      console.log("📋 Setting file to selectedFile, showAdvancedMessage should not be affected");
       setFile(selectedFile);
       if (!selectedFile) {
         setError(null);
+        // Only reset message when file is cleared AND we're not in animation sequence
+        if (!animationInProgress) {
+          console.log("📋 File cleared, resetting showAdvancedMessage to false");
+          setShowAdvancedMessage(false);
+        } else {
+          console.log("📋 File cleared but animation in progress, keeping message state");
+        }
       }
+    } else {
+      console.log("📋 useEffect no changes needed - files are same");
     }
-  }, [selectedFile, file]);
+  }, [selectedFile, file, animationInProgress, showAdvancedMessage]);
 
   // Manage Lottie animation
   useEffect(() => {
-    console.log("🎬 Lottie useEffect - showLottieAnimation:", showLottieAnimation, "canvas:", !!canvasRef.current);
 
     if (showLottieAnimation) {
       // Use a small delay to ensure the canvas is rendered
       const timer = setTimeout(() => {
-        console.log("🎬 Checking canvas after delay:", !!canvasRef.current);
         if (canvasRef.current) {
-          console.log("🎬 Initializing Lottie animation");
           dotLottieRef.current = new DotLottie({
             autoplay: true,
             loop: true,
             canvas: canvasRef.current,
             src: "/atpV03BrWT.lottie"
           });
-        } else {
-          console.error("🎬 Canvas still not available!");
         }
       }, 100); // Small delay to ensure DOM is updated
 
@@ -452,7 +459,6 @@ const FileUploader: React.FC<FileUploaderProps> = ({
 
     setFile(selectedFile);
     setError(null);
-    setShowAdvancedMessage(false); // Hide message during animation
 
     // Call parent first
     if (onFileSelected) {
@@ -461,19 +467,23 @@ const FileUploader: React.FC<FileUploaderProps> = ({
 
     // Wait for parent to finish processing, then start animation
     setTimeout(() => {
-      console.log("🔍 Starting Lottie animation - showing container");
+      console.log("📋 Starting animation sequence");
+
+      // Set animation in progress flag
+      setAnimationInProgress(true);
+
+      // Hide message during animation
+      setShowAdvancedMessage(false);
+      shouldShowMessageRef.current = false;
 
       // Show the animation container
       const container = document.getElementById('lottie-animation-container');
       if (container) {
         container.style.display = 'flex';
-        console.log("🔍 Container shown");
 
         // Initialize Lottie animation with retry mechanism
         const initLottie = (attempt = 1) => {
-          console.log(`🎬 Attempt ${attempt} - Checking for canvas:`, !!canvasRef.current);
           if (canvasRef.current) {
-            console.log("🎬 Initializing Lottie animation directly");
             try {
               dotLottieRef.current = new DotLottie({
                 autoplay: true,
@@ -481,15 +491,11 @@ const FileUploader: React.FC<FileUploaderProps> = ({
                 canvas: canvasRef.current,
                 src: "/atpV03BrWT.lottie"
               });
-              console.log("🎬 Lottie animation initialized successfully!");
             } catch (error) {
-              console.error("🎬 Error initializing Lottie:", error);
+              console.error("Error initializing Lottie:", error);
             }
           } else if (attempt < 5) {
-            console.log(`🎬 Canvas not found, retrying in ${attempt * 100}ms...`);
             setTimeout(() => initLottie(attempt + 1), attempt * 100);
-          } else {
-            console.error("🎬 Canvas not found after 5 attempts!");
           }
         };
 
@@ -503,7 +509,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({
 
       // End animation after 2.5 seconds
       analysisTimerRef.current = setTimeout(() => {
-        console.log("🔍 Ending Lottie animation - hiding container");
+        console.log("📋 Animation ending, hiding container");
+
         const container = document.getElementById('lottie-animation-container');
         if (container) {
           container.style.display = 'none';
@@ -513,10 +520,17 @@ const FileUploader: React.FC<FileUploaderProps> = ({
           dotLottieRef.current = null;
         }
 
-        // Show advanced message after animation ends
-        setTimeout(() => {
-          setShowAdvancedMessage(true);
-        }, 500); // Small delay after animation ends
+        // Show advanced message immediately after animation ends
+        console.log("📋 Setting showAdvancedMessage to true and clearing animation flag");
+
+        // Set the ref flag to force display
+        shouldShowMessageRef.current = true;
+        console.log("📋 Set shouldShowMessageRef.current = true");
+
+        setAnimationInProgress(false);
+        setShowAdvancedMessage(true);
+
+        console.log("📋 Animation sequence completed");
 
         analysisTimerRef.current = null;
       }, 2500);
@@ -780,13 +794,14 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       )}
 
       {/* Info message about advanced options */}
-      {file && !error && !isUploading && !isConverting && !isAnalyzing && showAdvancedMessage && (
+      {file && !animationInProgress && (showAdvancedMessage || shouldShowMessageRef.current) && (
         <div className="text-center mt-3">
           <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-            💡 {t("fileUploader.advancedOptionsBelow")}
+            💡 Para opciones avanzadas, usa el panel de conversión que aparece a la izquierda
           </p>
         </div>
       )}
+
     </Container>
     {toast && (
       <Toast

@@ -56,7 +56,9 @@ def test_api_convert_returns_task_id(tmp_path, monkeypatch):
     assert task_id
     mock_apply.assert_called_once()
     assert mock_apply.call_args.kwargs.get('task_id') == task_id
+    assert mock_apply.call_args.kwargs['queue'] == 'conversions'
     assert mock_apply.call_args.kwargs['args'][3] == 'rapid'
+    assert response.get_json()['queue'] == 'conversions'
     os.remove(pdf_path)
 
 
@@ -159,3 +161,27 @@ def test_invalid_pipeline_id(tmp_path, monkeypatch):
     assert res.status_code == 400
     assert res.get_json()['error'] == 'Invalid pipeline_id'
     os.remove(pdf_path)
+
+
+def test_health_endpoint(tmp_path, monkeypatch):
+    app = _setup_app(tmp_path)
+    client = app.test_client()
+
+    class DummyInspect:
+        def ping(self):
+            return {'worker@localhost': 'pong'}
+
+    class DummyControl:
+        def inspect(self):
+            return DummyInspect()
+
+    class DummyCelery:
+        control = DummyControl()
+
+    monkeypatch.setattr(routes, 'celery_app', DummyCelery())
+
+    response = client.get('/health')
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['status'] in ('ok', 'degraded')
+    assert set(data['directories'].keys()) == {'uploads', 'results', 'thumbnails'}

@@ -1,10 +1,13 @@
 @echo off
-title Anclora PDF2EPUB - INICIAR Desarrollo
+title Anclora PDF2EPUB - INICIAR Desarrollo Híbrido
 color 0A
 
 echo.
 echo =====================================================
-echo ANCLORA PDF2EPUB - INICIAR DESARROLLO
+echo ANCLORA PDF2EPUB - DESARROLLO HÍBRIDO
+echo =====================================================
+echo Backend + Redis: Docker
+echo Frontend + Celery: Local
 echo =====================================================
 echo.
 
@@ -45,33 +48,25 @@ if %errorlevel% neq 0 (
 )
 echo OK: Docker listo
 
-REM Detener contenedores anteriores (por si acaso)
-echo Limpiando contenedores anteriores...
-docker stop redis-anclora >nul 2>&1
-docker rm redis-anclora >nul 2>&1
-
-REM Iniciar Redis
-echo Iniciando Redis en Docker...
-docker run -d --name redis-anclora -p 6379:6379 redis:7-alpine redis-server --requirepass XNdpx7I-taa6vZDF3ttieYd1gxs0oE9e9xHt4utbkCQ --appendonly yes >nul
-
+REM Verificar que Backend y Redis estén ejecutándose en Docker
+echo Verificando servicios Docker...
+docker ps | findstr "anclora-pdf2epub-claude-backend" >nul 2>&1
 if %errorlevel% neq 0 (
-    echo ERROR: No se pudo iniciar Redis
+    echo ERROR: Backend no está ejecutándose en Docker.
+    echo Por favor ejecuta: docker-compose -f docker-compose.dev.yml up backend redis -d
     pause
     exit /b 1
 )
 
-REM Esperar a que Redis este listo
-echo Esperando que Redis este listo...
-timeout /t 3 /nobreak >nul
-
-REM Verificar Redis
-docker exec redis-anclora redis-cli -a XNdpx7I-taa6vZDF3ttieYd1gxs0oE9e9xHt4utbkCQ ping >nul 2>&1
+docker ps | findstr "anclora-pdf2epub-claude-redis" >nul 2>&1
 if %errorlevel% neq 0 (
-    echo ERROR: Redis no responde
+    echo ERROR: Redis no está ejecutándose en Docker.
+    echo Por favor ejecuta: docker-compose -f docker-compose.dev.yml up backend redis -d
     pause
     exit /b 1
 )
-echo OK: Redis funcionando en puerto 6379
+
+echo OK: Backend y Redis ejecutándose en Docker
 
 REM Preparar comandos para entorno virtual
 if %USE_VENV%==1 (
@@ -83,33 +78,14 @@ if %USE_VENV%==1 (
 REM Crear scripts para cada terminal
 echo Creando scripts para terminales...
 
-REM Script Backend
-echo @echo off > "%TEMP%\anclora_backend.bat"
-echo title [ANCLORA] Backend Flask - Puerto 5175 >> "%TEMP%\anclora_backend.bat"
-echo color 02 >> "%TEMP%\anclora_backend.bat"
-echo echo ================================== >> "%TEMP%\anclora_backend.bat"
-echo echo    BACKEND FLASK - Puerto 5175 >> "%TEMP%\anclora_backend.bat"
-echo echo    Carpeta: %PROJECT_FOLDER% >> "%TEMP%\anclora_backend.bat"
-echo echo ================================== >> "%TEMP%\anclora_backend.bat"
-echo echo. >> "%TEMP%\anclora_backend.bat"
-echo cd /d "%PROJECT_FOLDER%\backend" >> "%TEMP%\anclora_backend.bat"
-echo %VENV_CMD% >> "%TEMP%\anclora_backend.bat"
-echo echo Instalando dependencias Python... >> "%TEMP%\anclora_backend.bat"
-echo pip install -r requirements.txt >> "%TEMP%\anclora_backend.bat"
-echo echo. >> "%TEMP%\anclora_backend.bat"
-echo echo Iniciando servidor Flask... >> "%TEMP%\anclora_backend.bat"
-echo python main.py >> "%TEMP%\anclora_backend.bat"
-echo echo. >> "%TEMP%\anclora_backend.bat"
-echo echo Backend detenido. >> "%TEMP%\anclora_backend.bat"
-echo pause >> "%TEMP%\anclora_backend.bat"
-
-REM Script Frontend
+REM Script Frontend Local
 echo @echo off > "%TEMP%\anclora_frontend.bat"
 echo title [ANCLORA] Frontend React - Puerto 5178 >> "%TEMP%\anclora_frontend.bat"
 echo color 09 >> "%TEMP%\anclora_frontend.bat"
 echo echo ================================== >> "%TEMP%\anclora_frontend.bat"
-echo echo   FRONTEND REACT - Puerto 5178 >> "%TEMP%\anclora_frontend.bat"
+echo echo   FRONTEND REACT LOCAL - Puerto 5178 >> "%TEMP%\anclora_frontend.bat"
 echo echo   Carpeta: %PROJECT_FOLDER%\frontend >> "%TEMP%\anclora_frontend.bat"
+echo echo   Backend: Docker puerto 5175 >> "%TEMP%\anclora_frontend.bat"
 echo echo ================================== >> "%TEMP%\anclora_frontend.bat"
 echo echo. >> "%TEMP%\anclora_frontend.bat"
 echo cd /d "%PROJECT_FOLDER%\frontend" >> "%TEMP%\anclora_frontend.bat"
@@ -127,19 +103,23 @@ echo echo. >> "%TEMP%\anclora_frontend.bat"
 echo echo Frontend detenido. >> "%TEMP%\anclora_frontend.bat"
 echo pause >> "%TEMP%\anclora_frontend.bat"
 
-REM Script Celery
+REM Script Celery Local
 echo @echo off > "%TEMP%\anclora_celery.bat"
-echo title [ANCLORA] Celery Worker - Conversiones >> "%TEMP%\anclora_celery.bat"
+echo title [ANCLORA] Celery Worker Local - Conversiones >> "%TEMP%\anclora_celery.bat"
 echo color 05 >> "%TEMP%\anclora_celery.bat"
 echo echo ================================== >> "%TEMP%\anclora_celery.bat"
-echo echo  CELERY WORKER - Conversiones PDF >> "%TEMP%\anclora_celery.bat"
+echo echo  CELERY WORKER LOCAL - Conversiones PDF >> "%TEMP%\anclora_celery.bat"
 echo echo  Carpeta: %PROJECT_FOLDER%\backend >> "%TEMP%\anclora_celery.bat"
+echo echo  Redis: Docker puerto 6379 >> "%TEMP%\anclora_celery.bat"
 echo echo ================================== >> "%TEMP%\anclora_celery.bat"
 echo echo. >> "%TEMP%\anclora_celery.bat"
 echo cd /d "%PROJECT_FOLDER%\backend" >> "%TEMP%\anclora_celery.bat"
 echo %VENV_CMD% >> "%TEMP%\anclora_celery.bat"
-echo echo Esperando 15 segundos a que el backend este listo... >> "%TEMP%\anclora_celery.bat"
-echo timeout /t 15 /nobreak >> "%TEMP%\anclora_celery.bat"
+echo echo Esperando 10 segundos a que los servicios estén listos... >> "%TEMP%\anclora_celery.bat"
+echo timeout /t 10 /nobreak >> "%TEMP%\anclora_celery.bat"
+echo echo. >> "%TEMP%\anclora_celery.bat"
+echo echo Instalando dependencias si es necesario... >> "%TEMP%\anclora_celery.bat"
+echo pip install -r requirements.txt >> "%TEMP%\anclora_celery.bat"
 echo echo. >> "%TEMP%\anclora_celery.bat"
 echo echo Iniciando Celery Worker... >> "%TEMP%\anclora_celery.bat"
 echo celery -A app.tasks.celery_app worker --loglevel=info --pool=eventlet --concurrency=2 >> "%TEMP%\anclora_celery.bat"
@@ -149,41 +129,37 @@ echo pause >> "%TEMP%\anclora_celery.bat"
 
 echo.
 echo =====================================================
-echo ABRIENDO 3 TERMINALES...
+echo ABRIENDO 2 TERMINALES...
 echo =====================================================
 echo.
 
 REM Abrir terminales con un poco de delay entre cada uno
-echo [1/3] Abriendo Backend...
-start "Backend" "%TEMP%\anclora_backend.bat"
+echo [1/2] Abriendo Frontend Local...
+start "Frontend Local" "%TEMP%\anclora_frontend.bat"
 
-timeout /t 2 /nobreak >nul
+timeout /t 3 /nobreak >nul
 
-echo [2/3] Abriendo Frontend...
-start "Frontend" "%TEMP%\anclora_frontend.bat"
-
-timeout /t 2 /nobreak >nul
-
-echo [3/3] Abriendo Celery Worker...
-start "Celery" "%TEMP%\anclora_celery.bat"
+echo [2/2] Abriendo Celery Worker Local...
+start "Celery Local" "%TEMP%\anclora_celery.bat"
 
 echo.
 echo =====================================================
-echo DESARROLLO INICIADO CORRECTAMENTE
+echo DESARROLLO HÍBRIDO INICIADO CORRECTAMENTE
 echo =====================================================
 echo.
 echo Ubicacion: %PROJECT_FOLDER%
 echo.
 echo Servicios iniciados:
-echo  [Backend]  Flask en puerto 5175
-echo  [Frontend] React en puerto 5178
-echo  [Worker]   Celery para conversiones
-echo  [Redis]    Base de datos en puerto 6379
+echo  [Backend]  Flask en Docker puerto 5175
+echo  [Redis]    Docker puerto 6379
+echo  [Frontend] React LOCAL puerto 5178
+echo  [Worker]   Celery LOCAL para conversiones
 echo.
 echo ACCEDE A TU APLICACION:
 echo  --^> http://localhost:5178
 echo.
-echo Para DETENER todo ejecuta: stop_dev.bat
+echo Para DETENER servicios Docker ejecuta:
+echo  docker-compose -f docker-compose.dev.yml stop
 echo.
 
 timeout /t 5 /nobreak >nul

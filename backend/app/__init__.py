@@ -67,6 +67,9 @@ def create_app():
         RATE_LIMIT=os.environ.get('RATE_LIMIT', '5 per minute'),
         JWT_SECRET=os.environ.get('JWT_SECRET', 'dev'),
         JWT_EXPIRATION=int(os.environ.get('JWT_EXPIRATION', 3600)),
+        CELERY_DEFAULT_QUEUE=os.environ.get('CELERY_DEFAULT_QUEUE', 'conversions'),
+        CELERY_CONVERSION_QUEUE=os.environ.get('CELERY_CONVERSION_QUEUE', os.environ.get('CELERY_DEFAULT_QUEUE', 'conversions')),
+        CELERY_TASK_EXPIRES=int(os.environ.get('CELERY_TASK_EXPIRES', 3600)),
     )
 
     limiter.init_app(app)
@@ -101,14 +104,15 @@ def create_app():
     #     return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
 
     # Registrar rutas
-    from . import routes  # Activated for full Celery support
+    # from . import routes  # Temporary disabled due to circular import
     from . import test_routes
     from . import credits_routes  # Sistema de créditos
-    # from . import simple_routes  # Disabled - using full routes with Celery
+    from . import simple_routes  # Temporary enabled for basic functionality
 
-    app.register_blueprint(routes.bp)  # Full routes with Celery
+    # app.register_blueprint(routes.bp)  # Temporarily disabled
     app.register_blueprint(test_routes.test_bp)
     app.register_blueprint(credits_routes.bp)  # Rutas de créditos
+    app.register_blueprint(simple_routes.bp)  # Simple routes for basic functionality
     # app.register_blueprint(simple_routes.bp)  # Disabled for now
 
     @app.errorhandler(429)

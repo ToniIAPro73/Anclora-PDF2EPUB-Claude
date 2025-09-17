@@ -2,19 +2,14 @@ import os
 import time
 import logging
 import json
-from celery import Celery
+from typing import Any, Dict, Iterable, List, Optional
+
 from celery.signals import task_prerun, task_postrun
 from prometheus_client import Counter, Histogram, start_http_server
 
-from app.converter import EnhancedPDFToEPUBConverter, ConversionEngine
+from app.converter import EnhancedPDFToEPUBConverter
+from .celery_app import celery_app, get_flask_app
 from .supabase_client import update_conversion_status, get_conversion_by_task_id
-
-
-celery_app = Celery(
-    "tasks",
-    broker=os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0"),
-    backend=os.environ.get("CELERY_RESULT_BACKEND", "redis://localhost:6379/0"),
-)
 
 
 class JsonFormatter(logging.Formatter):
@@ -58,21 +53,27 @@ if os.environ.get("WORKER_METRICS_PORT"):
         port = int(os.environ["WORKER_METRICS_PORT"])
         start_http_server(port)
         logger.info(f"Prometheus metrics server started on port {port}")
-    except Exception as e:
-        logger.warning(f"Failed to start Prometheus metrics server: {e}. Continuing without metrics.")
-        pass
+    except Exception as exc:  # pragma: no cover - metrics are optional
+        logger.warning(f"Failed to start Prometheus metrics server: {exc}. Continuing without metrics.")
 
 converter = EnhancedPDFToEPUBConverter()
+MAX_TASK_RETRIES = int(os.getenv("CELERY_MAX_RETRIES", "3"))
+_retry_backoff_value = os.getenv("CELERY_RETRY_BACKOFF")
+try:
+    RETRY_BACKOFF: Any = int(_retry_backoff_value) if _retry_backoff_value is not None else True
+except ValueError:
+    RETRY_BACKOFF = True
+RETRY_JITTER = os.getenv("CELERY_RETRY_JITTER", "true").strip().lower() in {"1", "true", "yes", "on"}
 
 
 @task_prerun.connect
-def _task_prerun(sender=None, task_id=None, **kwargs):  # pragma: no cover
+def _task_prerun(sender=None, task_id=None, **_kwargs):  # pragma: no cover
     sender.__start_time = time.time()
     logger.info("task start", extra={"task_name": sender.name, "task_id": task_id})
 
 
 @task_postrun.connect
-def _task_postrun(sender=None, task_id=None, state=None, **kwargs):  # pragma: no cover
+def _task_postrun(sender=None, task_id=None, state=None, **_kwargs):  # pragma: no cover
     duration = time.time() - getattr(sender, "__start_time", time.time())
     TASK_COUNT.labels(sender.name, state).inc()
     TASK_LATENCY.labels(sender.name).observe(duration)
@@ -87,53 +88,55 @@ def _task_postrun(sender=None, task_id=None, state=None, **kwargs):  # pragma: n
     )
 
 
-@celery_app.task(bind=True, name="convert_pdf_to_epub")
+def _coerce_pipeline(pipeline: Optional[Iterable[str]]) -> List[str]:
+    """Normalize pipeline input to a sequence of step names."""
+    if isinstance(pipeline, str):
+        return ["analysis", "conversion"]
+    if not pipeline:
+        return ["conversion"]
+    return [str(step) for step in pipeline]
 
-def convert_pdf_to_epub(self, task_id, input_path, output_path=None, pipeline=None):
-    """Convert a PDF to EPUB executing each step in the provided pipeline.
 
-    Args:
-        task_id: Identifier used to track conversion in the database.
-        input_path: Path to the source PDF file.
-        output_path: Optional path for the generated EPUB.
-        pipeline: List of step names to execute sequentially. Supported steps:
-            ``analysis`` and ``conversion``.
-    """
+@celery_app.task(
+    bind=True,
+    name="convert_pdf_to_epub",
+    autoretry_for=(Exception,),
+    retry_kwargs={"max_retries": MAX_TASK_RETRIES},
+    retry_backoff=RETRY_BACKOFF,
+    retry_jitter=RETRY_JITTER,
+)
+def convert_pdf_to_epub(self, task_id: str, input_path: str, output_path: Optional[str] = None,
+                       pipeline: Optional[Iterable[str]] = None) -> Dict[str, Any]:
+    """Convert a PDF to EPUB executing each step in the provided pipeline."""
 
     start_time = time.time()
+    pipeline_steps = _coerce_pipeline(pipeline)
+    total_steps = len(pipeline_steps)
 
-    # Convert pipeline_id to pipeline steps if needed
-    if isinstance(pipeline, str):
-        # If pipeline is a string (pipeline_id), convert to steps
-        pipeline = ["analysis", "conversion"]  # Always analyze first, then convert
-    else:
-        pipeline = pipeline or ["conversion"]
-
-    total_steps = len(pipeline)
     pipeline_metrics = []
-
-    from . import create_app
-    app = create_app()
+    flask_app = get_flask_app()
 
     if not getattr(self.request, "id", None):
         self.request.id = task_id
 
     logger.info(
         "pipeline start",
-        extra={"task_id": task_id, "task_name": "convert_pdf_to_epub", "pipeline": pipeline},
+        extra={"task_id": task_id, "task_name": "convert_pdf_to_epub", "pipeline": pipeline_steps},
     )
-    def _update(state, meta):
+
+    def _update(state: str, meta: Dict[str, Any]):
         try:
             self.update_state(state=state, meta=meta)
         except Exception:
             pass
 
-    context = {}
-    for i, step in enumerate(pipeline):
-        progress = int((i / total_steps) * 100)
+    context: Dict[str, Any] = {}
+    for index, step in enumerate(pipeline_steps):
+        progress = int((index / total_steps) * 100) if total_steps else 0
         _update("PROGRESS", {"progress": progress, "message": f"Iniciando {step}"})
         step_start = time.time()
         step_status = "SUCCESS"
+
         try:
             logger.info(
                 "step start",
@@ -186,16 +189,14 @@ def convert_pdf_to_epub(self, task_id, input_path, output_path=None, pipeline=No
             },
         )
 
-        # Update conversion status in Supabase
         conv = get_conversion_by_task_id(task_id)
         if conv:
-            metrics = conv.get('metrics') or {}
+            metrics = conv.get("metrics") or {}
             metrics.setdefault("pipeline", []).append(
                 {"step": step, "status": step_status, "duration": step_duration}
             )
 
-            update_data = {"metrics": metrics}
-
+            update_data: Dict[str, Any] = {"metrics": metrics}
             if step in {"conversion", "convert"} and step_status == "SUCCESS":
                 update_data["output_path"] = output_path
 
@@ -207,10 +208,14 @@ def convert_pdf_to_epub(self, task_id, input_path, output_path=None, pipeline=No
             else:
                 update_data["status"] = "PROCESSING"
 
-            update_conversion_status(task_id, update_data["status"], **{k: v for k, v in update_data.items() if k != "status"})
+            update_conversion_status(
+                task_id,
+                update_data["status"],
+                **{key: value for key, value in update_data.items() if key != "status"},
+            )
+
         if step_status == "FAILURE":
             error_msg = context.get(step, {}).get("error", "Unknown error")
-            total_duration = time.time() - start_time
             _update("FAILURE", {"progress": progress, "message": error_msg})
             context["conversion"] = {
                 "success": False,
@@ -218,18 +223,18 @@ def convert_pdf_to_epub(self, task_id, input_path, output_path=None, pipeline=No
                 "output_path": None,
             }
             break
-        progress = int(((i + 1) / total_steps) * 100)
+
+        progress = int(((index + 1) / total_steps) * 100) if total_steps else 100
         _update("PROGRESS", {"progress": progress, "message": f"Completado {step}"})
 
     total_duration = time.time() - start_time
     final_result = context.get("conversion", {})
     _update("PROGRESS", {"progress": 100, "message": "Proceso completado"})
 
-    # Update final conversion status in Supabase
     conv = get_conversion_by_task_id(task_id)
     if conv:
         final_status = "COMPLETED" if conv.get("status") != "FAILED" else "FAILED"
-        metrics = conv.get('metrics') or {}
+        metrics = conv.get("metrics") or {}
         metrics["duration"] = total_duration
 
         if final_result.get("engine_used"):
@@ -239,12 +244,11 @@ def convert_pdf_to_epub(self, task_id, input_path, output_path=None, pipeline=No
 
         update_data = {"metrics": metrics}
 
-        # Generate thumbnail for the source PDF
         try:
             from pdf2image import convert_from_path  # type: ignore
 
-            with app.app_context():
-                thumb_dir = app.config.get("THUMBNAIL_FOLDER", "thumbnails")
+            with flask_app.app_context():
+                thumb_dir = flask_app.config.get("THUMBNAIL_FOLDER", "thumbnails")
                 os.makedirs(thumb_dir, exist_ok=True)
                 thumb_filename = f"{task_id}.png"
                 thumb_path = os.path.join(thumb_dir, thumb_filename)
@@ -268,4 +272,3 @@ def convert_pdf_to_epub(self, task_id, input_path, output_path=None, pipeline=No
         "duration": total_duration,
         "pipeline": pipeline_metrics,
     }
-

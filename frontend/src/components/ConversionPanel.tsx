@@ -120,17 +120,20 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file, onConversionSta
       formData.append("file", file);
       
       const data = await apiPost("analyze", formData, token);
-      setPipelines(data.pipelines || []);
-      
-      // Auto-select the middle pipeline (intermediate) by default
-      // But delay showing cards until animation finishes (3 seconds total)
+      // Store pipelines but don't show them yet
+      const pipelinesData = data.pipelines || [];
+
+      // Wait for animation to complete before showing anything
       setTimeout(() => {
-        if (data.pipelines?.length > 0) {
+        setPipelines(pipelinesData);
+
+        // Auto-select the middle pipeline (intermediate) by default
+        if (pipelinesData.length > 0) {
           // Seleccionar el del medio por defecto
-          const middleIndex = Math.floor(data.pipelines.length / 2);
-          setSelectedPipeline(data.pipelines[middleIndex].id);
+          const middleIndex = Math.floor(pipelinesData.length / 2);
+          setSelectedPipeline(pipelinesData[middleIndex].id);
         }
-      }, 3000); // Wait 3 seconds total for animation to complete
+      }, 3500); // Wait 3.5 seconds total (animation 2.5s + message 0.5s + cards 0.5s)
     } catch (err) {
       console.error("Error analyzing file:", err);
       if (err instanceof ApiError && err.code === "UNAUTHORIZED") {

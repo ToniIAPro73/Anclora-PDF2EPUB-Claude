@@ -160,19 +160,30 @@ def convert():
 
         # Start asynchronous conversion task
         logger.info(f"Starting conversion task {task_id} for user {user_id}")
-        convert_pdf_to_epub.apply_async(
-            args=[task_id, pdf_path, epub_path, pipeline_id],
-            task_id=task_id
+        queue_name = (
+            current_app.config.get('CELERY_CONVERSION_QUEUE')
+            or current_app.config.get('CELERY_DEFAULT_QUEUE', 'conversions')
         )
-        
-        # Increment conversion counter for metrics
+        expires_in = current_app.config.get('CELERY_TASK_EXPIRES')
+        task_options = {
+            'args': [task_id, pdf_path, epub_path, pipeline_id],
+            'task_id': task_id,
+            'queue': queue_name,
+        }
+        if expires_in:
+            task_options['expires'] = expires_in
+
+        convert_pdf_to_epub.apply_async(**task_options)
+
         conversion_counter.inc()
-        
+
         return jsonify({
             'task_id': task_id,
-            'message': 'Conversion started successfully'
+            'message': 'Conversion started successfully',
+            'queue': queue_name,
+            'expires_in': expires_in
         }), 202
-        
+
     except Exception as e:
         logger.exception(f"Unexpected error in conversion: {str(e)}")
         return jsonify({
@@ -252,6 +263,39 @@ def download_epub(filename):
                                      download_name=filename, mimetype='application/epub+zip')
 
     return jsonify({'error': 'File not found'}), 404
+
+@bp.route('/health', methods=['GET'])
+def health():
+    """Lightweight health indicator for load balancers and uptime checks."""
+    from .config import ConfigManager
+
+    config_status = ConfigManager.get_health_check()
+    celery_status = 'unknown'
+    try:
+        inspector = celery_app.control.inspect()
+        if inspector:
+            ping = inspector.ping()
+            celery_status = 'ok' if ping else 'unreachable'
+    except Exception as exc:  # pragma: no cover - best effort diagnostics
+        celery_status = f'error:{exc.__class__.__name__}'
+
+    directories = {
+        'uploads': os.path.isdir(current_app.config.get('UPLOAD_FOLDER', 'uploads')),
+        'results': os.path.isdir(current_app.config.get('RESULTS_FOLDER', 'results')),
+        'thumbnails': os.path.isdir(current_app.config.get('THUMBNAIL_FOLDER', 'thumbnails')),
+    }
+
+    status = 'ok'
+    if config_status.get('has_errors') or celery_status.startswith('error') or celery_status == 'unreachable':
+        status = 'degraded'
+
+    return jsonify({
+        'status': status,
+        'celery': celery_status,
+        'config': config_status,
+        'directories': directories,
+        'timestamp': datetime.datetime.utcnow().isoformat() + 'Z'
+    })
 
 @bp.route('/metrics')
 def metrics():

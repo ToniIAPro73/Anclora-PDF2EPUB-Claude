@@ -5,7 +5,8 @@ app = create_app()
 if __name__ == '__main__':
     try:
         print("Iniciando servidor Flask...")
-        app.run(host='0.0.0.0', port=5175, debug=True)
+        # Disable debug mode to avoid potential segfault issues
+        app.run(host='0.0.0.0', port=5175, debug=False, threaded=True)
     except Exception as e:
         print(f"Error al iniciar el servidor: {e}")
         import traceback
