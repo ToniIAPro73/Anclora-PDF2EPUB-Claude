@@ -38,6 +38,16 @@ def health():
         'timestamp': datetime.now().isoformat()
     })
 
+@bp.route('/', methods=['GET'])
+def redirect_to_frontend():
+    """Redirect root requests to frontend"""
+    from flask import redirect, request
+    # Get the current host and redirect to port 5000
+    host = request.headers.get('Host', 'localhost:3002')
+    # Replace the port with 5000 for frontend
+    frontend_host = host.split(':')[0] + ':5000'
+    return redirect(f'http://{frontend_host}', code=302)
+
 # File validation moved to file_validator.py
 from .file_validator import FileSecurityValidator
 logger = logging.getLogger(__name__)
