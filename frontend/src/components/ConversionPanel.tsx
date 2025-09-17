@@ -123,11 +123,14 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file, onConversionSta
       setPipelines(data.pipelines || []);
       
       // Auto-select the middle pipeline (intermediate) by default
-      if (data.pipelines?.length > 0) {
-        // Seleccionar el del medio por defecto
-        const middleIndex = Math.floor(data.pipelines.length / 2);
-        setSelectedPipeline(data.pipelines[middleIndex].id);
-      }
+      // But delay showing cards until animation finishes (3 seconds total)
+      setTimeout(() => {
+        if (data.pipelines?.length > 0) {
+          // Seleccionar el del medio por defecto
+          const middleIndex = Math.floor(data.pipelines.length / 2);
+          setSelectedPipeline(data.pipelines[middleIndex].id);
+        }
+      }, 3000); // Wait 3 seconds total for animation to complete
     } catch (err) {
       console.error("Error analyzing file:", err);
       if (err instanceof ApiError && err.code === "UNAUTHORIZED") {

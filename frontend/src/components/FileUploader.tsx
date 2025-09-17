@@ -57,6 +57,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
   const [isConverting, setIsConverting] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showLottieAnimation, setShowLottieAnimation] = useState(false);
+  const [showAdvancedMessage, setShowAdvancedMessage] = useState(false);
   const [toast, setToast] = useState<ToastConfig | null>(null);
 
   // Lottie animation reference
@@ -451,6 +452,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
 
     setFile(selectedFile);
     setError(null);
+    setShowAdvancedMessage(false); // Hide message during animation
 
     // Call parent first
     if (onFileSelected) {
@@ -467,18 +469,31 @@ const FileUploader: React.FC<FileUploaderProps> = ({
         container.style.display = 'flex';
         console.log("🔍 Container shown");
 
-        // Initialize Lottie animation
-        setTimeout(() => {
+        // Initialize Lottie animation with retry mechanism
+        const initLottie = (attempt = 1) => {
+          console.log(`🎬 Attempt ${attempt} - Checking for canvas:`, !!canvasRef.current);
           if (canvasRef.current) {
             console.log("🎬 Initializing Lottie animation directly");
-            dotLottieRef.current = new DotLottie({
-              autoplay: true,
-              loop: true,
-              canvas: canvasRef.current,
-              src: "/atpV03BrWT.lottie"
-            });
+            try {
+              dotLottieRef.current = new DotLottie({
+                autoplay: true,
+                loop: true,
+                canvas: canvasRef.current,
+                src: "/atpV03BrWT.lottie"
+              });
+              console.log("🎬 Lottie animation initialized successfully!");
+            } catch (error) {
+              console.error("🎬 Error initializing Lottie:", error);
+            }
+          } else if (attempt < 5) {
+            console.log(`🎬 Canvas not found, retrying in ${attempt * 100}ms...`);
+            setTimeout(() => initLottie(attempt + 1), attempt * 100);
+          } else {
+            console.error("🎬 Canvas not found after 5 attempts!");
           }
-        }, 100);
+        };
+
+        setTimeout(() => initLottie(), 100);
       }
 
       // Clear any existing timer
@@ -497,6 +512,12 @@ const FileUploader: React.FC<FileUploaderProps> = ({
           dotLottieRef.current.destroy();
           dotLottieRef.current = null;
         }
+
+        // Show advanced message after animation ends
+        setTimeout(() => {
+          setShowAdvancedMessage(true);
+        }, 500); // Small delay after animation ends
+
         analysisTimerRef.current = null;
       }, 2500);
     }, 200); // Wait 200ms for parent processing to complete
@@ -709,14 +730,43 @@ const FileUploader: React.FC<FileUploaderProps> = ({
           className="flex flex-col items-center justify-center mt-6"
           style={{ display: 'none' }}
         >
-          {/* Lottie Animation */}
-          <div className="mb-4">
-            <canvas
-              ref={canvasRef}
-              style={{ width: '120px', height: '120px' }}
-              className="mx-auto"
-            />
+          {/* Simple CSS Animation as fallback */}
+          <div className="mb-4 flex items-center justify-center">
+            <div className="relative w-24 h-24">
+              {/* PDF Icon */}
+              <div
+                className="w-16 h-20 rounded-lg flex items-center justify-center p-2 mx-auto"
+                style={{ background: "var(--gradient-nexus)" }}
+              >
+                <img
+                  src="/images/iconos/icono-pdf.png"
+                  alt="PDF"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+
+              {/* Animated Magnifying Glass */}
+              <div
+                className="absolute w-6 h-6 rounded-full bg-blue-400 border-2 border-blue-600 flex items-center justify-center"
+                style={{
+                  animation: 'upDown 1.2s ease-in-out infinite',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)'
+                }}
+              >
+                <span className="text-blue-800 text-sm">🔍</span>
+              </div>
+            </div>
           </div>
+
+          <style>{`
+            @keyframes upDown {
+              0% { transform: translate(-50%, -50%) translateY(-15px); }
+              50% { transform: translate(-50%, -50%) translateY(15px); }
+              100% { transform: translate(-50%, -50%) translateY(-15px); }
+            }
+          `}</style>
 
           {/* Analyzing Text */}
           <p className="text-base font-medium text-center"
@@ -730,7 +780,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       )}
 
       {/* Info message about advanced options */}
-      {file && !error && !isUploading && !isConverting && !isAnalyzing && (
+      {file && !error && !isUploading && !isConverting && !isAnalyzing && showAdvancedMessage && (
         <div className="text-center mt-3">
           <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
             💡 {t("fileUploader.advancedOptionsBelow")}

@@ -112,7 +112,8 @@
     "conversionStarted": "¡Conversión iniciada exitosamente!",
     "checkHistory": "Revisa el historial para ver el progreso",
     "conversionError": "Error en la conversión",
-    "analyzeError": "Error al analizar el archivo"
+    "analyzeError": "Error al analizar el archivo",
+    "analyzing": "Analizando"
   },
   "history": {
     "title": "Historial de Conversiones",

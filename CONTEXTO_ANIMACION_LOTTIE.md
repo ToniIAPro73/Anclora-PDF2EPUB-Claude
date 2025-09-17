@@ -11,8 +11,9 @@
 6. **Timing correcto**: 200ms delay + 2.5s animación
 
 ### ❌ Lo que NO está funcionando:
-- **La animación Lottie no aparece visualmente** (aunque los logs se ejecutan)
-- **Posible problema con el canvas o la inicialización de DotLottie**
+- **El canvas nunca se renderiza** (canvasRef.current siempre es null)
+- **Problema confirmado**: React no está renderizando el canvas element a tiempo
+- **5 reintentos fallan**: Canvas no disponible ni después de 500ms adicionales
 
 ## 🎯 OBJETIVO
 
