@@ -29,6 +29,15 @@ from . import limiter
 
 bp = Blueprint('routes', __name__)
 
+@bp.route('/api/health', methods=['GET'])
+def health():
+    """Health check endpoint"""
+    return jsonify({
+        'status': 'ok',
+        'message': 'Backend is working',
+        'timestamp': datetime.datetime.now().isoformat()
+    })
+
 # File validation moved to file_validator.py
 from .file_validator import FileSecurityValidator
 logger = logging.getLogger(__name__)
