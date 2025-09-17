@@ -19,7 +19,7 @@ export default ({ mode }) => {
       proxy: {
         // Proxy all /api requests to the backend server
         "/api": {
-          target: "http://localhost:5175",
+          target: "http://localhost:3002",
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path,
