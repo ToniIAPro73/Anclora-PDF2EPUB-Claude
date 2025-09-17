@@ -13,8 +13,9 @@ export default ({ mode }) => {
       globals: true,
     },
     server: {
-      port: 5178,
+      port: 5000,
       host: "0.0.0.0",
+      allowedHosts: "all",
       proxy: {
         // Proxy all /api requests to the backend server
         "/api": {
@@ -35,7 +36,7 @@ export default ({ mode }) => {
       }
     },
     preview: {
-      port: 5178,
+      port: 5000,
       host: "0.0.0.0",
     },
     build: {
