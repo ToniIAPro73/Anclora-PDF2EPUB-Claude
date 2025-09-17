@@ -92,7 +92,7 @@ const MainApp: React.FC = () => {
                   <div className="w-full">
                     <div className="grid grid-cols-12 items-start max-w-6xl mx-auto px-8">
                       {/* Columna izquierda - Cards (3 columnas) */}
-                      <div className="col-span-3 pr-6 py-6" style={{ marginTop: '-50px' }}>
+                      <div className="col-span-3 pr-6 py-6" style={{ marginTop: '-160px' }}>
                         <ConversionPanel
                           file={selectedFile}
                           onConversionStateChange={setConversionState}

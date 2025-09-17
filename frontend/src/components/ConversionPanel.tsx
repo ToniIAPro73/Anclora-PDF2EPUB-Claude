@@ -258,9 +258,9 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file, onConversionSta
   return (
     <div className="conversion-panel relative">
       {pipelines.length > 0 && (
-        <div className="pipeline-selection">
-          {/* Cards en columna vertical con más separación */}
-          <div className="flex flex-col space-y-6">
+        <div className="pipeline-selection" style={{ overflow: 'visible', padding: '100px 20px' }}>
+          {/* Cards en columna vertical con más separación para efectos dramáticos */}
+          <div className="flex flex-col space-y-12" style={{ overflow: 'visible' }}>
             {pipelines.map((p, index) => {
               // Calcular la parte del degradado para cada card (igual al botón)
               const getCardGradient = (cardIndex: number) => {
@@ -280,22 +280,40 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file, onConversionSta
                 <div
                   key={p.id}
                   onClick={() => setSelectedPipeline(p.id)}
-                  className={`pipeline-card cursor-pointer relative transition-all duration-300 hover:scale-105 ${isSelected ? 'selected-card-glow selected-card-activated' : ''}`}
+                  className={`pipeline-card cursor-pointer relative transition-all duration-500 hover:scale-105 ${isSelected ? 'selected-card-glow selected-card-activated' : ''}`}
                   style={{
                     background: getCardGradient(index),
-                    border: isSelected ? '3px solid transparent' : '2px solid rgba(0,0,0,0.15)',
+                    border: isSelected ? '3px solid rgba(46, 175, 196, 0.5)' : '2px solid rgba(0,0,0,0.15)',
                     borderRadius: '12px',
                     padding: '20px 16px',
                     boxShadow: isSelected
-                      ? '0 12px 40px rgba(30, 58, 138, 0.6), 0 0 30px rgba(30, 58, 138, 0.4), inset 0 1px 0 rgba(255,255,255,0.2)'
+                      ? '0 8px 32px rgba(46, 175, 196, 0.3), 0 4px 16px rgba(255, 201, 121, 0.2), inset 0 1px 0 rgba(255,255,255,0.3)'
                       : '0 2px 8px rgba(0, 0, 0, 0.15)',
                     minHeight: '120px',
                     width: '100%',
-                    transform: isSelected ? 'translateY(-4px)' : 'translateY(0)',
                     position: 'relative' as const,
-                    overflow: 'hidden' as const,
+                    overflow: 'visible' as const,
+                    zIndex: isSelected ? 10 : 1,
                   }}
                 >
+                  {/* Efectos luminosos dramáticos para card seleccionado */}
+                  {isSelected && (
+                    <>
+                      {/* Múltiples capas de resplandor para efecto dramático */}
+                      <div className="dramatic-glow-layer-1"></div>
+                      <div className="dramatic-glow-layer-2"></div>
+                      <div className="dramatic-glow-layer-3"></div>
+
+                      {/* Partículas brillantes */}
+                      <div className="card-sparkle"></div>
+                      <div className="card-sparkle"></div>
+                      <div className="card-sparkle"></div>
+
+                      {/* Ondas expansivas */}
+                      <div className="ripple-effect"></div>
+                    </>
+                  )}
+
                   <div className="text-center h-full flex flex-col justify-between">
 
                     <h4 className={`font-semibold text-xl mb-4 ${isSelected ? 'selected-title' : ''}`} style={{

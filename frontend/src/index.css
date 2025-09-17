@@ -438,26 +438,519 @@ p {
   filter: brightness(1.05);
 }
 
-/* Internal Activation Effect for Selected Cards */
+/* EFECTO LUMINOSO SÚPER DRAMÁTICO PARA CARD SELECCIONADO */
 .selected-card-activated {
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  transform: translateY(-12px) scale(1.05);
+  filter: brightness(1.25) saturate(1.5) contrast(1.1);
+  box-shadow:
+    0 30px 60px rgba(0, 0, 0, 0.4),
+    0 0 0 3px rgba(59, 130, 246, 0.7),
+    inset 0 2px 0 rgba(255, 255, 255, 0.3);
+  animation: selectedCardPulse 2s ease-in-out infinite alternate;
+  z-index: 10;
+  isolation: isolate;
 }
 
-/* Internal glow effect - card lights up from within */
+/* RESPLANDOR EXTERIOR ADICIONAL PARA MÁXIMA VISIBILIDAD */
+.selected-card-activated {
+  box-shadow:
+    0 30px 60px rgba(0, 0, 0, 0.4),
+    0 0 0 3px rgba(59, 130, 246, 0.7),
+    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+    /* RESPLANDOR EXTERIOR DRAMÁTICO */
+    0 0 100px rgba(30, 58, 138, 0.8),
+    0 0 150px rgba(15, 118, 110, 0.6),
+    0 0 200px rgba(180, 83, 9, 0.4);
+}
+
+/* MODO OSCURO - Resplandor exterior brillante */
+[data-theme="dark"] .selected-card-activated {
+  box-shadow:
+    0 30px 60px rgba(0, 0, 0, 0.6),
+    0 0 0 3px rgba(46, 175, 196, 0.9),
+    inset 0 2px 0 rgba(255, 255, 255, 0.4),
+    /* RESPLANDOR EXTERIOR SÚPER BRILLANTE */
+    0 0 120px rgba(46, 175, 196, 1),
+    0 0 180px rgba(125, 211, 252, 0.8),
+    0 0 240px rgba(255, 201, 121, 0.6),
+    0 0 300px rgba(255, 255, 255, 0.3);
+}
+
+/* EFECTO RESPLANDOR SÚPER DRAMÁTICO - MODO CLARO */
 .selected-card-activated::before {
   content: '';
   position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.15);
+  inset: -60px;
+  background:
+    radial-gradient(ellipse 120% 120% at center,
+      rgba(30, 58, 138, 1) 0%,        /* Azul marino MÁXIMO centro */
+      rgba(15, 118, 110, 0.95) 20%,   /* Verde azulado intenso */
+      rgba(180, 83, 9, 0.9) 40%,      /* Naranja oscuro intenso */
+      rgba(30, 58, 138, 0.8) 60%,     /* Azul difuminado */
+      rgba(15, 118, 110, 0.6) 80%,    /* Verde final */
+      transparent 100%
+    );
+  border-radius: 60px;
+  z-index: -1;
+  pointer-events: none;
+  filter: blur(40px) brightness(1.5) saturate(1.8);
+  animation: superDramaticGlowDark 1.5s ease-in-out infinite alternate;
+  opacity: 0.9;
+}
+
+/* BRILLO INTERNO SÚPER DRAMÁTICO - MODO CLARO */
+.selected-card-activated::after {
+  content: '';
+  position: absolute;
+  inset: 0px;
+  background:
+    radial-gradient(ellipse 80% 80% at center,
+      rgba(30, 58, 138, 0.6) 0%,      /* Centro muy intenso */
+      rgba(15, 118, 110, 0.5) 30%,    /* Verde azulado fuerte */
+      rgba(180, 83, 9, 0.4) 60%,      /* Naranja visible */
+      rgba(30, 58, 138, 0.2) 80%,     /* Azul difuminado */
+      transparent 100%
+    ),
+    linear-gradient(135deg,
+      rgba(30, 58, 138, 0.4),
+      rgba(15, 118, 110, 0.35),
+      rgba(180, 83, 9, 0.4),
+      rgba(30, 58, 138, 0.3)
+    );
   border-radius: 12px;
   z-index: 1;
   pointer-events: none;
+  filter: brightness(1.3) saturate(1.5);
+  animation: superDramaticInnerGlowDark 2s ease-in-out infinite alternate;
 }
 
-/* Dark mode internal glow */
+/* Animaciones del efecto luminoso SÚPER DRAMÁTICO */
+@keyframes selectedCardPulse {
+  0% {
+    transform: translateY(-12px) scale(1.05);
+    filter: brightness(1.25) saturate(1.5) contrast(1.1);
+  }
+  50% {
+    transform: translateY(-16px) scale(1.08);
+    filter: brightness(1.4) saturate(1.8) contrast(1.2);
+  }
+  100% {
+    transform: translateY(-14px) scale(1.06);
+    filter: brightness(1.3) saturate(1.6) contrast(1.15);
+  }
+}
+
+/* ANIMACIONES SÚPER DRAMÁTICAS PARA MODO CLARO */
+@keyframes superDramaticGlowDark {
+  0% {
+    opacity: 0.9;
+    transform: scale(1);
+    filter: blur(40px) brightness(1.5) saturate(1.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+    filter: blur(50px) brightness(2) saturate(2.2);
+  }
+  100% {
+    opacity: 0.95;
+    transform: scale(1.04);
+    filter: blur(45px) brightness(1.8) saturate(2);
+  }
+}
+
+@keyframes superDramaticInnerGlowDark {
+  0% {
+    opacity: 0.8;
+    filter: brightness(1.3) saturate(1.5);
+  }
+  50% {
+    opacity: 1;
+    filter: brightness(1.8) saturate(2);
+  }
+  100% {
+    opacity: 0.9;
+    filter: brightness(1.5) saturate(1.7);
+  }
+}
+
+/* ANIMACIONES SÚPER DRAMÁTICAS PARA MODO OSCURO */
+@keyframes superDramaticGlowLight {
+  0% {
+    opacity: 0.95;
+    transform: scale(1);
+    filter: blur(50px) brightness(2) saturate(2);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+    filter: blur(60px) brightness(2.5) saturate(2.5);
+  }
+  100% {
+    opacity: 0.98;
+    transform: scale(1.05);
+    filter: blur(55px) brightness(2.2) saturate(2.2);
+  }
+}
+
+@keyframes superDramaticInnerGlowLight {
+  0% {
+    opacity: 0.9;
+    filter: brightness(1.8) saturate(1.8);
+  }
+  50% {
+    opacity: 1;
+    filter: brightness(2.2) saturate(2.2);
+  }
+  100% {
+    opacity: 0.95;
+    filter: brightness(2) saturate(2);
+  }
+}
+
+/* MODO OSCURO - EFECTOS SÚPER DRAMÁTICOS BRILLANTES */
 [data-theme="dark"] .selected-card-activated::before {
-  background: rgba(255, 255, 255, 0.08);
+  inset: -80px;
+  background:
+    radial-gradient(ellipse 150% 150% at center,
+      rgba(46, 175, 196, 1) 0%,        /* Turquesa Anclora MÁXIMO centro */
+      rgba(125, 211, 252, 1) 15%,      /* Azul claro MÁXIMO */
+      rgba(255, 201, 121, 0.95) 35%,   /* Naranja claro intenso */
+      rgba(46, 175, 196, 0.8) 55%,     /* Turquesa fuerte */
+      rgba(255, 255, 255, 0.6) 75%,    /* Blanco muy visible */
+      rgba(125, 211, 252, 0.4) 90%,    /* Azul final */
+      transparent 100%
+    );
+  filter: blur(50px) brightness(2) saturate(2);
+  animation: superDramaticGlowLight 1.2s ease-in-out infinite alternate;
+  opacity: 0.95;
+}
+
+[data-theme="dark"] .selected-card-activated::after {
+  background:
+    radial-gradient(ellipse 90% 90% at center,
+      rgba(46, 175, 196, 0.8) 0%,      /* Centro turquesa intenso */
+      rgba(125, 211, 252, 0.7) 25%,    /* Azul claro fuerte */
+      rgba(255, 201, 121, 0.6) 50%,    /* Naranja visible */
+      rgba(255, 255, 255, 0.5) 70%,    /* Blanco muy visible */
+      rgba(46, 175, 196, 0.3) 85%,     /* Turquesa final */
+      transparent 100%
+    ),
+    linear-gradient(135deg,
+      rgba(255, 255, 255, 0.6),
+      rgba(46, 175, 196, 0.5),
+      rgba(255, 201, 121, 0.5),
+      rgba(125, 211, 252, 0.4)
+    );
+  filter: brightness(1.8) saturate(1.8);
+  animation: superDramaticInnerGlowLight 1.8s ease-in-out infinite alternate;
+}
+
+/* Efecto de partículas luminosas - MODO CLARO (oscuras) */
+.selected-card-activated .card-sparkle {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: rgba(30, 58, 138, 0.9);  /* Azul oscuro */
+  border-radius: 50%;
+  animation: sparkle 2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 2;
+  box-shadow: 0 0 8px rgba(30, 58, 138, 0.6);
+}
+
+.selected-card-activated .card-sparkle:nth-child(1) {
+  top: 20%;
+  left: 15%;
+  animation-delay: 0s;
+}
+
+.selected-card-activated .card-sparkle:nth-child(2) {
+  top: 70%;
+  right: 20%;
+  animation-delay: 0.5s;
+  background: rgba(180, 83, 9, 0.9);   /* Naranja oscuro */
+  box-shadow: 0 0 8px rgba(180, 83, 9, 0.6);
+}
+
+.selected-card-activated .card-sparkle:nth-child(3) {
+  bottom: 30%;
+  left: 70%;
+  animation-delay: 1s;
+  background: rgba(15, 118, 110, 0.9); /* Verde azulado oscuro */
+  box-shadow: 0 0 8px rgba(15, 118, 110, 0.6);
+}
+
+/* Partículas en MODO OSCURO (brillantes y claras) */
+[data-theme="dark"] .selected-card-activated .card-sparkle {
+  background: rgba(125, 211, 252, 1);  /* Azul claro brillante */
+  box-shadow: 0 0 12px rgba(125, 211, 252, 0.8), 0 0 20px rgba(125, 211, 252, 0.4);
+  width: 6px;
+  height: 6px;
+}
+
+[data-theme="dark"] .selected-card-activated .card-sparkle:nth-child(2) {
+  background: rgba(255, 201, 121, 1);  /* Naranja claro brillante */
+  box-shadow: 0 0 12px rgba(255, 201, 121, 0.8), 0 0 20px rgba(255, 201, 121, 0.4);
+}
+
+[data-theme="dark"] .selected-card-activated .card-sparkle:nth-child(3) {
+  background: rgba(46, 175, 196, 1);   /* Turquesa brillante */
+  box-shadow: 0 0 12px rgba(46, 175, 196, 0.8), 0 0 20px rgba(46, 175, 196, 0.4);
+}
+
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Efecto de ondas expansivas - MODO CLARO (oscuras) */
+.selected-card-activated .ripple-effect {
+  position: absolute;
+  inset: -20px;
+  border: 3px solid rgba(30, 58, 138, 0.4);  /* Azul oscuro */
+  border-radius: 28px;
+  animation: ripple 3s ease-out infinite;
+  pointer-events: none;
+  z-index: -2;
+  box-shadow: 0 0 20px rgba(30, 58, 138, 0.3);
+}
+
+/* Ondas en MODO OSCURO (brillantes y claras) */
+[data-theme="dark"] .selected-card-activated .ripple-effect {
+  border: 3px solid rgba(125, 211, 252, 0.6);  /* Azul claro brillante */
+  box-shadow: 0 0 30px rgba(125, 211, 252, 0.5), 0 0 50px rgba(46, 175, 196, 0.3);
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+}
+
+/* Efecto para el texto seleccionado - MODO CLARO (texto oscuro con brillo) */
+.selected-title {
+  color: #1e3a8a !important;  /* Azul oscuro */
+  text-shadow: 0 0 15px rgba(30, 58, 138, 0.8), 0 0 25px rgba(30, 58, 138, 0.5);
+  animation: titleGlowDark 2s ease-in-out infinite alternate;
+  font-weight: 700;
+}
+
+.selected-content {
+  color: #1f2937 !important;  /* Gris oscuro */
+  text-shadow: 0 0 10px rgba(180, 83, 9, 0.7);
+  font-weight: 600;
+}
+
+.selected-icon {
+  animation: iconBounce 1.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px rgba(30, 58, 138, 0.6));
+}
+
+.selected-cost {
+  color: #1e3a8a !important;  /* Azul oscuro */
+  text-shadow: 0 0 12px rgba(15, 118, 110, 0.8);
+  animation: costPulseDark 2s ease-in-out infinite alternate;
+  font-weight: 700;
+}
+
+/* Efectos de texto en MODO OSCURO (brillantes y claros) */
+[data-theme="dark"] .selected-title {
+  color: #ffffff !important;
+  text-shadow: 0 0 20px rgba(125, 211, 252, 1), 0 0 35px rgba(46, 175, 196, 0.6);
+  animation: titleGlowLight 2s ease-in-out infinite alternate;
+}
+
+[data-theme="dark"] .selected-content {
+  color: #f0f9ff !important;
+  text-shadow: 0 0 15px rgba(255, 201, 121, 0.8), 0 0 25px rgba(255, 201, 121, 0.4);
+}
+
+[data-theme="dark"] .selected-icon {
+  filter: drop-shadow(0 0 12px rgba(125, 211, 252, 0.8));
+}
+
+[data-theme="dark"] .selected-cost {
+  color: #ffffff !important;
+  text-shadow: 0 0 18px rgba(46, 175, 196, 1), 0 0 30px rgba(125, 211, 252, 0.6);
+  animation: costPulseLight 2s ease-in-out infinite alternate;
+}
+
+/* Animaciones para MODO CLARO (efectos oscuros) */
+@keyframes titleGlowDark {
+  0% {
+    text-shadow: 0 0 15px rgba(30, 58, 138, 0.8), 0 0 25px rgba(30, 58, 138, 0.5);
+  }
+  100% {
+    text-shadow: 0 0 25px rgba(30, 58, 138, 1), 0 0 40px rgba(30, 58, 138, 0.7);
+  }
+}
+
+@keyframes costPulseDark {
+  0% {
+    transform: scale(1);
+    text-shadow: 0 0 12px rgba(15, 118, 110, 0.8);
+  }
+  100% {
+    transform: scale(1.05);
+    text-shadow: 0 0 18px rgba(15, 118, 110, 1);
+  }
+}
+
+/* Animaciones para MODO OSCURO (efectos claros) */
+@keyframes titleGlowLight {
+  0% {
+    text-shadow: 0 0 20px rgba(125, 211, 252, 1), 0 0 35px rgba(46, 175, 196, 0.6);
+  }
+  100% {
+    text-shadow: 0 0 30px rgba(125, 211, 252, 1), 0 0 50px rgba(46, 175, 196, 0.8);
+  }
+}
+
+@keyframes costPulseLight {
+  0% {
+    transform: scale(1);
+    text-shadow: 0 0 18px rgba(46, 175, 196, 1), 0 0 30px rgba(125, 211, 252, 0.6);
+  }
+  100% {
+    transform: scale(1.05);
+    text-shadow: 0 0 25px rgba(46, 175, 196, 1), 0 0 40px rgba(125, 211, 252, 0.8);
+  }
+}
+
+@keyframes iconBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+/* CAPAS ADICIONALES DE RESPLANDOR DRAMÁTICO */
+
+/* Capa 1 - Resplandor más cercano */
+.dramatic-glow-layer-1 {
+  position: absolute;
+  inset: -15px;
+  background: radial-gradient(ellipse at center,
+    rgba(30, 58, 138, 0.6) 0%,
+    rgba(15, 118, 110, 0.4) 50%,
+    transparent 100%
+  );
+  border-radius: 20px;
+  z-index: -3;
+  pointer-events: none;
+  filter: blur(10px);
+  animation: layer1Pulse 2.5s ease-in-out infinite alternate;
+}
+
+/* Capa 2 - Resplandor medio */
+.dramatic-glow-layer-2 {
+  position: absolute;
+  inset: -35px;
+  background: radial-gradient(ellipse at center,
+    rgba(180, 83, 9, 0.5) 0%,
+    rgba(30, 58, 138, 0.3) 60%,
+    transparent 100%
+  );
+  border-radius: 35px;
+  z-index: -4;
+  pointer-events: none;
+  filter: blur(20px);
+  animation: layer2Pulse 3s ease-in-out infinite alternate;
+}
+
+/* Capa 3 - Resplandor más lejano */
+.dramatic-glow-layer-3 {
+  position: absolute;
+  inset: -50px;
+  background: radial-gradient(ellipse at center,
+    rgba(15, 118, 110, 0.4) 0%,
+    rgba(30, 58, 138, 0.2) 70%,
+    transparent 100%
+  );
+  border-radius: 50px;
+  z-index: -5;
+  pointer-events: none;
+  filter: blur(30px);
+  animation: layer3Pulse 3.5s ease-in-out infinite alternate;
+}
+
+/* MODO OSCURO - Capas brillantes */
+[data-theme="dark"] .dramatic-glow-layer-1 {
+  background: radial-gradient(ellipse at center,
+    rgba(46, 175, 196, 0.8) 0%,
+    rgba(125, 211, 252, 0.6) 50%,
+    transparent 100%
+  );
+  filter: blur(12px) brightness(1.4);
+}
+
+[data-theme="dark"] .dramatic-glow-layer-2 {
+  background: radial-gradient(ellipse at center,
+    rgba(255, 201, 121, 0.7) 0%,
+    rgba(46, 175, 196, 0.5) 60%,
+    transparent 100%
+  );
+  filter: blur(25px) brightness(1.3);
+}
+
+[data-theme="dark"] .dramatic-glow-layer-3 {
+  background: radial-gradient(ellipse at center,
+    rgba(125, 211, 252, 0.6) 0%,
+    rgba(255, 255, 255, 0.3) 40%,
+    rgba(46, 175, 196, 0.4) 70%,
+    transparent 100%
+  );
+  filter: blur(35px) brightness(1.2);
+}
+
+/* Animaciones para las capas */
+@keyframes layer1Pulse {
+  0% {
+    opacity: 0.6;
+    transform: scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes layer2Pulse {
+  0% {
+    opacity: 0.5;
+    transform: scale(0.96);
+  }
+  100% {
+    opacity: 0.8;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes layer3Pulse {
+  0% {
+    opacity: 0.4;
+    transform: scale(0.94);
+  }
+  100% {
+    opacity: 0.7;
+    transform: scale(1.06);
+  }
 }
 
 /* Selected text enhancement - more vibrant but readable */

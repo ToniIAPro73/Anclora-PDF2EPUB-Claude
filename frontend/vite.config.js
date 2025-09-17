@@ -49,7 +49,7 @@ export default ({ mode }) => {
       proxy: {
         // Proxy all /api requests to the backend server
         "/api": {
-          target: "http://127.0.0.1:3002",
+          target: "http://127.0.0.1:5175",
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path,

@@ -6,6 +6,7 @@ import React, {
   ReactNode,
   useRef,
   useCallback,
+  useMemo,
 } from "react";
 import { supabase } from "./lib/supabase";
 import type { User, Session } from "@supabase/supabase-js";
@@ -148,8 +149,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [scheduleRefresh, showToast]);
 
-  // Create API client with token provider
-  const api = createAuthenticatedApi(() => token);
+  // Create API client with token provider (memoized to prevent recreations)
+  const api = useMemo(() => createAuthenticatedApi(() => token), [token]);
 
   // Update language when it changes
   useEffect(() => {

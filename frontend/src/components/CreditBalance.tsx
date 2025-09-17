@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { apiGet } from '../lib/apiClient';
 import { useAuth } from '../AuthContext';
 import { useTranslation } from 'react-i18next';
 
@@ -24,17 +23,22 @@ const CreditBalance: React.FC<CreditBalanceProps> = ({
   const [balance, setBalance] = useState<CreditBalance | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { token } = useAuth();
+  const { token, api } = useAuth();
   const { t } = useTranslation();
 
   const fetchBalance = async () => {
     try {
       setLoading(true);
-      const response = await apiGet<{success: boolean, balance: CreditBalance}>('credits/balance', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+
+      // Verificar que el API client existe
+      if (!api) {
+        console.warn('🔐 No API client available for credit balance request');
+        setError('Authentication required');
+        setLoading(false);
+        return;
+      }
+
+      const response = await api.get<{success: boolean, balance: CreditBalance}>('credits/balance');
 
       if (response.success && response.balance) {
         setBalance(response.balance);
@@ -51,10 +55,14 @@ const CreditBalance: React.FC<CreditBalanceProps> = ({
   };
 
   useEffect(() => {
-    if (token) {
+    if (api && token) {
       fetchBalance();
+    } else if (token === null) {
+      // Token is explicitly null, user is not authenticated
+      setError('Authentication required');
+      setLoading(false);
     }
-  }, [token]);
+  }, [api, token]);
 
   if (loading) {
     return (
@@ -69,12 +77,12 @@ const CreditBalance: React.FC<CreditBalanceProps> = ({
     return (
       <div className={`flex items-center space-x-2 text-red-500 ${className}`}>
         <span className="text-sm">⚠️ {error || t('credits.error')}</span>
-        <button
+        <span
           onClick={fetchBalance}
-          className="text-xs underline hover:no-underline"
+          className="text-xs underline hover:no-underline cursor-pointer"
         >
           {t('credits.retry')}
-        </button>
+        </span>
       </div>
     );
   }
