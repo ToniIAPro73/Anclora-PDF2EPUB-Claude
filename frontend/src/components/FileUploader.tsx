@@ -454,9 +454,11 @@ const FileUploader: React.FC<FileUploaderProps> = ({
    * Handle file drop
    */
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    console.log("📄 onDrop called with files:", acceptedFiles.length);
     if (acceptedFiles.length === 0) return;
 
     const selectedFile = acceptedFiles[0];
+    console.log("📄 Selected file:", selectedFile.name);
 
     setFile(selectedFile);
     setError(null);
@@ -464,6 +466,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
 
     // Call parent first
     if (onFileSelected) {
+      console.log("📄 Calling parent onFileSelected");
       onFileSelected(selectedFile);
     }
 
