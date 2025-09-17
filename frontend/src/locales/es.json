@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "Anclora PDF2EPUB",
+    "title": "Pdf2Epub",
     "subtitle": "Conversión inteligente de PDF a EPUB3",
     "copyright": "© 2024 Anclora. Todos los derechos reservados."
   },
@@ -59,11 +59,11 @@
   },
   "home": {
     "hero": {
-      "title": "Anclora PDF2EPUB",
+      "title": "Pdf2Epub",
       "subtitle": "Conversión inteligente de PDF a EPUB3"
     },
     "features": {
-      "title": "¿Por qué elegir Anclora PDF2EPUB?",
+      "title": "¿Por qué elegir Pdf2Epub?",
       "subtitle": "Tecnología avanzada para conversiones perfectas",
       "ai": {
         "title": "IA Inteligente",

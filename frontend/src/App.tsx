@@ -79,7 +79,7 @@ const MainApp: React.FC = () => {
             <section className="relative overflow-hidden py-16" style={{ background: 'var(--gradient-hero)' }}>
               <div className="w-full text-center text-white">
                 <div className="mb-8">
-                  <h1 className="text-5xl md:text-6xl font-bold mb-6 gradient-text-hero" style={{ fontFamily: 'var(--font-heading)' }}>
+                  <h1 className="text-4xl md:text-5xl font-bold mb-4 gradient-text-hero" style={{ fontFamily: 'var(--font-heading)' }}>
                     {t('home.hero.title')}
                   </h1>
                   <p className="text-xl md:text-2xl mb-8 opacity-90">
