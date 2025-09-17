@@ -363,33 +363,22 @@ p {
 
 /* ===== EFECTOS VISUALES AVANZADOS ===== */
 
-/* CSS Properties for animated border */
-@property --angle {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
-}
-
-/* Glowing animated border effect for selected cards */
+/* Subtle flowing border effect for selected cards */
 .selected-card-glow::before {
   content: '';
   position: absolute;
   inset: -3px;
-  background: repeating-conic-gradient(
-    from var(--angle, 0deg), 
-    #2EAFC4 0% 5%, 
-    #7DD3FC 5% 15%, 
-    #FFC979 15% 25%,
-    #2EAFC4 25% 35%,
-    #7DD3FC 35% 45%,
-    #FFC979 45% 55%,
-    #2EAFC4 55% 65%,
-    #7DD3FC 65% 75%,
-    #FFC979 75% 85%,
-    #2EAFC4 85% 100%
+  background: linear-gradient(
+    90deg, 
+    rgba(46, 175, 196, 0.8) 0%,
+    rgba(125, 211, 252, 0.9) 25%,
+    rgba(255, 201, 121, 0.7) 50%,
+    rgba(125, 211, 252, 0.9) 75%,
+    rgba(46, 175, 196, 0.8) 100%
   );
+  background-size: 200% 100%;
   border-radius: 12px;
-  animation: rotate-border 3s linear infinite;
+  animation: flowing-border 4s linear infinite;
   z-index: -1;
 }
 
@@ -399,20 +388,23 @@ p {
   inset: -8px;
   background: radial-gradient(
     ellipse at center,
-    rgba(46, 175, 196, 0.6) 0%,
-    rgba(125, 211, 252, 0.4) 30%,
-    rgba(255, 201, 121, 0.3) 60%,
+    rgba(46, 175, 196, 0.3) 0%,
+    rgba(125, 211, 252, 0.25) 30%,
+    rgba(255, 201, 121, 0.2) 60%,
     transparent 80%
   );
   border-radius: 20px;
-  animation: glow-pulse 2s ease-in-out infinite alternate;
+  animation: glow-pulse 3s ease-in-out infinite alternate;
   z-index: -2;
-  filter: blur(8px);
+  filter: blur(12px);
 }
 
-@keyframes rotate-border {
-  to {
-    --angle: 360deg;
+@keyframes flowing-border {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
   }
 }
 
