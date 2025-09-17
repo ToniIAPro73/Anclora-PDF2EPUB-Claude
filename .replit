@@ -63,5 +63,5 @@ externalPort = 3002
 
 [deployment]
 deploymentTarget = "vm"
-run = ["bash", "-c", "cd backend && python main.py & cd ../frontend && VITE_API_URL=http://localhost:3002/api npm run serve & wait"]
-build = ["bash", "-c", "cd frontend && npm run build"]
+run = ["bash", "-c", "cd backend && python -m waitress --host=0.0.0.0 --port=3002 wsgi:app & cd .. && NODE_ENV=production node proxy-server.js"]
+build = ["bash", "-c", "python -m pip install -r backend/requirements.txt && npm ci --omit=dev && cd frontend && npm ci && npm run build"]
