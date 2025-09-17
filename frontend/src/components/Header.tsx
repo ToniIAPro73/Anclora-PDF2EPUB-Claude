@@ -126,32 +126,33 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
 
           {/* Controles de Usuario */}
           <div className="flex items-center gap-4">
-            {/* Balance de Créditos y Usuario */}
-            <div className="relative">
-              <button
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center gap-3 p-2 rounded-lg transition-all duration-200 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-                style={{ color: 'var(--text-primary)' }}
-              >
-                {/* Balance de Créditos */}
-                <CreditBalance onCreditsUpdate={setCurrentCredits} />
-
-                {/* Avatar del Usuario */}
-                <div className="flex items-center justify-center w-9 h-9 rounded-full text-sm font-bold text-white"
-                     style={{ background: 'var(--gradient-nexus)' }}>
-                  {getUserInitials(user)}
-                </div>
-
-                {/* Icono de dropdown */}
-                <svg
-                  className={`w-4 h-4 transition-transform duration-200 ${showUserMenu ? 'rotate-180' : ''}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+            {/* Solo mostrar controles si el usuario está autenticado */}
+            {user && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center gap-3 p-2 rounded-lg transition-all duration-200 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                  style={{ color: 'var(--text-primary)' }}
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
+                  {/* Balance de Créditos */}
+                  <CreditBalance onCreditsUpdate={setCurrentCredits} />
+
+                  {/* Avatar del Usuario */}
+                  <div className="flex items-center justify-center w-9 h-9 rounded-full text-sm font-bold text-white"
+                       style={{ background: 'var(--gradient-nexus)' }}>
+                    {getUserInitials(user)}
+                  </div>
+
+                  {/* Icono de dropdown */}
+                  <svg
+                    className={`w-4 h-4 transition-transform duration-200 ${showUserMenu ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
 
               {/* Menú Dropdown */}
               {showUserMenu && (
@@ -270,7 +271,8 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
                   </div>
                 </>
               )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
 
