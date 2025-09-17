@@ -4,7 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from celery.result import AsyncResult
 import os
 import uuid
-import datetime
+from datetime import datetime
 import jwt
 import logging
 import ebooklib
@@ -35,7 +35,7 @@ def health():
     return jsonify({
         'status': 'ok',
         'message': 'Backend is working',
-        'timestamp': datetime.datetime.now().isoformat()
+        'timestamp': datetime.now().isoformat()
     })
 
 # File validation moved to file_validator.py
