@@ -514,10 +514,26 @@ p {
   font-weight: 600 !important;
 }
 
-/* Ensure uploader info text is visible in light mode */
+/* Force dark text for uploader elements in light mode */
 :root [style*="color: var(--text-uploader)"] {
-  color: #1f2937 !important;
+  color: #111827 !important;
   font-weight: 700 !important;
+  opacity: 1 !important;
+}
+
+/* Force dark text for file info spans (Solo PDF, Max 25MB, etc.) */
+:root .bg-uploader-pattern div[style*="color: var(--text-uploader)"] span {
+  color: #111827 !important;
+  font-weight: 700 !important;
+  opacity: 1 !important;
+}
+
+/* Force dark text for uploader titles and descriptions */
+:root .bg-uploader-pattern h3[style*="color: var(--text-uploader)"],
+:root .bg-uploader-pattern p[style*="color: var(--text-uploader)"] {
+  color: #111827 !important;
+  font-weight: 700 !important;
+  opacity: 1 !important;
 }
 
 /* Improve general text contrast in light mode */
