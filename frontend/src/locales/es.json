@@ -102,7 +102,7 @@
     "tryAgain": "Intentar de nuevo",
     "changeFile": "Cambiar archivo",
     "convertNow": "Analizar y convertir",
-    "advancedOptionsBelow": "Para opciones avanzadas, usa el panel de conversión que aparece abajo",
+    "advancedOptionsBelow": "Para opciones avanzadas, usa el panel de conversión que aparece a la izquierda",
     "analysisComplete": "Análisis completado",
     "recommendedEngine": "Motor recomendado",
     "loginToConvert": "Inicia sesión para comenzar la conversión",
@@ -138,8 +138,12 @@
     }
   },
   "engines": {
+    "low": "Rápido",
     "rapid": "Rápido",
+    "medium": "Equilibrado",
     "balanced": "Equilibrado",
+    "intermediate": "Intermedio",
+    "high": "Alta Calidad",
     "quality": "Alta Calidad"
   },
   "conversionPanel": {

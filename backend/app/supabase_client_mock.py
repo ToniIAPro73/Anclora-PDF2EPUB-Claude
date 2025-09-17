@@ -70,9 +70,9 @@ def verify_supabase_token(token: str) -> Optional[Dict[str, Any]]:
     return {"sub": "mock_user_id", "email": "test@example.com"}
 
 # Mock functions
-def create_conversion_record(user_id: str, filename: str, task_id: str, status: str = "pending") -> Optional[str]:
-    logger.info(f"Mock create_conversion_record: {filename}")
-    return "mock_record_id"
+def create_conversion_record(user_id: str, task_id: str, input_filename: str) -> Dict[str, Any]:
+    logger.info(f"Mock create_conversion_record: {input_filename}")
+    return {"id": "mock_record_id", "task_id": task_id, "status": "PENDING"}
 
 def update_conversion_status(task_id: str, status: str, **kwargs) -> bool:
     logger.info(f"Mock update_conversion_status: {task_id} -> {status}")

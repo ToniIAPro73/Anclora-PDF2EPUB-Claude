@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect, useMemo } from "react";
+import React, { useCallback, useState, useEffect, useMemo, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -7,6 +7,7 @@ import { ApiError, NetworkError, ValidationError, FileProcessingError } from "..
 import { apiPost, createFormData } from "../lib/apiClient";
 import Container from "./Container";
 import Toast from "./Toast";
+import { DotLottie } from '@lottiefiles/dotlottie-web';
 
 // File storage key in localStorage
 const PENDING_FILE_KEY = "pendingFile";
@@ -36,23 +37,51 @@ interface ConversionResult {
 }
 
 interface FileUploaderProps {
-  onFileSelected?: (file: File) => void;
+  onFileSelected?: (file: File | null) => void;
   onConversionStarted?: (taskId: string) => void;
+  selectedFile?: File | null; // Para sincronizar con el estado externo
 }
 
 /**
  * Enhanced FileUploader component with optimized file handling and error management
  */
-const FileUploader: React.FC<FileUploaderProps> = ({ 
-  onFileSelected, 
-  onConversionStarted 
+const FileUploader: React.FC<FileUploaderProps> = ({
+  onFileSelected,
+  onConversionStarted,
+  selectedFile
 }) => {
   // State management
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<ApiError | Error | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showLottieAnimation, setShowLottieAnimation] = useState(false);
   const [toast, setToast] = useState<ToastConfig | null>(null);
+
+  // Lottie animation reference
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const dotLottieRef = useRef<DotLottie | null>(null);
+  const analysisTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debug isAnalyzing state changes
+  useEffect(() => {
+    console.log("🔍 isAnalyzing state changed to:", isAnalyzing);
+  }, [isAnalyzing]);
+
+  // Debug showLottieAnimation state changes
+  useEffect(() => {
+    console.log("🎬 showLottieAnimation state changed to:", showLottieAnimation);
+  }, [showLottieAnimation]);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (analysisTimerRef.current) {
+        clearTimeout(analysisTimerRef.current);
+      }
+    };
+  }, []);
   
   // Hooks
   const { t, i18n } = useTranslation();
@@ -95,7 +124,11 @@ const FileUploader: React.FC<FileUploaderProps> = ({
     setFile(null);
     setError(null);
     clearPendingFile();
-  }, [clearPendingFile]);
+    // Notificar al componente padre que el archivo se ha eliminado
+    if (onFileSelected) {
+      onFileSelected(null);
+    }
+  }, [clearPendingFile, onFileSelected]);
 
   /**
    * Handle API errors with appropriate user feedback
@@ -144,7 +177,6 @@ const FileUploader: React.FC<FileUploaderProps> = ({
               timestamp: Date.now() // Add timestamp for expiration
             })
           );
-          console.info("📁 File saved to localStorage:", file.name);
           resolve();
         } catch (e) {
           console.error("❌ Error saving file to localStorage:", e);
@@ -174,14 +206,12 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       // Check if the saved file has expired (24 hours)
       const MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
       if (Date.now() - timestamp > MAX_AGE) {
-        console.info("📁 Saved file expired, removing from localStorage");
         clearPendingFile();
         return null;
       }
-      
+
       const res = await fetch(dataUrl);
       const blob = await res.blob();
-      console.info("📁 File retrieved from localStorage:", name);
       return { file: new File([blob], name, { type }), route };
     } catch (e) {
       console.error("❌ Error reconstructing file from localStorage:", e);
@@ -216,7 +246,6 @@ const FileUploader: React.FC<FileUploaderProps> = ({
 
       // Make API request with enhanced error handling
       const data = await apiPost<ConversionResult>("convert", formData, token);
-      console.info("✅ Conversion started successfully:", data);
 
       // Show success toast
       showToast({ 
@@ -285,9 +314,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       });
 
       // Make API request with enhanced error handling
-      console.info("🔍 Analyzing file:", fileToUse.name);
       const analyzeData = await apiPost<AnalysisResult>("analyze", formData, token);
-      console.info("✅ Analysis complete:", analyzeData);
 
       // Determine recommended engine
       const engineName = analyzeData.recommended || analyzeData.pipeline_id || "balanced";
@@ -341,14 +368,49 @@ const FileUploader: React.FC<FileUploaderProps> = ({
     }
   }, [file, isConverting, token, user, t, navigate, showToast, handleApiError, savePendingFile, startActualConversion]);
 
-  // Debug logging for authentication state
+  // Sincronizar con el archivo seleccionado externamente
   useEffect(() => {
-    console.info("🔐 Auth state:", { 
-      user: !!user, 
-      token: token ? `${token.substring(0, 10)}...` : null,
-      session: !!session 
-    });
-  }, [user, token, session]);
+    if (selectedFile !== file) {
+      setFile(selectedFile);
+      if (!selectedFile) {
+        setError(null);
+      }
+    }
+  }, [selectedFile, file]);
+
+  // Manage Lottie animation
+  useEffect(() => {
+    console.log("🎬 Lottie useEffect - showLottieAnimation:", showLottieAnimation, "canvas:", !!canvasRef.current);
+
+    if (showLottieAnimation) {
+      // Use a small delay to ensure the canvas is rendered
+      const timer = setTimeout(() => {
+        console.log("🎬 Checking canvas after delay:", !!canvasRef.current);
+        if (canvasRef.current) {
+          console.log("🎬 Initializing Lottie animation");
+          dotLottieRef.current = new DotLottie({
+            autoplay: true,
+            loop: true,
+            canvas: canvasRef.current,
+            src: "/atpV03BrWT.lottie"
+          });
+        } else {
+          console.error("🎬 Canvas still not available!");
+        }
+      }, 100); // Small delay to ensure DOM is updated
+
+      return () => clearTimeout(timer);
+    }
+
+    // Cleanup function for when showLottieAnimation becomes false
+    return () => {
+      if (dotLottieRef.current) {
+        console.log("🎬 Destroying Lottie animation");
+        dotLottieRef.current.destroy();
+        dotLottieRef.current = null;
+      }
+    };
+  }, [showLottieAnimation]);
 
   /**
    * Process any pending file when user is authenticated
@@ -386,14 +448,32 @@ const FileUploader: React.FC<FileUploaderProps> = ({
     if (acceptedFiles.length === 0) return;
 
     const selectedFile = acceptedFiles[0];
-    console.info("📄 File selected:", selectedFile.name, `(${formatFileSize(selectedFile.size)})`);
-    
+
     setFile(selectedFile);
     setError(null);
 
+    // Call parent first
     if (onFileSelected) {
       onFileSelected(selectedFile);
     }
+
+    // Wait for parent to finish processing, then start animation
+    setTimeout(() => {
+      console.log("🔍 Starting Lottie animation - setShowLottieAnimation(true)");
+      setShowLottieAnimation(true);
+
+      // Clear any existing timer
+      if (analysisTimerRef.current) {
+        clearTimeout(analysisTimerRef.current);
+      }
+
+      // End animation after 2.5 seconds
+      analysisTimerRef.current = setTimeout(() => {
+        console.log("🔍 Ending Lottie animation - setShowLottieAnimation(false)");
+        setShowLottieAnimation(false);
+        analysisTimerRef.current = null;
+      }, 2500);
+    }, 200); // Wait 200ms for parent processing to complete
   }, [onFileSelected, formatFileSize]);
 
   /**
@@ -503,8 +583,9 @@ const FileUploader: React.FC<FileUploaderProps> = ({
           </div>
         )}
 
+
         {/* Success State */}
-        {file && !error && !isUploading && (
+        {file && !error && !isUploading && !isAnalyzing && (
           <div className="flex items-center justify-between py-6 px-6">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl flex items-center justify-center p-2"
@@ -574,14 +655,14 @@ const FileUploader: React.FC<FileUploaderProps> = ({
           <button
             onClick={resetUpload}
             className="btn btn-secondary"
-            disabled={isConverting}
+            disabled={isConverting || isAnalyzing}
           >
             🔄 {t("fileUploader.changeFile")}
           </button>
           <button
             className="btn btn-primary"
             onClick={() => startQuickConversion()}
-            disabled={isConverting}
+            disabled={isConverting || isAnalyzing}
           >
             {isConverting ? (
               <>
@@ -595,8 +676,31 @@ const FileUploader: React.FC<FileUploaderProps> = ({
         </div>
       )}
 
+      {/* Analyzing Animation - appears below buttons */}
+      {file && !error && !isUploading && showLottieAnimation && (
+        <div className="flex flex-col items-center justify-center mt-6">
+          {/* Lottie Animation */}
+          <div className="mb-4">
+            <canvas
+              ref={canvasRef}
+              style={{ width: '120px', height: '120px' }}
+              className="mx-auto"
+            />
+          </div>
+
+          {/* Analyzing Text */}
+          <p className="text-base font-medium text-center"
+             style={{
+               color: "var(--anclora-blue)",
+               fontWeight: '500'
+             }}>
+            {t("fileUploader.analyzing")}...
+          </p>
+        </div>
+      )}
+
       {/* Info message about advanced options */}
-      {file && !error && !isUploading && !isConverting && (
+      {file && !error && !isUploading && !isConverting && !isAnalyzing && (
         <div className="text-center mt-3">
           <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
             💡 {t("fileUploader.advancedOptionsBelow")}

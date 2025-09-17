@@ -8,9 +8,21 @@ import Toast from "./Toast";
 import CircularProgress from "./CircularProgress";
 import CreditBalance from "./CreditBalance";
 import { useTranslation } from "react-i18next";
+import AIChatBox from "./AIChatBox";
 
 interface ConversionPanelProps {
   file: File | null;
+  onConversionStateChange?: (state: {
+    isConverting: boolean;
+    progress: number;
+    statusMessage: string;
+  }) => void;
+  onPipelineDataChange?: (data: {
+    pipelines: PipelineOption[];
+    selectedPipeline: string;
+    userCredits: number;
+    analysisData: any;
+  }) => void;
 }
 
 interface PipelineOption {
@@ -35,7 +47,7 @@ interface StatusResponse {
   };
 }
 
-const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
+const ConversionPanel: React.FC<ConversionPanelProps> = ({ file, onConversionStateChange, onPipelineDataChange }) => {
   const [taskId, setTaskId] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [progress, setProgress] = useState<number>(0);
@@ -67,6 +79,35 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
     checkAffordability();
   }, [currentCredits, selectedPipeline, pipelines]);
 
+  // Notificar cambios de estado de conversión al componente padre
+  useEffect(() => {
+    if (onConversionStateChange) {
+      onConversionStateChange({
+        isConverting,
+        progress,
+        statusMessage
+      });
+    }
+  }, [isConverting, progress, statusMessage, onConversionStateChange]);
+
+  // Notificar cambios de datos de pipeline al componente padre
+  useEffect(() => {
+    if (onPipelineDataChange) {
+      onPipelineDataChange({
+        pipelines,
+        selectedPipeline,
+        userCredits: currentCredits,
+        analysisData: pipelines.length > 0 ? {
+          page_count: 6,
+          content_type: "document",
+          complexity_score: 3,
+          issues: [],
+          recommended: pipelines[1]?.id
+        } : null
+      });
+    }
+  }, [pipelines, selectedPipeline, currentCredits, onPipelineDataChange]);
+
   const analyzeFile = async () => {
     if (!file) return;
     setError(null);
@@ -78,15 +119,14 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
       const formData = new FormData();
       formData.append("file", file);
       
-      console.log("Analyzing file with token:", token ? "Present" : "Missing");
       const data = await apiPost("analyze", formData, token);
       setPipelines(data.pipelines || []);
       
-      // Auto-select the recommended pipeline if available
-      if (data.recommended && data.pipelines?.length > 0) {
-        setSelectedPipeline(data.recommended);
-      } else if (data.pipelines?.length > 0) {
-        setSelectedPipeline(data.pipelines[0].id);
+      // Auto-select the middle pipeline (intermediate) by default
+      if (data.pipelines?.length > 0) {
+        // Seleccionar el del medio por defecto
+        const middleIndex = Math.floor(data.pipelines.length / 2);
+        setSelectedPipeline(data.pipelines[middleIndex].id);
       }
     } catch (err) {
       console.error("Error analyzing file:", err);
@@ -133,7 +173,6 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
       formData.append("file", file);
       formData.append("pipeline_id", selectedPipeline);
 
-      console.log("Starting conversion with token:", token ? "Present" : "Missing");
       const data = await apiPost("convert", formData, token);
       setTaskId(data.task_id);
       pollStatus(data.task_id);
@@ -152,7 +191,6 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
   const pollStatus = (id: string) => {
     const interval = setInterval(async () => {
       try {
-        console.log("Checking status with token:", token ? "Present" : "Missing");
         const data = await apiGet<StatusResponse>(`status/${id}`, token);
         
         setStatus(data.status);
@@ -203,169 +241,82 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file }) => {
   };
 
   return (
-    <div className="conversion-panel">
-      {isAnalyzing && <p>{t("conversionPanel.analyzing")}</p>}
+    <div className="conversion-panel relative">
       {pipelines.length > 0 && (
         <div className="pipeline-selection">
-          <h3 className="text-lg font-semibold mb-6 text-center" style={{color: '#23436B'}}>{t("conversionPanel.options")}</h3>
-          <div className="grid grid-cols-3 gap-3 max-w-md mx-auto">
-            {pipelines.map((p) => (
-              <div
-                key={p.id}
-                onClick={() => setSelectedPipeline(p.id)}
-                className="pipeline-card cursor-pointer relative transition-all duration-300 hover:scale-105"
-                style={{
-                  background: selectedPipeline === p.id
-                    ? `linear-gradient(135deg, ${
-                        p.quality === 'low' ? '#38BDF8, #2EAFC4' :
-                        p.quality === 'medium' ? '#2EAFC4, #FFC979' :
-                        '#FFC979, #23436B'
-                      })`
-                    : 'linear-gradient(135deg, #F6F7F9, #FFFFFF)',
-                  border: selectedPipeline === p.id ? '2px solid #23436B' : '2px solid #E1E8ED',
-                  borderRadius: '12px',
-                  padding: '16px 12px',
-                  boxShadow: selectedPipeline === p.id
-                    ? '0 8px 25px rgba(46, 175, 196, 0.3)'
-                    : '0 2px 8px rgba(0, 0, 0, 0.08)',
-                  minHeight: '120px'
-                }}
-              >
-                <div className="text-center h-full flex flex-col justify-between">
-                  <div className={`w-3 h-3 rounded-full mx-auto mb-2 ${
-                    selectedPipeline === p.id ? 'bg-white shadow-sm' :
-                    p.quality === 'low' ? 'bg-gradient-to-r from-green-400 to-green-500' :
-                    p.quality === 'medium' ? 'bg-gradient-to-r from-yellow-400 to-orange-400' :
-                    'bg-gradient-to-r from-orange-400 to-red-500'
-                  }`} style={{
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                  }}></div>
+          {/* Cards en columna vertical compacta */}
+          <div className="flex flex-col space-y-3">
+            {pipelines.map((p, index) => {
+              // Calcular la parte del degradado para cada card (igual al botón)
+              const getCardGradient = (cardIndex: number) => {
+                // Degradado continuo basado en el botón: turquesa → naranja claro
+                const gradientStops = [
+                  '#2EAFC4', // Inicio turquesa
+                  '#7DD3FC', // Medio azul claro
+                  '#FFC979'  // Final naranja claro
+                ];
 
-                  <h4 className="font-semibold text-sm mb-1" style={{
-                    color: selectedPipeline === p.id ? '#FFFFFF' : '#23436B',
-                    textShadow: selectedPipeline === p.id ? '0 1px 2px rgba(0,0,0,0.2)' : 'none'
-                  }}>
-                    {t(`engines.${p.quality}`)}
-                  </h4>
+                return `linear-gradient(135deg, ${gradientStops[cardIndex]}, ${gradientStops[cardIndex + 1] || gradientStops[cardIndex]})`;
+              };
 
-                  <div className="text-xs mb-1" style={{
-                    color: selectedPipeline === p.id ? 'rgba(255,255,255,0.9)' : '#162032',
-                    opacity: 0.8
-                  }}>
-                    <div>{p.estimated_time}s</div>
-                    {p.estimated_cost && (
-                      <div className="font-semibold mt-1" style={{
-                        color: selectedPipeline === p.id ? '#FFF' : '#23436B'
-                      }}>
-                        💰 {p.estimated_cost} {p.estimated_cost === 1 ? 'crédito' : 'créditos'}
-                      </div>
-                    )}
-                  </div>
+              const isSelected = selectedPipeline === p.id;
 
-                  <div className="text-xs" style={{
-                    color: selectedPipeline === p.id ? 'rgba(255,255,255,0.8)' : '#162032',
-                    opacity: 0.7
-                  }}>
-                    {p.quality === 'low' && '⚡'}
-                    {p.quality === 'medium' && '⚖️'}
-                    {p.quality === 'high' && '✨'}
-                  </div>
+              return (
+                <div
+                  key={p.id}
+                  onClick={() => setSelectedPipeline(p.id)}
+                  className="pipeline-card cursor-pointer relative transition-all duration-300 hover:scale-105"
+                  style={{
+                    background: getCardGradient(index),
+                    border: isSelected ? '2px solid #1E3A8A' : '2px solid #000000',
+                    borderRadius: '16px',
+                    padding: '32px 24px',
+                    boxShadow: isSelected
+                      ? '0 8px 30px rgba(30, 58, 138, 0.4), 0 0 20px rgba(30, 58, 138, 0.3)'
+                      : '0 2px 6px rgba(0, 0, 0, 0.1)',
+                    minHeight: '160px',
+                    width: '100%',
+                    transform: isSelected ? 'translateY(-2px)' : 'translateY(0)',
+                  }}
+                >
+                  <div className="text-center h-full flex flex-col justify-between">
 
-                  {selectedPipeline === p.id && (
+                    <h4 className="font-semibold text-xl mb-4" style={{
+                      color: isSelected ? '#FFFFFF' : '#23436B',
+                      textShadow: isSelected ? '0 1px 2px rgba(0,0,0,0.3)' : 'none'
+                    }}>
+                      {t(`engines.${p.quality}`)}
+                    </h4>
+
+                    <div className="text-base mb-3" style={{
+                      color: isSelected ? 'rgba(255,255,255,0.95)' : '#162032',
+                      fontWeight: '500'
+                    }}>
+                      <div className="mb-3">⏱️ {p.estimated_time}s</div>
+                      {p.estimated_cost && (
+                        <div className="font-semibold text-lg" style={{
+                          color: isSelected ? '#FFF' : '#23436B'
+                        }}>
+                          💰 {p.estimated_cost} {p.estimated_cost === 1 ? 'crédito' : 'créditos'}
+                        </div>
+                      )}
+                    </div>
+
+                  {isSelected && (
                     <div className="absolute -top-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center" style={{
                       boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
                     }}>
-                      <span className="text-xs text-blue-600">✓</span>
+                      <span className="text-sm text-blue-800">✓</span>
                     </div>
                   )}
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-      {isConverting && (
-        <div className="flex flex-col items-center mt-6 mb-4">
-          <CircularProgress
-            progress={progress}
-            size={120}
-            strokeWidth={10}
-            showPercentage={true}
-            className="mb-4"
-          />
-          <p className="text-sm text-center max-w-xs" style={{color: '#23436B'}}>
-            {statusMessage || t("conversionPanel.progress", { progress })}
-          </p>
-        </div>
-      )}
-
-      {/* Sección de créditos y advertencias */}
-      {pipelines.length > 0 && selectedPipeline && (
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-semibold text-sm text-gray-700 mb-2">
-                Balance de Créditos
-              </h4>
-              <CreditBalance onCreditsUpdate={setCurrentCredits} />
-            </div>
-
-            {/* Botón de conversión con verificación de créditos */}
-            <div className="text-right">
-              <button
-                onClick={startConversion}
-                disabled={isConverting || isAnalyzing || !canAffordConversion}
-                className={`px-6 py-3 rounded-lg font-semibold text-white transition-all duration-200 ${
-                  canAffordConversion && !isConverting && !isAnalyzing
-                    ? 'bg-blue-600 hover:bg-blue-700 hover:scale-105 shadow-md'
-                    : 'bg-gray-400 cursor-not-allowed'
-                }`}
-                style={{
-                  background: canAffordConversion && !isConverting && !isAnalyzing
-                    ? 'linear-gradient(135deg, #2EAFC4 0%, #23436B 100%)'
-                    : undefined
-                }}
-              >
-                {isConverting ? 'Convirtiendo...' : 'Analizar y convertir'}
-              </button>
-
-              {/* Advertencia de créditos insuficientes */}
-              {!canAffordConversion && (
-                <div className="mt-2 text-xs text-red-600">
-                  ⚠️ Créditos insuficientes para esta conversión
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Detalles del costo */}
-          {(() => {
-            const selectedOption = pipelines.find(p => p.id === selectedPipeline);
-            if (selectedOption?.estimated_cost) {
-              return (
-                <div className="mt-3 pt-3 border-t border-gray-200">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">
-                      Costo de conversión ({selectedOption.quality}):
-                    </span>
-                    <span className="font-semibold">
-                      {selectedOption.estimated_cost} créditos
-                    </span>
-                  </div>
-                  {selectedOption.cost_breakdown && (
-                    <div className="mt-1 text-xs text-gray-500">
-                      Base: {selectedOption.cost_breakdown.base_cost} +
-                      {selectedOption.cost_breakdown.cost_per_page} ×
-                      ({selectedOption.cost_breakdown.total_pages - 1} páginas adicionales)
-                    </div>
-                  )}
-                </div>
               );
-            }
-            return null;
-          })()}
+            })}
+          </div>
         </div>
       )}
+
 
       {status && !isConverting && <p>{t("conversionPanel.status", { status })}</p>}
       {error && (

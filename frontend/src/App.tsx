@@ -4,11 +4,12 @@ import Header from './components/Header';
 import ConversionHistory from './components/ConversionHistory';
 import ConversionPanel from './components/ConversionPanel';
 import FileUploader from './components/FileUploader';
+import CircularProgress from './components/CircularProgress';
+import AIChatBox from './components/AIChatBox';
 import LoginForm from './LoginForm';
 import RegisterForm from './RegisterForm';
 import ProtectedRoute from './ProtectedRoute';
 
-console.log('App.tsx: App component loaded');
 import { useTranslation } from 'react-i18next';
 
 const getInitialTheme = (): 'light' | 'dark' => {
@@ -21,7 +22,19 @@ const MainApp: React.FC = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>(getInitialTheme);
   const [currentSection, setCurrentSection] = useState<string>('inicio');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [conversionState, setConversionState] = useState({
+    isConverting: false,
+    progress: 0,
+    statusMessage: ''
+  });
+  const [pipelineData, setPipelineData] = useState({
+    pipelines: [],
+    selectedPipeline: '',
+    userCredits: 0,
+    analysisData: null
+  });
   const { t } = useTranslation();
+
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -38,16 +51,33 @@ const MainApp: React.FC = () => {
 
   const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
 
+  // Función para manejar el reinicio/nueva conversión
+  const handleNewConversion = () => {
+    setSelectedFile(null); // Resetear archivo seleccionado
+    setConversionState({    // Resetear estado de conversión
+      isConverting: false,
+      progress: 0,
+      statusMessage: ''
+    });
+    setPipelineData({       // Resetear datos de pipeline
+      pipelines: [],
+      selectedPipeline: '',
+      userCredits: 0,
+      analysisData: null
+    });
+    setCurrentSection('inicio'); // Ir a la sección inicio
+  };
+
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }} data-theme={theme}>
-      <Header theme={theme} toggleTheme={toggleTheme} currentSection={currentSection} setCurrentSection={setCurrentSection} />
+      <Header theme={theme} toggleTheme={toggleTheme} currentSection={currentSection} setCurrentSection={setCurrentSection} onNewConversion={handleNewConversion} />
 
       <main className="min-h-[calc(100vh-4rem)]">
         {currentSection === 'inicio' && (
           <div className="animate-fade-in">
             {/* Hero Section */}
-            <section className="relative overflow-hidden py-16 px-4" style={{ background: 'var(--gradient-hero)' }}>
-              <div className="max-w-4xl mx-auto text-center text-white">
+            <section className="relative overflow-hidden py-16" style={{ background: 'var(--gradient-hero)' }}>
+              <div className="w-full text-center text-white">
                 <div className="mb-8">
                   <h1 className="text-5xl md:text-6xl font-bold mb-6 gradient-text-hero" style={{ fontFamily: 'var(--font-heading)' }}>
                     {t('home.hero.title')}
@@ -57,15 +87,64 @@ const MainApp: React.FC = () => {
                   </p>
                 </div>
 
-                {/* File Uploader integrado */}
-                <div className="max-w-2xl mx-auto">
-                  <FileUploader onFileSelected={setSelectedFile} />
-                </div>
+                {/* Layout de borde a borde cuando hay archivo seleccionado */}
+                {selectedFile ? (
+                  <div className="w-full">
+                    <div className="grid grid-cols-12 items-start">
+                      {/* Columna izquierda - Cards (3 columnas) */}
+                      <div className="col-span-3 pl-4 pr-4 py-6" style={{ marginTop: '-150px' }}>
+                        <ConversionPanel
+                          file={selectedFile}
+                          onConversionStateChange={setConversionState}
+                          onPipelineDataChange={setPipelineData}
+                        />
+                      </div>
 
-                {/* Conversion Panel - shown when file is selected */}
-                {selectedFile && (
-                  <div className="max-w-4xl mx-auto mt-8">
-                    <ConversionPanel file={selectedFile} />
+                      {/* Columna central - File Uploader (6 columnas) */}
+                      <div className="col-span-6 flex flex-col items-center px-8">
+                        <FileUploader
+                          onFileSelected={setSelectedFile}
+                          selectedFile={selectedFile}
+                        />
+
+                        {/* Barra de progreso circular centrada debajo del área de importación */}
+                        {conversionState.isConverting && (
+                          <div className="flex flex-col items-center mt-6">
+                            <CircularProgress
+                              progress={conversionState.progress}
+                              size={120}
+                              strokeWidth={10}
+                              showPercentage={true}
+                              className="mb-4"
+                            />
+                            <p className="text-sm text-center max-w-xs" style={{color: '#23436B'}}>
+                              {conversionState.statusMessage || t("conversionPanel.progress", { progress: conversionState.progress })}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Columna derecha - AI ChatBox (3 columnas) */}
+                      <div className="col-span-3 flex items-start justify-center pl-6 pr-4 py-6" style={{ marginTop: '60px' }}>
+                        <AIChatBox
+                          userCredits={pipelineData.userCredits}
+                          selectedPipeline={pipelineData.selectedPipeline}
+                          pipelines={pipelineData.pipelines}
+                          analysisData={pipelineData.analysisData}
+                          onSequenceRecommended={(sequence) => {
+                            // Handle sequence recommendation
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* File Uploader centrado cuando no hay archivo */
+                  <div className="max-w-2xl mx-auto">
+                    <FileUploader
+                      onFileSelected={setSelectedFile}
+                      selectedFile={selectedFile}
+                    />
                   </div>
                 )}
               </div>

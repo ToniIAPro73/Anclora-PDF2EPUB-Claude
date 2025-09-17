@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@lottiefiles/dotlottie-web": "^0.52.1",
     "@supabase/supabase-js": "^2.57.4",
     "@types/dompurify": "^3.0.5",
     "dompurify": "^3.2.6",

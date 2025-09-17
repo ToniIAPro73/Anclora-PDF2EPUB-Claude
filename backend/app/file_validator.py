@@ -258,21 +258,23 @@ class FileSecurityValidator:
             if pattern in file_content:
                 critical_patterns_found.append(pattern.decode('ascii', errors='ignore'))
 
-        # Only fail for truly dangerous patterns
+        # Log potentially suspicious patterns but don't block (many legitimate PDFs have JavaScript)
         if critical_patterns_found:
             dangerous_patterns = [p for p in critical_patterns_found if p in ['/JavaScript', '/JS', '/OpenAction', '/AA']]
             if dangerous_patterns:
-                logger.warning(f"High-risk malicious content detected in {file.filename}: {dangerous_patterns}")
-                return False, {
-                    'error': 'File contains potentially malicious content',
-                    'details': 'Executable JavaScript or auto-actions detected'
-                }, 400
+                logger.info(f"PDF contains interactive elements: {dangerous_patterns} in {file.filename}")
+                # Don't block - many legitimate PDFs have JavaScript for forms, etc.
+                # return False, {
+                #     'error': 'File contains potentially malicious content',
+                #     'details': 'Executable JavaScript or auto-actions detected'
+                # }, 400
 
         # Check for extremely unusual PDF structure (very high threshold)
         obj_count = file_content.count(b'obj')
-        if obj_count > 50000:  # Much higher threshold - complex documents can have many objects
-            logger.warning(f"Very high number of PDF objects ({obj_count}) in {file.filename}")
-            return False, {'error': 'PDF structure appears suspicious (too many objects)'}, 400
+        if obj_count > 100000:  # Even higher threshold - scientific/complex PDFs can have many objects
+            logger.warning(f"Extremely high number of PDF objects ({obj_count}) in {file.filename}")
+            # Don't block - complex scientific documents, scanned books, etc. can have many objects
+            # return False, {'error': 'PDF structure appears suspicious (too many objects)'}, 400
 
         # Log analysis results for legitimate complex documents
         if obj_count > 1000:

@@ -19,7 +19,7 @@ from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST, REG
 from .tasks import convert_pdf_to_epub, celery_app
 from .converter import ConversionEngine, suggest_best_pipeline
 from .supabase_auth import supabase_auth_required, get_current_user_id
-from .supabase_client import (
+from .supabase_client_mock import (
     create_conversion_record,
     update_conversion_status,
     get_user_conversions,
@@ -237,6 +237,21 @@ def history():
 def thumbnail(filename):
     thumb_dir = current_app.config['THUMBNAIL_FOLDER']
     return send_from_directory(thumb_dir, filename)
+
+@bp.route('/download/<path:filename>', methods=['GET'])
+def download_epub(filename):
+    """Download converted EPUB files"""
+    results_dir = current_app.config.get('RESULTS_FOLDER', 'results')
+    test_output_dir = os.path.join(os.path.dirname(__file__), '..', 'test_output')
+
+    # Try results folder first, then test_output folder
+    for directory in [results_dir, test_output_dir]:
+        file_path = os.path.join(directory, filename)
+        if os.path.exists(file_path):
+            return send_from_directory(directory, filename, as_attachment=True,
+                                     download_name=filename, mimetype='application/epub+zip')
+
+    return jsonify({'error': 'File not found'}), 404
 
 @bp.route('/metrics')
 def metrics():

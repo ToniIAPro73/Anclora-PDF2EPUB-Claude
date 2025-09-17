@@ -108,7 +108,10 @@ def verify_supabase_token(token: str) -> Optional[Dict[str, Any]]:
             token,
             SupabaseConfig.get_jwt_secret(),
             algorithms=["HS256"],
-            options={"verify_aud": False}  # Don't verify audience claim
+            options={
+                "verify_aud": False,  # Don't verify audience claim
+                "verify_iat": False   # Don't verify issued at time
+            }
         )
         logger.info(f"🔍 Token decoded successfully!")
         logger.info(f"🔍 Issuer: {payload.get('iss')}")
@@ -116,8 +119,9 @@ def verify_supabase_token(token: str) -> Optional[Dict[str, Any]]:
         logger.info(f"🔍 Expires: {payload.get('exp')}")
         
         # Validate the token is from Supabase
-        if payload.get('iss') != 'supabase':
-            logger.warning(f"Token issuer is not Supabase: {payload.get('iss')}")
+        issuer = payload.get('iss', '')
+        if not issuer.endswith('.supabase.co/auth/v1') and issuer != 'supabase':
+            logger.warning(f"Token issuer is not Supabase: {issuer}")
             return None
 
         # Extract and return user information

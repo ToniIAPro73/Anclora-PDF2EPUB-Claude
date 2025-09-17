@@ -138,8 +138,12 @@
     }
   },
   "engines": {
+    "low": "Rapid",
     "rapid": "Rapid",
+    "medium": "Balanced",
     "balanced": "Balanced",
+    "intermediate": "Intermediate",
+    "high": "High Quality",
     "quality": "High Quality"
   },
   "conversionPanel": {

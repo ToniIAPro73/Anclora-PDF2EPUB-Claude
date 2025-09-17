@@ -12,6 +12,8 @@ import tempfile
 import uuid
 import logging
 import zipfile
+import time
+from concurrent.futures import ThreadPoolExecutor
 
 from .table_extractor import extract_tables
 
@@ -66,7 +68,7 @@ class ContentType(Enum):
 
 class ConversionEngine(Enum):
     RAPID = "rapid"
-    BALANCED = "balanced"
+    INTERMEDIATE = "intermediate"
     QUALITY = "quality"
 
 class PDFAnalysis:
@@ -194,10 +196,10 @@ class PDFAnalyzer:
             complexity_score = min(5, complexity_score)
 
             # 6. Recomendar motor
-            if complexity_score <= 1:
+            if complexity_score <= 2:
                 recommended_engine = ConversionEngine.RAPID
             elif complexity_score <= 3:
-                recommended_engine = ConversionEngine.BALANCED
+                recommended_engine = ConversionEngine.INTERMEDIATE
             else:
                 recommended_engine = ConversionEngine.QUALITY
 
@@ -239,13 +241,13 @@ class SequenceEvaluator:
             "sequence": ["analyze", ConversionEngine.RAPID.value],
             "metrics": {"quality": 0.7, "cost": 1},
         },
-        ConversionEngine.BALANCED: {
-            "sequence": ["analyze", ConversionEngine.BALANCED.value],
-            "metrics": {"quality": 0.85, "cost": 2},
+        ConversionEngine.INTERMEDIATE: {
+            "sequence": ["analyze", ConversionEngine.INTERMEDIATE.value],
+            "metrics": {"quality": 0.90, "cost": 6},
         },
         ConversionEngine.QUALITY: {
             "sequence": ["analyze", ConversionEngine.QUALITY.value],
-            "metrics": {"quality": 0.95, "cost": 3},
+            "metrics": {"quality": 0.95, "cost": 10},
         },
     }
 
@@ -688,7 +690,7 @@ class EnhancedPDFToEPUBConverter:
         self.analyzer = PDFAnalyzer()
         self.engines = {
             ConversionEngine.RAPID: RapidConverter(),
-            ConversionEngine.BALANCED: BalancedConverter(),
+            ConversionEngine.INTERMEDIATE: BalancedConverter(),  # Intermediate uses balanced converter
             ConversionEngine.QUALITY: QualityConverter(),
         }
 
@@ -825,40 +827,51 @@ def suggest_best_pipeline(pdf_path):
 
     time_factors = {
         ConversionEngine.RAPID: 1,
-        ConversionEngine.BALANCED: 2,
+        ConversionEngine.INTERMEDIATE: 2.5,
         ConversionEngine.QUALITY: 3,
     }
 
     quality_estimates = {
         ConversionEngine.RAPID: 70,
-        ConversionEngine.BALANCED: 85,
+        ConversionEngine.INTERMEDIATE: 90,
         ConversionEngine.QUALITY: 95,
     }
 
-    # Importar servicio de créditos para calcular costos
-    from .credits_service import credits_service
+    # Costos fijos definidos
+    cost_map = {
+        'rapid': 1,
+        'intermediate': 6,
+        'quality': 10
+    }
 
     options = []
     for engine in converter.engines:
-        # Calcular costo de la conversión
-        estimated_cost = credits_service.calculate_conversion_cost(engine.value, analysis.page_count)
+        # Usar costo fijo según el motor
+        estimated_cost = cost_map.get(engine.value, 5)
+
+        # Map engine values to quality levels expected by frontend
+        quality_map = {
+            'rapid': 'low',
+            'intermediate': 'medium',
+            'quality': 'high'
+        }
 
         options.append({
             "id": engine.value,
-            "quality": engine.value.split('.')[-1],  # low, medium, high
+            "quality": quality_map.get(engine.value, 'medium'),
             "estimated_time": analysis.page_count * time_factors[engine],
             "estimated_quality": quality_estimates[engine],
             "estimated_cost": estimated_cost,  # Costo en créditos
             "cost_breakdown": {
-                "base_cost": credits_service.DEFAULT_PIPELINE_COSTS.get(engine.value, {}).get('base_cost', 5),
-                "cost_per_page": credits_service.DEFAULT_PIPELINE_COSTS.get(engine.value, {}).get('cost_per_page', 0),
+                "base_cost": estimated_cost,
+                "cost_per_page": 0,
                 "total_pages": analysis.page_count
             }
         })
 
     return {
         "recommended": analysis.recommended_engine.value,
-        "options": options,
+        "pipelines": options,  # Change from 'options' to 'pipelines' for frontend compatibility
         "analysis": {
             "page_count": analysis.page_count,
             "file_size": analysis.file_size,

@@ -10,9 +10,10 @@ interface HeaderProps {
   toggleTheme: () => void;
   currentSection: string;
   setCurrentSection: (section: string) => void;
+  onNewConversion?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, setCurrentSection }) => {
+const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, setCurrentSection, onNewConversion }) => {
   const { logout, user } = useAuth();
   const { t } = useTranslation();
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -100,7 +101,13 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
             {navigationItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => setCurrentSection(item.id)}
+                onClick={() => {
+                  if (item.id === 'inicio' && onNewConversion) {
+                    onNewConversion();
+                  } else {
+                    setCurrentSection(item.id);
+                  }
+                }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 ${
                   currentSection === item.id
                     ? 'shadow-md'
@@ -273,7 +280,13 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
             {navigationItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => setCurrentSection(item.id)}
+                onClick={() => {
+                  if (item.id === 'inicio' && onNewConversion) {
+                    onNewConversion();
+                  } else {
+                    setCurrentSection(item.id);
+                  }
+                }}
                 className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 ${
                   currentSection === item.id
                     ? ''

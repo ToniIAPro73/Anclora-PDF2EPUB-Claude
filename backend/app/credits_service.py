@@ -26,6 +26,11 @@ class CreditsService:
 
         # Costos por defecto si no están en BD
         self.DEFAULT_PIPELINE_COSTS = {
+            'rapid': {'base_cost': 1, 'cost_per_page': 0},
+            'balanced': {'base_cost': 3, 'cost_per_page': 1},
+            'intermediate': {'base_cost': 6, 'cost_per_page': 1},
+            'quality': {'base_cost': 10, 'cost_per_page': 2},
+            # Legacy mappings
             'engines.low': {'base_cost': 1, 'cost_per_page': 0},
             'engines.medium': {'base_cost': 3, 'cost_per_page': 1},
             'engines.high': {'base_cost': 8, 'cost_per_page': 2},
