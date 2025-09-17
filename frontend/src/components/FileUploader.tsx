@@ -140,16 +140,16 @@ const FileUploader: React.FC<FileUploaderProps> = ({
     let errorMessage: string;
     
     if (error instanceof ApiError) {
-      // Use user-friendly message from specialized error classes
-      errorMessage = error.getUserMessage();
+      // Use user-friendly message from ApiError
+      errorMessage = error.message;
       
-      // Handle authentication errors
-      if (error.isAuthError()) {
+      // Handle authentication errors  
+      if (error.status === 401 || error.status === 403) {
         return { requiresAuth: true, message: errorMessage };
       }
       
       // Log detailed diagnostics for debugging
-      console.debug("🔍 Error diagnostics:", error.getDiagnostics());
+      console.debug("🔍 Error details:", { status: error.status, message: error.message });
     } else if (error instanceof Error) {
       errorMessage = error.message;
     } else {
