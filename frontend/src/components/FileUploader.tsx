@@ -643,7 +643,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
     } else if (error) {
       return `${baseClasses} border-red-400`;
     } else {
-      return `${baseClasses} border-gray-300 hover:border-gray-400 bg-uploader-pattern`;
+      return `${baseClasses} border-transparent dropzone-enhanced bg-uploader-pattern`;
     }
   }, [isDragActive, file, error]);
 
