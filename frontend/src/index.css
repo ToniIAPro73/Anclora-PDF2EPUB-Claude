@@ -362,59 +362,48 @@ p {
 
 /* ===== EFECTOS VISUALES AVANZADOS ===== */
 
-/* CSS Properties for rotating border */
-@property --angle {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
+/* Elegant static border effect for selected cards */
+.selected-card-glow {
+  transform: translateY(-3px);
+  box-shadow: 
+    0 12px 25px rgba(0, 0, 0, 0.15),
+    0 6px 12px rgba(46, 175, 196, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Snake-like rotating border effect for selected cards */
 .selected-card-glow::before {
   content: '';
   position: absolute;
-  inset: -6px;
-  background: conic-gradient(
-    from var(--angle),
-    transparent 0deg,
-    rgba(46, 175, 196, 1) 60deg,
-    rgba(125, 211, 252, 1) 120deg,
-    rgba(255, 201, 121, 0.9) 180deg,
-    rgba(125, 211, 252, 1) 240deg,
-    rgba(46, 175, 196, 1) 300deg,
-    transparent 360deg
+  inset: -8px;
+  background: linear-gradient(
+    135deg,
+    rgba(22, 101, 113, 0.9) 0%,
+    rgba(46, 175, 196, 1) 25%,
+    rgba(22, 101, 113, 0.9) 50%,
+    rgba(46, 175, 196, 1) 75%,
+    rgba(22, 101, 113, 0.9) 100%
   );
   border-radius: 12px;
-  animation: snake-border 3s linear infinite;
   z-index: -1;
 }
 
-/* Enhanced glow effect underneath */
+/* Intense glow effect underneath */
 .selected-card-glow::after {
   content: '';
   position: absolute;
-  inset: -15px;
+  inset: -18px;
   background: radial-gradient(
     ellipse at center,
-    rgba(46, 175, 196, 0.7) 0%,
-    rgba(125, 211, 252, 0.6) 25%,
-    rgba(255, 201, 121, 0.5) 50%,
-    rgba(46, 175, 196, 0.4) 75%,
-    transparent 100%
+    rgba(46, 175, 196, 0.8) 0%,
+    rgba(125, 211, 252, 0.7) 20%,
+    rgba(255, 201, 121, 0.6) 40%,
+    rgba(46, 175, 196, 0.5) 60%,
+    transparent 80%
   );
-  border-radius: 30px;
-  animation: glow-pulse 2.5s ease-in-out infinite alternate;
+  border-radius: 35px;
   z-index: -2;
-  filter: blur(20px);
-}
-
-@keyframes snake-border {
-  0% {
-    --angle: 0deg;
-  }
-  100% {
-    --angle: 360deg;
-  }
+  filter: blur(25px);
+  opacity: 0.9;
 }
 
 @keyframes glow-pulse {
