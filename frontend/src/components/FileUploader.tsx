@@ -788,7 +788,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       )}
 
       {/* Info message about advanced options */}
-      {file && !error && !isUploading && !isConverting && !isAnalyzing && showAdvancedMessage && (
+      {file && !error && !isUploading && !isConverting && showAdvancedMessage && (
         <div className="text-center mt-3">
           <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
             💡 {t("fileUploader.advancedOptionsBelow")}
