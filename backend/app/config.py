@@ -153,7 +153,7 @@ class ConfigManager:
         for env_path in env_paths:
             if env_path.exists():
                 logger.info(f"Loading environment variables from: {env_path}")
-                load_dotenv(dotenv_path=env_path, override=True)
+                load_dotenv(dotenv_path=env_path, override=False)  # Respect runtime env vars
                 loaded_any = True
             else:
                 logger.debug(f"Environment file not found: {env_path}")

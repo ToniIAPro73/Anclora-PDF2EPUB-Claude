@@ -4,6 +4,7 @@ expertMode = true
 
 [nix]
 channel = "stable-25_05"
+packages = ["redis"]
 
 [workflows]
 runButton = "Project"
@@ -20,6 +21,14 @@ args = "Backend"
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Frontend"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Redis"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Celery Worker"
 
 [[workflows.workflow]]
 name = "Backend"
@@ -45,6 +54,28 @@ waitForPort = 5000
 [workflows.workflow.metadata]
 outputType = "webview"
 
+[[workflows.workflow]]
+name = "Redis"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "redis-server --bind 127.0.0.1 --port 6379"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow]]
+name = "Celery Worker"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd backend && unset REDIS_PASSWORD && export CELERY_BROKER_URL=\"redis://localhost:6379/0\" && export CELERY_RESULT_BACKEND=\"redis://localhost:6379/0\" && celery -A app.tasks worker --loglevel=info --concurrency=2"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
 [[ports]]
 localPort = 3002
 externalPort = 3002
@@ -60,10 +91,6 @@ externalPort = 3000
 [[ports]]
 localPort = 35373
 externalPort = 3001
-
-[[ports]]
-localPort = 37643
-externalPort = 4200
 
 [[ports]]
 localPort = 46291
