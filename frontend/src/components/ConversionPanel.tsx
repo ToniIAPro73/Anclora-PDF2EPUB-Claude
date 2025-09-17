@@ -280,7 +280,7 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file, onConversionSta
                 <div
                   key={p.id}
                   onClick={() => setSelectedPipeline(p.id)}
-                  className={`pipeline-card cursor-pointer relative transition-all duration-300 hover:scale-105 ${isSelected ? 'selected-card-glow' : ''}`}
+                  className={`pipeline-card cursor-pointer relative transition-all duration-300 hover:scale-105 ${isSelected ? 'selected-card-glow selected-card-activated' : ''}`}
                   style={{
                     background: getCardGradient(index),
                     border: isSelected ? '3px solid transparent' : '2px solid rgba(0,0,0,0.15)',
@@ -298,34 +298,25 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file, onConversionSta
                 >
                   <div className="text-center h-full flex flex-col justify-between">
 
-                    <h4 className="font-semibold text-xl mb-4" style={{
-                      color: isSelected ? '#FFFFFF' : '#23436B',
-                      textShadow: isSelected ? '0 1px 2px rgba(0,0,0,0.3)' : 'none'
+                    <h4 className={`font-semibold text-xl mb-4 ${isSelected ? 'selected-title' : ''}`} style={{
+                      color: isSelected ? undefined : '#23436B'
                     }}>
                       {t(`engines.${p.quality}`)}
                     </h4>
 
-                    <div className="text-base mb-3" style={{
-                      color: isSelected ? 'rgba(255,255,255,0.95)' : '#162032',
-                      fontWeight: '500'
+                    <div className={`text-base mb-3 font-medium ${isSelected ? 'selected-content' : ''}`} style={{
+                      color: isSelected ? undefined : '#162032'
                     }}>
-                      <div className="mb-3">⏱️ {p.estimated_time}s</div>
+                      <div className={`mb-3 ${isSelected ? 'selected-icon' : ''}`}>⏱️ {p.estimated_time}s</div>
                       {p.estimated_cost && (
-                        <div className="font-semibold text-lg" style={{
-                          color: isSelected ? '#FFF' : '#23436B'
+                        <div className={`font-semibold text-lg ${isSelected ? 'selected-cost' : ''}`} style={{
+                          color: isSelected ? undefined : '#23436B'
                         }}>
                           💰 {p.estimated_cost} {p.estimated_cost === 1 ? 'crédito' : 'créditos'}
                         </div>
                       )}
                     </div>
 
-                  {isSelected && (
-                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center" style={{
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
-                    }}>
-                      <span className="text-sm text-blue-800">✓</span>
-                    </div>
-                  )}
                 </div>
               </div>
               );

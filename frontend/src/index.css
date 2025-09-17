@@ -422,8 +422,65 @@ p {
   filter: brightness(1.05);
 }
 
-.selected-card-glow:hover {
-  filter: brightness(1.1);
+/* Internal Activation Effect for Selected Cards */
+.selected-card-activated {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Internal glow effect - card lights up from within */
+.selected-card-activated::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Dark mode internal glow */
+[data-theme="dark"] .selected-card-activated::before {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Selected text enhancement - more vibrant */
+.selected-title {
+  color: #FFFFFF !important;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4), 0 0 15px rgba(255,255,255,0.3) !important;
+  filter: drop-shadow(0 0 8px rgba(255,255,255,0.4));
+}
+
+.selected-content {
+  color: rgba(255,255,255,0.98) !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
+}
+
+.selected-icon {
+  filter: drop-shadow(0 0 8px rgba(255,255,255,0.6));
+  text-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
+
+.selected-cost {
+  color: #FFFFFF !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4) !important;
+  filter: drop-shadow(0 0 10px rgba(255,255,255,0.5));
+}
+
+/* Dark mode text adjustments for better contrast */
+[data-theme="dark"] .selected-title {
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6), 0 0 20px rgba(46,175,196,0.4) !important;
+  filter: drop-shadow(0 0 12px rgba(46,175,196,0.6));
+}
+
+[data-theme="dark"] .selected-icon {
+  filter: drop-shadow(0 0 12px rgba(125,211,252,0.7));
+  text-shadow: 0 0 15px rgba(125,211,252,0.6);
+}
+
+[data-theme="dark"] .selected-cost {
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6), 0 0 15px rgba(255,201,121,0.5) !important;
+  filter: drop-shadow(0 0 10px rgba(255,201,121,0.6));
 }
 
 /* Prevent glow effect overflow issues */
