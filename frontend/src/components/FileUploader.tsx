@@ -523,6 +523,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
 
         // Show advanced message after animation ends
         setTimeout(() => {
+          console.log("💡 Setting showAdvancedMessage to true");
           setShowAdvancedMessage(true);
         }, 500); // Small delay after animation ends
 
