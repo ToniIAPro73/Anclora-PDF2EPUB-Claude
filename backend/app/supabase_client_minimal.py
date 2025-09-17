@@ -102,6 +102,10 @@ class LocalQueryBuilder:
 class LocalResponse:
     def __init__(self, data):
         self.data = data
+    
+    def execute(self):
+        """Return self to maintain compatibility with Supabase API"""
+        return self
 
 # Create local client
 supabase = LocalSupabaseClient()
