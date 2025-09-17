@@ -156,7 +156,7 @@ const AIChatBox: React.FC<AIChatBoxProps> = ({
     <div className="transition-all duration-300">
       {isExpanded ? (
         /* Chat expandido - ajustado al ancho de la columna */
-        <div className="w-full h-96 max-w-sm" style={{ marginTop: '-50px' }}>
+        <div className="w-full h-96 max-w-sm" style={{ marginTop: '0px' }}>
           <div className="bg-white rounded-lg shadow-xl border-2 border-blue-200 h-full flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between p-3 text-white rounded-t-lg" style={{ background: 'var(--gradient-nexus)' }}>
@@ -206,7 +206,7 @@ const AIChatBox: React.FC<AIChatBoxProps> = ({
         </div>
       ) : (
         /* Icono cerrado */
-        <div className="flex justify-center">
+        <div className="flex justify-center" style={{ marginTop: '50px' }}>
           <button
             onClick={handleChatOpen}
             className="w-16 h-16 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center relative"
