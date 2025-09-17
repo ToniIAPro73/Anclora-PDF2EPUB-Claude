@@ -15,6 +15,7 @@ export default ({ mode }) => {
     server: {
       port: 5178,
       host: "0.0.0.0",
+      allowedHosts: "7d91159f-3256-4529-966a-2ec951860628-00-3uxsaku1v9i5f.spock.replit.dev",
       proxy: {
         // Proxy all /api requests to the backend server
         "/api": {
