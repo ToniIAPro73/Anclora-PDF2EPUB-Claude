@@ -40,7 +40,11 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ taskId, onClose }) => {
       try {
         setLoading(true);
         console.log("Loading preview with token:", token ? "Present" : "Missing");
-        const data = await apiGet<PreviewResponse>(`preview/${taskId}`, token);
+        const data = await apiGet<PreviewResponse>(`preview/${taskId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         setPages(data.pages || []);
         setError(null);
       } catch (err) {

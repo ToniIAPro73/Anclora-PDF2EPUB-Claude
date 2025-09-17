@@ -30,7 +30,11 @@ const CreditBalance: React.FC<CreditBalanceProps> = ({
   const fetchBalance = async () => {
     try {
       setLoading(true);
-      const response = await apiGet<{success: boolean, balance: CreditBalance}>('credits/balance', token);
+      const response = await apiGet<{success: boolean, balance: CreditBalance}>('credits/balance', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
 
       if (response.success && response.balance) {
         setBalance(response.balance);

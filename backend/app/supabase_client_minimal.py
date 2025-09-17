@@ -62,6 +62,28 @@ class LocalQueryBuilder:
         self.filters[column] = value
         return self
     
+    def single(self):
+        """Return a single result, similar to Supabase's single() method"""
+        results = []
+        for record in conversion_records.values():
+            match = True
+            for col, val in self.filters.items():
+                if record.get(col) != val:
+                    match = False
+                    break
+            if match:
+                results.append(record)
+        
+        logger.info(f"Local single query on {self.table_name} returned {len(results)} results")
+        
+        if len(results) == 0:
+            return LocalResponse(None)
+        elif len(results) == 1:
+            return LocalResponse(results[0])
+        else:
+            logger.warning(f"Multiple records found for single() query on {self.table_name}")
+            return LocalResponse(results[0])  # Return first result
+    
     def execute(self):
         # Simple filter logic
         results = []

@@ -119,7 +119,11 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file, onConversionSta
       const formData = new FormData();
       formData.append("file", file);
       
-      const data = await apiPost("analyze", formData, token);
+      const data = await apiPost("analyze", formData, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       setPipelines(data.pipelines || []);
       
       // Auto-select the middle pipeline (intermediate) by default
@@ -176,7 +180,11 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file, onConversionSta
       formData.append("file", file);
       formData.append("pipeline_id", selectedPipeline);
 
-      const data = await apiPost("convert", formData, token);
+      const data = await apiPost("convert", formData, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       setTaskId(data.task_id);
       pollStatus(data.task_id);
     } catch (err) {
@@ -194,7 +202,11 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file, onConversionSta
   const pollStatus = (id: string) => {
     const interval = setInterval(async () => {
       try {
-        const data = await apiGet<StatusResponse>(`status/${id}`, token);
+        const data = await apiGet<StatusResponse>(`status/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         
         setStatus(data.status);
         if (data.status === "PROGRESS") {

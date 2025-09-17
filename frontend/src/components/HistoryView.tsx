@@ -23,7 +23,11 @@ const HistoryView: React.FC = () => {
     const fetchHistory = async () => {
       try {
         console.log("Fetching history with token:", token ? "Present" : "Missing");
-        const data = await apiGet<ConversionItem[]>("history", token);
+        const data = await apiGet<ConversionItem[]>("history", {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         setHistory(data);
       } catch (err) {
         console.error("Error fetching history:", err);

@@ -246,7 +246,11 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       });
 
       // Make API request with enhanced error handling
-      const data = await apiPost<ConversionResult>("convert", formData, token);
+      const data = await apiPost<ConversionResult>("convert", formData, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
 
       // Show success toast
       showToast({ 
@@ -315,7 +319,11 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       });
 
       // Make API request with enhanced error handling
-      const analyzeData = await apiPost<AnalysisResult>("analyze", formData, token);
+      const analyzeData = await apiPost<AnalysisResult>("analyze", formData, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
 
       // Determine recommended engine
       const engineName = analyzeData.recommended || analyzeData.pipeline_id || "balanced";
