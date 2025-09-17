@@ -92,7 +92,7 @@ const MainApp: React.FC = () => {
                   <div className="w-full">
                     <div className="grid grid-cols-12 items-start">
                       {/* Columna izquierda - Cards (3 columnas) */}
-                      <div className="col-span-3 pl-4 pr-4 py-6" style={{ marginTop: '-150px' }}>
+                      <div className="col-span-3 px-6 py-6" style={{ marginTop: '-100px' }}>
                         <ConversionPanel
                           file={selectedFile}
                           onConversionStateChange={setConversionState}
@@ -101,7 +101,7 @@ const MainApp: React.FC = () => {
                       </div>
 
                       {/* Columna central - File Uploader (6 columnas) */}
-                      <div className="col-span-6 flex flex-col items-center px-8">
+                      <div className="col-span-6 flex flex-col items-center px-6">
                         <FileUploader
                           onFileSelected={setSelectedFile}
                           selectedFile={selectedFile}
@@ -125,7 +125,7 @@ const MainApp: React.FC = () => {
                       </div>
 
                       {/* Columna derecha - AI ChatBox (3 columnas) */}
-                      <div className="col-span-3 flex items-start justify-center pl-6 pr-4 py-6" style={{ marginTop: '60px' }}>
+                      <div className="col-span-3 flex items-start justify-center px-6 py-6" style={{ marginTop: '-100px' }}>
                         <AIChatBox
                           userCredits={pipelineData.userCredits}
                           selectedPipeline={pipelineData.selectedPipeline}
