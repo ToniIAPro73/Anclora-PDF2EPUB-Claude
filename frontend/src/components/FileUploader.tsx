@@ -459,8 +459,27 @@ const FileUploader: React.FC<FileUploaderProps> = ({
 
     // Wait for parent to finish processing, then start animation
     setTimeout(() => {
-      console.log("🔍 Starting Lottie animation - setShowLottieAnimation(true)");
-      setShowLottieAnimation(true);
+      console.log("🔍 Starting Lottie animation - showing container");
+
+      // Show the animation container
+      const container = document.getElementById('lottie-animation-container');
+      if (container) {
+        container.style.display = 'flex';
+        console.log("🔍 Container shown");
+
+        // Initialize Lottie animation
+        setTimeout(() => {
+          if (canvasRef.current) {
+            console.log("🎬 Initializing Lottie animation directly");
+            dotLottieRef.current = new DotLottie({
+              autoplay: true,
+              loop: true,
+              canvas: canvasRef.current,
+              src: "/atpV03BrWT.lottie"
+            });
+          }
+        }, 100);
+      }
 
       // Clear any existing timer
       if (analysisTimerRef.current) {
@@ -469,8 +488,15 @@ const FileUploader: React.FC<FileUploaderProps> = ({
 
       // End animation after 2.5 seconds
       analysisTimerRef.current = setTimeout(() => {
-        console.log("🔍 Ending Lottie animation - setShowLottieAnimation(false)");
-        setShowLottieAnimation(false);
+        console.log("🔍 Ending Lottie animation - hiding container");
+        const container = document.getElementById('lottie-animation-container');
+        if (container) {
+          container.style.display = 'none';
+        }
+        if (dotLottieRef.current) {
+          dotLottieRef.current.destroy();
+          dotLottieRef.current = null;
+        }
         analysisTimerRef.current = null;
       }, 2500);
     }, 200); // Wait 200ms for parent processing to complete
@@ -677,8 +703,12 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       )}
 
       {/* Analyzing Animation - appears below buttons */}
-      {file && !error && !isUploading && showLottieAnimation && (
-        <div className="flex flex-col items-center justify-center mt-6">
+      {file && !error && !isUploading && (
+        <div
+          id="lottie-animation-container"
+          className="flex flex-col items-center justify-center mt-6"
+          style={{ display: 'none' }}
+        >
           {/* Lottie Animation */}
           <div className="mb-4">
             <canvas
