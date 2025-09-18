@@ -47,31 +47,9 @@ echo OK: Docker listo
 
 REM Detener contenedores anteriores (por si acaso)
 echo Limpiando contenedores anteriores...
-docker stop redis-anclora >nul 2>&1
-docker rm redis-anclora >nul 2>&1
+docker stop redis worker >nul 2>&1
+docker rm redis worker >nul 2>&1
 
-REM Iniciar Redis
-echo Iniciando Redis en Docker...
-docker run -d --name redis-anclora -p 6379:6379 redis:7-alpine redis-server --requirepass XNdpx7I-taa6vZDF3ttieYd1gxs0oE9e9xHt4utbkCQ --appendonly yes >nul
-
-if %errorlevel% neq 0 (
-    echo ERROR: No se pudo iniciar Redis
-    pause
-    exit /b 1
-)
-
-REM Esperar a que Redis este listo
-echo Esperando que Redis este listo...
-timeout /t 3 /nobreak >nul
-
-REM Verificar Redis
-docker exec redis-anclora redis-cli -a XNdpx7I-taa6vZDF3ttieYd1gxs0oE9e9xHt4utbkCQ ping >nul 2>&1
-if %errorlevel% neq 0 (
-    echo ERROR: Redis no responde
-    pause
-    exit /b 1
-)
-echo OK: Redis funcionando en puerto 6379
 
 REM Preparar comandos para entorno virtual
 if %USE_VENV%==1 (
@@ -105,10 +83,10 @@ echo pause >> "%TEMP%\anclora_backend.bat"
 
 REM Script Frontend
 echo @echo off > "%TEMP%\anclora_frontend.bat"
-echo title [ANCLORA] Frontend React - Puerto 5178 >> "%TEMP%\anclora_frontend.bat"
+echo title [ANCLORA] Frontend React - Puerto 5000 >> "%TEMP%\anclora_frontend.bat"
 echo color 09 >> "%TEMP%\anclora_frontend.bat"
 echo echo ================================== >> "%TEMP%\anclora_frontend.bat"
-echo echo   FRONTEND REACT - Puerto 5178 >> "%TEMP%\anclora_frontend.bat"
+echo echo   FRONTEND REACT - Puerto 5000 >> "%TEMP%\anclora_frontend.bat"
 echo echo   Carpeta: %PROJECT_FOLDER%\frontend >> "%TEMP%\anclora_frontend.bat"
 echo echo ================================== >> "%TEMP%\anclora_frontend.bat"
 echo echo. >> "%TEMP%\anclora_frontend.bat"
@@ -127,26 +105,6 @@ echo echo. >> "%TEMP%\anclora_frontend.bat"
 echo echo Frontend detenido. >> "%TEMP%\anclora_frontend.bat"
 echo pause >> "%TEMP%\anclora_frontend.bat"
 
-REM Script Celery
-echo @echo off > "%TEMP%\anclora_celery.bat"
-echo title [ANCLORA] Celery Worker - Conversiones >> "%TEMP%\anclora_celery.bat"
-echo color 05 >> "%TEMP%\anclora_celery.bat"
-echo echo ================================== >> "%TEMP%\anclora_celery.bat"
-echo echo  CELERY WORKER - Conversiones PDF >> "%TEMP%\anclora_celery.bat"
-echo echo  Carpeta: %PROJECT_FOLDER%\backend >> "%TEMP%\anclora_celery.bat"
-echo echo ================================== >> "%TEMP%\anclora_celery.bat"
-echo echo. >> "%TEMP%\anclora_celery.bat"
-echo cd /d "%PROJECT_FOLDER%\backend" >> "%TEMP%\anclora_celery.bat"
-echo %VENV_CMD% >> "%TEMP%\anclora_celery.bat"
-echo echo Esperando 15 segundos a que el backend este listo... >> "%TEMP%\anclora_celery.bat"
-echo timeout /t 15 /nobreak >> "%TEMP%\anclora_celery.bat"
-echo echo. >> "%TEMP%\anclora_celery.bat"
-echo echo Iniciando Celery Worker... >> "%TEMP%\anclora_celery.bat"
-echo celery -A app.tasks.celery_app worker --loglevel=info --pool=eventlet --concurrency=2 >> "%TEMP%\anclora_celery.bat"
-echo echo. >> "%TEMP%\anclora_celery.bat"
-echo echo Celery Worker detenido. >> "%TEMP%\anclora_celery.bat"
-echo pause >> "%TEMP%\anclora_celery.bat"
-
 echo.
 echo =====================================================
 echo ABRIENDO 3 TERMINALES...
@@ -162,11 +120,6 @@ timeout /t 2 /nobreak >nul
 echo [2/3] Abriendo Frontend...
 start "Frontend" "%TEMP%\anclora_frontend.bat"
 
-timeout /t 2 /nobreak >nul
-
-echo [3/3] Abriendo Celery Worker...
-start "Celery" "%TEMP%\anclora_celery.bat"
-
 echo.
 echo =====================================================
 echo DESARROLLO INICIADO CORRECTAMENTE
@@ -176,12 +129,12 @@ echo Ubicacion: %PROJECT_FOLDER%
 echo.
 echo Servicios iniciados:
 echo  [Backend]  Flask en puerto 5175
-echo  [Frontend] React en puerto 5178
+echo  [Frontend] React en puerto 5000
 echo  [Worker]   Celery para conversiones
 echo  [Redis]    Base de datos en puerto 6379
 echo.
 echo ACCEDE A TU APLICACION:
-echo  --^> http://localhost:5178
+echo  --^> http://localhost:5000
 echo.
 echo Para DETENER todo ejecuta: stop_dev.bat
 echo.
