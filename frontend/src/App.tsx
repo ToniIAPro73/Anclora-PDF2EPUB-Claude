@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+dimport React, { useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import ConversionHistory from './components/ConversionHistory';
@@ -79,10 +79,11 @@ const MainApp: React.FC = () => {
             <section className="relative overflow-hidden py-16" style={{ background: 'var(--gradient-hero)' }}>
               <div className="w-full text-center text-white">
                 <div className="mb-8">
-                  <h1 className="text-3xl md:text-4xl font-bold mb-3 gradient-text-hero" style={{ fontFamily: 'var(--font-heading)' }}>
-                    {t('home.hero.title')}
+                  <h1 className="text-4xl md:text-5xl font-bold mb-3 gradient-text-hero" style={{ fontFamily: 'var(--font-heading)' }}>
+                    <span>Anclora </span>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: '500' }}>Pdf2Epub</span>
                   </h1>
-                  <p className="text-xl md:text-2xl mb-8 opacity-90">
+                  <p className="text-base mb-8 opacity-90">
                     {t('home.hero.subtitle')}
                   </p>
                 </div>
@@ -139,12 +140,33 @@ const MainApp: React.FC = () => {
                     </div>
                   </div>
                 ) : (
-                  /* File Uploader centrado cuando no hay archivo */
-                  <div className="max-w-2xl mx-auto">
-                    <FileUploader
-                      onFileSelected={setSelectedFile}
-                      selectedFile={selectedFile}
-                    />
+                  /* File Uploader centrado cuando no hay archivo y ChatBox visible */
+                  <div className="grid grid-cols-12 items-start max-w-6xl mx-auto px-8">
+                    {/* Columna izquierda - Vacía (3 columnas) */}
+                    <div className="col-span-3 pr-6 py-6">
+                      {/* Espacio reservado para las cards que aparecerán después */}
+                    </div>
+                    
+                    {/* Columna central - File Uploader (6 columnas) */}
+                    <div className="col-span-6 flex flex-col items-center px-6">
+                      <FileUploader
+                        onFileSelected={setSelectedFile}
+                        selectedFile={selectedFile}
+                      />
+                    </div>
+                    
+                    {/* Columna derecha - AI ChatBox (3 columnas) */}
+                    <div className="col-span-3 flex items-start justify-center pl-6 py-6" style={{ marginTop: '-50px' }}>
+                      <AIChatBox
+                        userCredits={pipelineData.userCredits}
+                        selectedPipeline={pipelineData.selectedPipeline}
+                        pipelines={pipelineData.pipelines}
+                        analysisData={pipelineData.analysisData}
+                        onSequenceRecommended={(sequence) => {
+                          // Handle sequence recommendation
+                        }}
+                      />
+                    </div>
                   </div>
                 )}
               </div>

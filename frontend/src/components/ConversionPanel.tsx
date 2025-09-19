@@ -126,14 +126,10 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file, onConversionSta
       });
       setPipelines(data.pipelines || []);
       
-      // Auto-select the middle pipeline (intermediate) by default
-      // But delay showing cards until animation + message finishes (4 seconds total)
+      // Ensure no card is selected by default
       setTimeout(() => {
-        if (data.pipelines?.length > 0) {
-          // Seleccionar el del medio por defecto
-          const middleIndex = Math.floor(data.pipelines.length / 2);
-          setSelectedPipeline(data.pipelines[middleIndex].id);
-        }
+        // Explicitly set selectedPipeline to empty string to ensure no selection
+        setSelectedPipeline("");
       }, 4000); // Wait 4 seconds total: 2.5s animation + 1.5s message
     } catch (err) {
       console.error("Error analyzing file:", err);
@@ -271,16 +267,16 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file, onConversionSta
                   onClick={() => setSelectedPipeline(p.id)}
                   className={`pipeline-card cursor-pointer relative transition-all duration-500 hover:scale-105 ${isSelected ? 'selected-card-glow selected-card-activated' : ''}`}
                   style={{
-                    background: 'rgba(38, 48, 67, 0.82)', // Mismo tono translucido que la tarjeta inicial
+                    background: 'rgba(38, 48, 67, 0.82)', // Same background color for both states
                     border: isSelected
-                      ? '2px solid rgba(46, 175, 196, 0.45)'
+                      ? '2px solid rgba(46, 175, 196, 0.6)' // More visible border
                       : '1px solid rgba(255, 255, 255, 0.08)',
                     borderRadius: '12px',
                     padding: '20px 16px',
                     boxShadow: isSelected
-                      ? '0 10px 28px rgba(15, 23, 42, 0.28), 0 0 18px rgba(46, 175, 196, 0.2)'
+                      ? '0 10px 28px rgba(15, 23, 42, 0.3), 0 0 20px rgba(46, 175, 196, 0.25)' // Enhanced glow
                       : '0 6px 16px rgba(15, 23, 42, 0.2)',
-                    minHeight: '120px',
+                    minHeight: '180px',
                     width: '100%',
                     position: 'relative' as const,
                     overflow: 'visible' as const,

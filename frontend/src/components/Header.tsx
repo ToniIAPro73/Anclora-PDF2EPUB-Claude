@@ -92,7 +92,10 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
               />
             </div>
             <div className="flex items-center h-16">
-              <h1 className="text-xl font-bold" style={{ lineHeight: '1.5', margin: '0', padding: '0', color: 'var(--text-header)' }}>{t('app.title')}</h1>
+              <h1 className="text-2xl font-bold" style={{ lineHeight: '1.5', margin: '0', padding: '0', color: 'var(--text-header)' }}>
+                <span>Anclora </span>
+                <span>Pdf2Epub</span>
+              </h1>
             </div>
           </div>
 

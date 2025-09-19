@@ -202,12 +202,14 @@ p {
 }
 
 /* Asegurar texto blanco en cards en modo oscuro */
-[data-theme="dark"] .card {
+[data-theme="dark"] .card,
+[data-theme="dark"] .pipeline-card {
   color: var(--anclora-white);
 }
 
-[data-theme="dark"] .card * {
-  color: var(--anclora-white);
+[data-theme="dark"] .card *,
+[data-theme="dark"] .pipeline-card * {
+  color: var(--anclora-white) !important;
 }
 
 .card:hover {
@@ -440,7 +442,7 @@ p {
   position: relative;
   overflow: visible;
   transform: translateY(-4px) scale(1.01);
-  filter: brightness(1.04) saturate(1.02);
+  /* Removed brightness filter to prevent background color change */
   box-shadow:
     0 16px 28px rgba(15, 23, 42, 0.22),
     0 0 0 1px rgba(46, 175, 196, 0.2),
@@ -451,7 +453,7 @@ p {
 }
 
 [data-theme="dark"] .selected-card-activated {
-  filter: brightness(1.08) saturate(1.05);
+  /* Removed brightness filter to prevent background color change */
   box-shadow:
     0 18px 30px rgba(15, 23, 42, 0.35),
     0 0 0 1px rgba(125, 211, 252, 0.22),
