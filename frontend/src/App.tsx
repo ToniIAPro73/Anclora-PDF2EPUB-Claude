@@ -1,4 +1,4 @@
-dimport React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import ConversionHistory from './components/ConversionHistory';
@@ -27,7 +27,25 @@ const MainApp: React.FC = () => {
     progress: 0,
     statusMessage: ''
   });
-  const [pipelineData, setPipelineData] = useState({
+  // Import PipelineOption interface from ConversionPanel
+  interface PipelineOption {
+    id: string;
+    quality: string;
+    estimated_time: number;
+    estimated_cost?: number;
+    cost_breakdown?: {
+      base_cost: number;
+      cost_per_page: number;
+      total_pages: number;
+    };
+  }
+
+  const [pipelineData, setPipelineData] = useState<{
+    pipelines: PipelineOption[];
+    selectedPipeline: string;
+    userCredits: number;
+    analysisData: null | any;
+  }>({
     pipelines: [],
     selectedPipeline: '',
     userCredits: 0,
@@ -132,7 +150,7 @@ const MainApp: React.FC = () => {
                           selectedPipeline={pipelineData.selectedPipeline}
                           pipelines={pipelineData.pipelines}
                           analysisData={pipelineData.analysisData}
-                          onSequenceRecommended={(sequence) => {
+                          onSequenceRecommended={(_sequence) => {
                             // Handle sequence recommendation
                           }}
                         />
@@ -162,7 +180,7 @@ const MainApp: React.FC = () => {
                         selectedPipeline={pipelineData.selectedPipeline}
                         pipelines={pipelineData.pipelines}
                         analysisData={pipelineData.analysisData}
-                        onSequenceRecommended={(sequence) => {
+                        onSequenceRecommended={(_sequence) => {
                           // Handle sequence recommendation
                         }}
                       />
