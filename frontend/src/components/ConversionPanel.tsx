@@ -258,22 +258,11 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file, onConversionSta
   return (
     <div className="conversion-panel relative">
       {pipelines.length > 0 && (
-        <div className="pipeline-selection" style={{ overflow: 'visible', padding: '100px 20px' }}>
+        <div className="pipeline-selection" style={{ overflow: 'visible', padding: '32px 20px 48px' }}>
           {/* Cards en columna vertical con más separación para efectos dramáticos */}
-          <div className="flex flex-col space-y-12" style={{ overflow: 'visible' }}>
+          <div className="flex flex-col space-y-6" style={{ overflow: 'visible' }}>
             {pipelines.map((p, index) => {
-              // Calcular la parte del degradado para cada card (igual al botón)
-              const getCardGradient = (cardIndex: number) => {
-                // Degradado continuo basado en el botón: turquesa → naranja claro
-                const gradientStops = [
-                  '#2EAFC4', // Inicio turquesa
-                  '#7DD3FC', // Medio azul claro
-                  '#FFC979'  // Final naranja claro
-                ];
-
-                return `linear-gradient(135deg, ${gradientStops[cardIndex]}, ${gradientStops[cardIndex + 1] || gradientStops[cardIndex]})`;
-              };
-
+              // Configurar el estilo visual de cada card de pipeline
               const isSelected = selectedPipeline === p.id;
 
               return (
@@ -282,18 +271,22 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file, onConversionSta
                   onClick={() => setSelectedPipeline(p.id)}
                   className={`pipeline-card cursor-pointer relative transition-all duration-500 hover:scale-105 ${isSelected ? 'selected-card-glow selected-card-activated' : ''}`}
                   style={{
-                    background: getCardGradient(index),
-                    border: isSelected ? '3px solid rgba(46, 175, 196, 0.5)' : '2px solid rgba(0,0,0,0.15)',
+                    background: 'rgba(38, 48, 67, 0.82)', // Mismo tono translucido que la tarjeta inicial
+                    border: isSelected
+                      ? '2px solid rgba(46, 175, 196, 0.45)'
+                      : '1px solid rgba(255, 255, 255, 0.08)',
                     borderRadius: '12px',
                     padding: '20px 16px',
                     boxShadow: isSelected
-                      ? '0 8px 32px rgba(46, 175, 196, 0.3), 0 4px 16px rgba(255, 201, 121, 0.2), inset 0 1px 0 rgba(255,255,255,0.3)'
-                      : '0 2px 8px rgba(0, 0, 0, 0.15)',
+                      ? '0 10px 28px rgba(15, 23, 42, 0.28), 0 0 18px rgba(46, 175, 196, 0.2)'
+                      : '0 6px 16px rgba(15, 23, 42, 0.2)',
                     minHeight: '120px',
                     width: '100%',
                     position: 'relative' as const,
                     overflow: 'visible' as const,
-                    zIndex: isSelected ? 10 : 1,
+                    zIndex: isSelected ? 5 : 1,
+                    color: '#FFFFFF',
+                    backdropFilter: 'blur(6px)',
                   }}
                 >
                   {/* Efectos luminosos dramáticos para card seleccionado */}
@@ -317,18 +310,18 @@ const ConversionPanel: React.FC<ConversionPanelProps> = ({ file, onConversionSta
                   <div className="text-center h-full flex flex-col justify-between">
 
                     <h4 className={`font-semibold text-xl mb-4 ${isSelected ? 'selected-title' : ''}`} style={{
-                      color: isSelected ? undefined : '#23436B'
+                      color: isSelected ? undefined : '#FFFFFF'
                     }}>
                       {t(`engines.${p.quality}`)}
                     </h4>
 
                     <div className={`text-base mb-3 font-medium ${isSelected ? 'selected-content' : ''}`} style={{
-                      color: isSelected ? undefined : '#162032'
+                      color: isSelected ? undefined : '#FFFFFF'
                     }}>
                       <div className={`mb-3 ${isSelected ? 'selected-icon' : ''}`}>⏱️ {p.estimated_time}s</div>
                       {p.estimated_cost && (
                         <div className={`font-semibold text-lg ${isSelected ? 'selected-cost' : ''}`} style={{
-                          color: isSelected ? undefined : '#23436B'
+                          color: isSelected ? undefined : '#FFFFFF'
                         }}>
                           💰 {p.estimated_cost} {p.estimated_cost === 1 ? 'crédito' : 'créditos'}
                         </div>
