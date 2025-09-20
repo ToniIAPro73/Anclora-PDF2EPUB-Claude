@@ -30,7 +30,17 @@
   --gradient-subtle: linear-gradient(180deg, #F6F7F9 0%, #FFFFFF 100%);
   --gradient-dark: linear-gradient(120deg, #202837 0%, #263043 100%);
 
-  /* === FONDOS DE PANTALLA === */
+    /* === RADIOS Y SOMBRAS === */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+
+/* === FONDOS DE PANTALLA === */
   --bg-pattern-light:
     /* PDFs sutiles desde la izquierda - usando azul Anclora */
     radial-gradient(ellipse 25px 12px at 5% 20%, rgba(35, 67, 107, 0.015) 0%, transparent 80%),
@@ -1013,3 +1023,78 @@ p {
   z-index: -2;
   filter: blur(10px);
 }
+
+
+
+
+
+
+
+/* Ensure file uploader card follows Anclora design system */
+.file-uploader-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s ease;
+}
+
+/* Dark mode: Use same background as chatbox (gradient-nexus) */
+[data-theme="dark"] .file-uploader-card {
+  background: var(--gradient-nexus);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+/* === HEADER NAVIGATION STYLES === */
+/* Remove hover backgrounds in dark mode for navigation buttons */
+[data-theme="dark"] .nav-button-no-hover:hover {
+  background: transparent !important;
+}
+
+/* Remove hover backgrounds in dark mode for user menu button */
+[data-theme="dark"] .user-menu-button:hover {
+  background: transparent !important;
+}
+
+.file-uploader-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Ensure all text in file uploader card is white in dark mode */
+[data-theme="dark"] .file-uploader-card * {
+  color: var(--anclora-white) !important;
+}
+
+/* Make dropzone more opaque in dark mode and ensure white text */
+[data-theme="dark"] .dropzone-enhanced {
+  background: linear-gradient(135deg, rgba(46, 175, 196, 0.15), rgba(255, 201, 121, 0.10)) !important;
+}
+
+/* Force white text for all uploader elements in dark mode */
+[data-theme="dark"] [style*="color: var(--text-uploader)"] {
+  color: var(--anclora-white) !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+}
+
+[data-theme="dark"] .bg-uploader-pattern div[style*="color: var(--text-uploader)"] span {
+  color: var(--anclora-white) !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+}
+
+[data-theme="dark"] .bg-uploader-pattern h3[style*="color: var(--text-uploader)"],
+[data-theme="dark"] .bg-uploader-pattern p[style*="color: var(--text-uploader)"] {
+  color: var(--anclora-white) !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+}
+
+/* Force white text for all text elements in dropzone in dark mode */
+[data-theme="dark"] .dropzone-enhanced h3,
+[data-theme="dark"] .dropzone-enhanced p,
+[data-theme="dark"] .dropzone-enhanced span {
+  color: var(--anclora-white) !important;
+}
+

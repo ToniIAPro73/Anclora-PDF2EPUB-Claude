@@ -93,8 +93,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
             </div>
             <div className="flex items-center h-16">
               <h1 className="text-2xl font-bold" style={{ lineHeight: '1.5', margin: '0', padding: '0', color: 'var(--text-header)' }}>
-                <span>Anclora </span>
-                <span>Pdf2Epub</span>
+                <span style={{ fontFamily: "var(--font-heading)" }}>Anclora </span><span style={{ fontFamily: "var(--font-heading)" }}>Pdf2Epub</span>
               </h1>
             </div>
           </div>
@@ -111,7 +110,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
                     setCurrentSection(item.id);
                   }
                 }}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 nav-button-no-hover ${
                   currentSection === item.id
                     ? 'shadow-md'
                     : 'hover:bg-gray-100'
@@ -134,7 +133,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
               <div className="relative">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center gap-3 p-2 rounded-lg transition-all duration-200 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                  className="flex items-center gap-3 p-2 rounded-lg transition-all duration-200 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 user-menu-button"
                   style={{ color: 'var(--text-primary)' }}
                 >
                   {/* Balance de Créditos */}
