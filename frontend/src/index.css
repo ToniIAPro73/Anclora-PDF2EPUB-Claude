@@ -1046,8 +1046,8 @@ p {
 }
 
 /* === HEADER NAVIGATION STYLES === */
-/* Remove hover backgrounds in dark mode for navigation buttons */
-[data-theme="dark"] .nav-button-no-hover:hover {
+/* Remove hover backgrounds in dark mode for navigation buttons (only for inactive buttons) */
+[data-theme="dark"] .nav-button-no-hover:not(.nav-button-active):hover {
   background: transparent !important;
 }
 

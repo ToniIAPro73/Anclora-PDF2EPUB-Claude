@@ -112,7 +112,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, currentSection, set
                 }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 nav-button-no-hover ${
                   currentSection === item.id
-                    ? 'shadow-md'
+                    ? 'shadow-md nav-button-active'
                     : 'hover:bg-gray-100'
                 }`}
                 style={currentSection === item.id
